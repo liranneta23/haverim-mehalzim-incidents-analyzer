@@ -295,7 +295,7 @@ def serve_frontend():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>מנהל אירועים - Incidents Analyzer</title>
+        <title>מנתח אירועים - Incidents Analyzer</title>
         <style>
             * {
                 margin: 0;
@@ -493,7 +493,7 @@ def serve_frontend():
     <body>
         <div class="container">
             <header>
-                <h1>📊 מנהל אירועים</h1>
+                <h1>📊 מנתח אירועים</h1>
                 <p class="subtitle">Incidents Analyzer Dashboard</p>
             </header>
 
