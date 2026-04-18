@@ -1,0 +1,5 @@
+GROUP_OPENED = "נפתח אירוע"
+INCIDENT_HANDLED_BY_RON = "טופל על ידי רון"
+SIGNIFICANT_INCIDENT = "אירוע משמעותי"
+
+ACTIVE_VOLUNTEERS_COUNT = 30
