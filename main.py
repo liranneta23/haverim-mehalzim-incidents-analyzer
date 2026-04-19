@@ -978,7 +978,7 @@ def serve_frontend():
             <div class="impact-strip fade-in stagger-2">
                 <div class="impact-card danger">
                     <div class="impact-info">
-                        <div class="impact-label">מקרים מסכני חיים</div>
+                        <div class="impact-label">מקרי חירום</div>
                         <div class="impact-number">${impact.count_life_threatening_incidents}</div>
                     </div>
                     <div class="impact-badge">CRITICAL</div>
