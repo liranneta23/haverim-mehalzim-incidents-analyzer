@@ -16,3 +16,5 @@ dist/
 .env
 
 node_modules/
+frontend/dist/
+app/dashboard/static/globe/

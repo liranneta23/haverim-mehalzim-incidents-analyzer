@@ -1,46 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
+import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Incident {
-  id: string;
-  lat: number;
-  lng: number;
-  country: string;
-  type: string;
-  status: 'active' | 'resolved';
-  label: string;
-}
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-// Replace with real API data from /api/incidents when integrating
-
-const MOCK_INCIDENTS: Incident[] = [
-  { id: '1', lat: 31.77,  lng:  35.21,  country: 'Israel',    type: 'Medical',      status: 'active',   label: 'INC-001' },
-  { id: '2', lat: 51.50,  lng:  -0.12,  country: 'UK',        type: 'Mental Health',status: 'resolved', label: 'INC-002' },
-  { id: '3', lat: 40.71,  lng: -74.00,  country: 'USA',       type: 'Search',       status: 'active',   label: 'INC-003' },
-  { id: '4', lat: 48.85,  lng:   2.35,  country: 'France',    type: 'Medical',      status: 'resolved', label: 'INC-004' },
-  { id: '5', lat: -33.86, lng: 151.20,  country: 'Australia', type: 'Rescue',       status: 'active',   label: 'INC-005' },
-  { id: '6', lat: 55.75,  lng:  37.61,  country: 'Russia',    type: 'Medical',      status: 'resolved', label: 'INC-006' },
-  { id: '7', lat: 35.67,  lng: 139.65,  country: 'Japan',     type: 'Search',       status: 'active',   label: 'INC-007' },
-  { id: '8', lat: -1.28,  lng:  36.82,  country: 'Kenya',     type: 'Antisemitism', status: 'active',   label: 'INC-008' },
-];
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
 
 const GEO_URL =
   'https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
 
-// Inline SVG hex grid as a data URI — overlaid on the globe at low opacity
 const HEX_TILE_URI = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="25">
     <polygon points="11,1 21,6.5 21,17.5 11,23 1,17.5 1,6.5"
       fill="none" stroke="#00e6a0" stroke-width="0.45"/>
-  </svg>`
+  </svg>`,
 )}`;
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
 
 function StatusRow({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -53,82 +31,147 @@ function StatusRow({ label, value, color }: { label: string; value: number; colo
 
 function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
   const base = 'absolute w-8 h-8 border-[#00e6a0] pointer-events-none';
-  const styles: Record<string, string> = {
+  const map: Record<string, string> = {
     tl: 'top-4 left-4  border-t-2 border-l-2',
     tr: 'top-4 right-4 border-t-2 border-r-2',
     bl: 'bottom-4 left-4  border-b-2 border-l-2',
     br: 'bottom-4 right-4 border-b-2 border-r-2',
   };
-  return <div className={`${base} ${styles[position]}`} />;
+  return <div className={`${base} ${map[position]}`} />;
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Live incident label — rendered as a DOM element injected into WebGL space
+// ─────────────────────────────────────────────────────────────────────────────
+
+function makeLiveLabel(inc: GlobeIncident): HTMLElement {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    transform: translateY(-28px);
+  `;
+
+  // Location name chip
+  const chip = document.createElement('div');
+  chip.style.cssText = `
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ff5050;
+    background: rgba(11,14,17,0.85);
+    border: 1px solid rgba(255,50,50,0.5);
+    padding: 2px 7px;
+    white-space: nowrap;
+    line-height: 1.6;
+  `;
+  chip.textContent = inc.locationName;
+
+  // Stem line connecting chip to ring center
+  const stem = document.createElement('div');
+  stem.style.cssText = `
+    width: 1px;
+    height: 10px;
+    background: rgba(255,50,50,0.45);
+  `;
+
+  wrapper.appendChild(chip);
+  wrapper.appendChild(stem);
+  return wrapper;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function TacticalGlobe() {
-  const globeRef = useRef<any>(null);
+  const globeRef    = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [countries, setCountries] = useState<any[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [dots, setDots] = useState('');      // for the scanning animation
+  const [countries,  setCountries]  = useState<any[]>([]);
+  const [incidents,  setIncidents]  = useState<GlobeIncident[]>([]);
+  const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [dots,       setDots]       = useState('');
+  const [error,      setError]      = useState<string | null>(null);
 
-  const activeIncidents   = MOCK_INCIDENTS.filter(i => i.status === 'active');
-  const resolvedIncidents = MOCK_INCIDENTS.filter(i => i.status === 'resolved');
+  const liveIncidents     = incidents.filter(i => i.isLive);
+  const resolvedIncidents = incidents.filter(i => i.isResolved && !i.isLive);
+  // Active = not live and not resolved (opened but not yet closed)
+  const activeIncidents   = incidents.filter(i => !i.isLive && !i.isResolved);
 
-  // Country polygons for olive landmasses
+  // ── Data loading ────────────────────────────────────────────────────────────
+
   useEffect(() => {
     fetch(GEO_URL)
       .then(r => r.json())
       .then(d => setCountries(d.features));
   }, []);
 
-  // Responsive canvas size
   useEffect(() => {
-    const measure = () => {
+    fetchGlobeIncidents()
+      .then(setIncidents)
+      .catch(err => setError(err.message));
+  }, []);
+
+  // ── Responsive sizing ────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const ro = new ResizeObserver(() => {
       if (containerRef.current) {
         setDimensions({
           width:  containerRef.current.clientWidth,
           height: containerRef.current.clientHeight,
         });
       }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
+    });
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, []);
 
-  // Auto-rotate + initial POV centered on Middle East
-  useEffect(() => {
-    const g = globeRef.current;
-    if (!g) return;
-    g.controls().autoRotate = true;
-    g.controls().autoRotateSpeed = 0.35;
-    g.controls().enableZoom = true;
-    g.pointOfView({ lat: 28, lng: 25, altitude: 2.4 }, 1200);
-  }, [countries]); // fire after countries load so globe is ready
+  // ── Globe controls ───────────────────────────────────────────────────────────
+  // Delay ensures the WebGL context is fully initialised before we touch controls
 
-  // "SCANNING..." dot ticker
+  useEffect(() => {
+    if (!countries.length) return;
+    const timer = setTimeout(() => {
+      const g = globeRef.current;
+      if (!g) return;
+      g.controls().autoRotate      = true;
+      g.controls().autoRotateSpeed = 0.35;
+      g.controls().enableZoom      = true;
+      g.pointOfView({ lat: 28, lng: 25, altitude: 2.4 }, 1200);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [countries]);
+
+  // ── Scanning ticker ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     const id = setInterval(() => setDots(d => (d.length >= 3 ? '' : d + '.')), 550);
     return () => clearInterval(id);
   }, []);
 
-  // Tooltip template for resolved (point) incidents
-  const pointLabel = (d: any) => `
-    <div style="background:#0b0e11dd;border:1px solid #FFB930;padding:5px 9px;
-                color:#FFB930;font:11px/1.5 monospace;border-radius:2px;">
-      <strong>${d.label}</strong> · ${d.country}<br/>
-      ${d.type} · RESOLVED
-    </div>`;
+  // ── Tooltip builders ─────────────────────────────────────────────────────────
 
-  // Tooltip for active (ring) incidents
-  const ringLabel = (d: any) => `
-    <div style="background:#0b0e11dd;border:1px solid #ff3232;padding:5px 9px;
-                color:#ff5050;font:11px/1.5 monospace;border-radius:2px;">
-      <strong>${d.label}</strong> · ${d.country}<br/>
-      ${d.type} · ⚠ ACTIVE
-    </div>`;
+  const pointLabel = useCallback(
+    (d: any) => `
+      <div style="background:#0b0e11dd;border:1px solid #FFB930;padding:5px 9px;
+                  color:#FFB930;font:11px/1.5 'JetBrains Mono',monospace;border-radius:2px;">
+        <strong>${(d as GlobeIncident).label}</strong> · ${(d as GlobeIncident).locationName}<br/>
+        ${(d as GlobeIncident).type} · RESOLVED
+      </div>`,
+    [],
+  );
+
+  // ── HTML label elements for live incidents ───────────────────────────────────
+
+  const htmlElement = useCallback((d: any) => makeLiveLabel(d as GlobeIncident), []);
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -137,14 +180,11 @@ export default function TacticalGlobe() {
       style={{ minHeight: 600, fontFamily: "'JetBrains Mono', monospace" }}
     >
       {/* ── Globe ──────────────────────────────────────────────────────────── */}
-      {dimensions.width > 0 && (
-        <Globe
+      <Globe
           ref={globeRef}
           width={dimensions.width}
           height={dimensions.height}
           backgroundColor="#0B0E11"
-
-          // Atmosphere: faint cyan halo
           atmosphereColor="#00e6a0"
           atmosphereAltitude={0.18}
 
@@ -155,17 +195,18 @@ export default function TacticalGlobe() {
           polygonStrokeColor={() => '#4e6349'}
           polygonAltitude={0.006}
 
-          // Active incidents → red pulsating rings
-          ringsData={activeIncidents}
+          // Live incidents → bright red pulsating rings (rendered first = on top)
+          ringsData={[...liveIncidents, ...activeIncidents]}
           ringLat={(d: any) => d.lat}
           ringLng={(d: any) => d.lng}
-          // gradient: opaque red at center → transparent at edge
-          ringColor={() => (t: number) => `rgba(255,50,50,${Math.max(0, 1 - t)})`}
-          ringMaxRadius={3.5}
-          ringPropagationSpeed={2.5}
-          ringRepeatPeriod={850}
-          ringLabel={ringLabel}
-
+          ringColor={(d: any) =>
+            (d as GlobeIncident).isLive
+              ? (t: number) => `rgba(255,30,30,${Math.max(0, 1 - t)})`
+              : (t: number) => `rgba(255,120,50,${Math.max(0, 1 - t)})`
+          }
+          ringMaxRadius={(d: any) => ((d as GlobeIncident).isLive ? 4.5 : 3.0)}
+          ringPropagationSpeed={(d: any) => ((d as GlobeIncident).isLive ? 3.0 : 2.0)}
+          ringRepeatPeriod={(d: any) => ((d as GlobeIncident).isLive ? 700 : 950)}
           // Resolved incidents → amber dots
           pointsData={resolvedIncidents}
           pointLat={(d: any) => d.lat}
@@ -174,8 +215,14 @@ export default function TacticalGlobe() {
           pointRadius={0.38}
           pointAltitude={0.015}
           pointLabel={pointLabel}
+
+          // Live incident location labels (HTML in 3D space)
+          htmlElementsData={liveIncidents}
+          htmlLat={(d: any) => d.lat}
+          htmlLng={(d: any) => d.lng}
+          htmlAltitude={0.06}
+          htmlElement={htmlElement}
         />
-      )}
 
       {/* ── Hex grid texture overlay ────────────────────────────────────────── */}
       <div
@@ -189,7 +236,7 @@ export default function TacticalGlobe() {
         }}
       />
 
-      {/* ── HUD corner brackets ─────────────────────────────────────────────── */}
+      {/* ── HUD corners ─────────────────────────────────────────────────────── */}
       <Corner position="tl" />
       <Corner position="tr" />
       <Corner position="bl" />
@@ -198,20 +245,14 @@ export default function TacticalGlobe() {
       {/* ── Crosshair ───────────────────────────────────────────────────────── */}
       <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="relative w-10 h-10">
-          {/* horizontal arm */}
           <div className="absolute top-1/2 left-0 right-0 h-px bg-[#00e6a0] opacity-50" />
-          {/* vertical arm */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#00e6a0] opacity-50" />
-          {/* center pip */}
           <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00e6a0] opacity-70" />
         </div>
       </div>
 
-      {/* ── Top title bar ────────────────────────────────────────────────────── */}
-      <div
-        aria-hidden
-        className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none"
-      >
+      {/* ── Top title ───────────────────────────────────────────────────────── */}
+      <div aria-hidden className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none">
         <span className="text-[10px] text-[#00e6a0] tracking-[0.3em] uppercase opacity-60">
           Haverim Mehalzim · Incident Command
         </span>
@@ -224,22 +265,27 @@ export default function TacticalGlobe() {
         </span>
       </div>
 
-      {/* ── Status board (top-right) ─────────────────────────────────────────── */}
+      {/* ── Status board ─────────────────────────────────────────────────────── */}
       <div className="absolute top-10 right-6 pointer-events-none">
-        <div
-          className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-4 py-3"
-          style={{ minWidth: 160 }}
-        >
+        <div className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-4 py-3" style={{ minWidth: 164 }}>
           <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase border-b border-[#00e6a0]/20 pb-1.5 mb-2">
             ◈ Status Board
           </div>
-          <StatusRow label="Total"    value={MOCK_INCIDENTS.length}   color="text-white" />
-          <StatusRow label="Active"   value={activeIncidents.length}   color="text-red-400" />
+          <StatusRow label="Total"    value={incidents.length}        color="text-white" />
+          <StatusRow label="Live"     value={liveIncidents.length}     color="text-red-400" />
+          <StatusRow label="Active"   value={activeIncidents.length}   color="text-orange-400" />
           <StatusRow label="Resolved" value={resolvedIncidents.length} color="text-amber-400" />
         </div>
+
+        {/* API error notice */}
+        {error && (
+          <div className="mt-2 border border-red-500/40 bg-[#0B0E11]/90 px-3 py-2 text-[9px] text-red-400 tracking-wider">
+            ⚠ {error}
+          </div>
+        )}
       </div>
 
-      {/* ── Legend (bottom-left) ─────────────────────────────────────────────── */}
+      {/* ── Legend ───────────────────────────────────────────────────────────── */}
       <div className="absolute bottom-10 left-6 pointer-events-none">
         <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-2">
           <div className="flex items-center gap-2">
@@ -247,7 +293,11 @@ export default function TacticalGlobe() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-red-500" />
             </span>
-            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Active</span>
+            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Live</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full border-2 border-orange-400 block" />
+            <span className="text-[9px] text-orange-400 tracking-[0.2em] uppercase">Active</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block" />
