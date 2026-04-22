@@ -127,6 +127,42 @@ export const COUNTRY_MAP: Record<string, Coords> = {
   'Brazil':          { lat: -14.2350, lng: -51.9253 },
   'Chile':           { lat: -35.6751, lng: -71.5430 },
 
+  // ── Hebrew aliases (Monday.com stores country names in Hebrew) ───────────────
+  'ישראל':           { lat:  31.0461, lng:  34.8516 },
+  'ארצות הברית':     { lat:  37.0902, lng: -95.7129 },
+  'אמריקה':          { lat:  37.0902, lng: -95.7129 },
+  'בריטניה':         { lat:  55.3781, lng:  -3.4360 },
+  'אנגליה':          { lat:  51.5074, lng:  -0.1278 },
+  'צרפת':            { lat:  46.2276, lng:   2.2137 },
+  'גרמניה':          { lat:  51.1657, lng:  10.4515 },
+  'הולנד':           { lat:  52.1326, lng:   5.2913 },
+  'בלגיה':           { lat:  50.5039, lng:   4.4699 },
+  'ספרד':            { lat:  40.4637, lng:  -3.7492 },
+  'איטליה':          { lat:  41.8719, lng:  12.5674 },
+  'אוסטריה':         { lat:  47.5162, lng:  14.5501 },
+  'שוויץ':           { lat:  46.8182, lng:   8.2275 },
+  'שבדיה':           { lat:  60.1282, lng:  18.6435 },
+  'נורווגיה':        { lat:  60.4720, lng:   8.4689 },
+  'דנמרק':           { lat:  56.2639, lng:   9.5018 },
+  'פינלנד':          { lat:  61.9241, lng:  25.7482 },
+  'פולין':           { lat:  51.9194, lng:  19.1451 },
+  'הונגריה':         { lat:  47.1625, lng:  19.5033 },
+  'צ\'כיה':          { lat:  49.8175, lng:  15.4730 },
+  'רומניה':          { lat:  45.9432, lng:  24.9668 },
+  'יוון':            { lat:  39.0742, lng:  21.8243 },
+  'אוקראינה':        { lat:  48.3794, lng:  31.1656 },
+  'רוסיה':           { lat:  61.5240, lng: 105.3188 },
+  'טורקיה':          { lat:  38.9637, lng:  35.2433 },
+  'איחוד האמירויות': { lat:  23.4241, lng:  53.8478 },
+  'ירדן':            { lat:  30.5852, lng:  36.2384 },
+  'מצרים':           { lat:  26.8206, lng:  30.8025 },
+  'מרוקו':           { lat:  31.7917, lng:  -7.0926 },
+  'דרום אפריקה':     { lat: -30.5595, lng:  22.9375 },
+  'קנדה':            { lat:  56.1304, lng: -106.3468 },
+  'אוסטרליה':        { lat: -25.2744, lng: 133.7751 },
+  'ברזיל':           { lat: -14.2350, lng: -51.9253 },
+  'ארגנטינה':        { lat: -38.4161, lng: -63.6167 },
+
   // ── ADD MORE COUNTRIES HERE ───────────────────────────────────────────────
   // Follow the pattern:  'Country Name': { lat: XX.XXXX, lng: YY.YYYY },
 };
@@ -143,19 +179,33 @@ export const COUNTRY_MAP: Record<string, Coords> = {
  *   2. country_mkmb91h3   →  COUNTRY_MAP     (country centroid fallback)
  *   3. null               →  incident excluded from the globe
  */
+// Pre-built lowercase versions for case-insensitive lookup
+const _coordLower = Object.fromEntries(
+  Object.entries(COORDINATE_MAP).map(([k, v]) => [k.toLowerCase(), v])
+);
+const _countryLower = Object.fromEntries(
+  Object.entries(COUNTRY_MAP).map(([k, v]) => [k.toLowerCase(), v])
+);
+
 export function getCoordinates(
   location: string | null | undefined,
   country: string | null | undefined,
 ): Coords | null {
   if (location) {
-    const trimmed = location.trim();
-    if (COORDINATE_MAP[trimmed]) return COORDINATE_MAP[trimmed];
+    const key = location.trim().toLowerCase();
+    if (_coordLower[key])   return _coordLower[key];
+    if (_countryLower[key]) return _countryLower[key];
   }
 
   if (country) {
-    const trimmed = country.trim();
-    if (COUNTRY_MAP[trimmed]) return COUNTRY_MAP[trimmed];
+    const key = country.trim().toLowerCase();
+    if (_countryLower[key]) return _countryLower[key];
+    if (_coordLower[key])   return _coordLower[key];
   }
 
+  // Log misses in dev so you can see exactly what Monday is sending
+  if (location || country) {
+    console.warn('[Globe] no coords for:', { location, country });
+  }
   return null;
 }

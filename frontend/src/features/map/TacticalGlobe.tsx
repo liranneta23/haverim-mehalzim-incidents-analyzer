@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
 
@@ -41,50 +41,6 @@ function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Live incident label — rendered as a DOM element injected into WebGL space
-// ─────────────────────────────────────────────────────────────────────────────
-
-function makeLiveLabel(inc: GlobeIncident): HTMLElement {
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: none;
-    transform: translateY(-28px);
-  `;
-
-  // Location name chip
-  const chip = document.createElement('div');
-  chip.style.cssText = `
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #ff5050;
-    background: rgba(11,14,17,0.85);
-    border: 1px solid rgba(255,50,50,0.5);
-    padding: 2px 7px;
-    white-space: nowrap;
-    line-height: 1.6;
-  `;
-  chip.textContent = inc.locationName;
-
-  // Stem line connecting chip to ring center
-  const stem = document.createElement('div');
-  stem.style.cssText = `
-    width: 1px;
-    height: 10px;
-    background: rgba(255,50,50,0.45);
-  `;
-
-  wrapper.appendChild(chip);
-  wrapper.appendChild(stem);
-  return wrapper;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -98,10 +54,10 @@ export default function TacticalGlobe() {
   const [dots,       setDots]       = useState('');
   const [error,      setError]      = useState<string | null>(null);
 
-  const liveIncidents     = incidents.filter(i => i.isLive);
-  const resolvedIncidents = incidents.filter(i => i.isResolved && !i.isLive);
-  // Active = not live and not resolved (opened but not yet closed)
-  const activeIncidents   = incidents.filter(i => !i.isLive && !i.isResolved);
+  const liveIncidents     = useMemo(() => incidents.filter(i => i.isLive), [incidents]);
+  const resolvedIncidents = useMemo(() => incidents.filter(i => i.isResolved && !i.isLive), [incidents]);
+  const activeIncidents   = useMemo(() => incidents.filter(i => !i.isLive && !i.isResolved), [incidents]);
+  const ringData          = useMemo(() => [...liveIncidents, ...activeIncidents], [liveIncidents, activeIncidents]);
 
   // ── Data loading ────────────────────────────────────────────────────────────
 
@@ -167,9 +123,6 @@ export default function TacticalGlobe() {
     [],
   );
 
-  // ── HTML label elements for live incidents ───────────────────────────────────
-
-  const htmlElement = useCallback((d: any) => makeLiveLabel(d as GlobeIncident), []);
 
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -196,7 +149,7 @@ export default function TacticalGlobe() {
           polygonAltitude={0.006}
 
           // Live incidents → bright red pulsating rings (rendered first = on top)
-          ringsData={[...liveIncidents, ...activeIncidents]}
+          ringsData={ringData}
           ringLat={(d: any) => d.lat}
           ringLng={(d: any) => d.lng}
           ringColor={(d: any) =>
@@ -216,12 +169,16 @@ export default function TacticalGlobe() {
           pointAltitude={0.015}
           pointLabel={pointLabel}
 
-          // Live incident location labels (HTML in 3D space)
-          htmlElementsData={liveIncidents}
-          htmlLat={(d: any) => d.lat}
-          htmlLng={(d: any) => d.lng}
-          htmlAltitude={0.06}
-          htmlElement={htmlElement}
+          // Live incident location labels — rendered as native globe labels
+          labelsData={liveIncidents}
+          labelLat={(d: any) => d.lat}
+          labelLng={(d: any) => d.lng}
+          labelText={(d: any) => (d as GlobeIncident).locationName.toUpperCase()}
+          labelSize={0.6}
+          labelDotRadius={0.4}
+          labelColor={() => '#ff5050'}
+          labelResolution={2}
+          labelAltitude={0.015}
         />
 
       {/* ── Hex grid texture overlay ────────────────────────────────────────── */}

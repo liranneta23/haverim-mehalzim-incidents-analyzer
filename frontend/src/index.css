@@ -2,11 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-void: #080b0f;
+  --bg-surface: #0e1319;
+  --bg-card: #131a23;
+  --bg-card-hover: #172030;
+  --bg-elevated: #1a2535;
+  --border-dim: rgba(255,255,255,0.06);
+  --border-mid: rgba(255,255,255,0.1);
+  --border-accent: rgba(0,230,160,0.3);
+  --text-primary: #f0f4f8;
+  --text-secondary: #7a9ab5;
+  --text-muted: #3d5a72;
+  --accent-teal: #00e6a0;
+  --accent-teal-dim: rgba(0,230,160,0.12);
+  --accent-red: #ff4d6a;
+  --accent-red-dim: rgba(255,77,106,0.12);
+  --accent-amber: #ffb930;
+  --accent-amber-dim: rgba(255,185,48,0.12);
+  --accent-blue: #4da6ff;
+  --accent-blue-dim: rgba(77,166,255,0.12);
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-hebrew: 'Noto Sans Hebrew', sans-serif;
+}
 
 html, body, #root {
   width: 100%;
   height: 100%;
-  background: #0B0E11;
-  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-hebrew);
 }

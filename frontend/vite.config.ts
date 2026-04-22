@@ -5,20 +5,18 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
 
-  // Must match the Flask static URL for the globe folder
-  base: '/dashboard/static/globe/',
+  base: '/',
 
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
 
   build: {
-    // Output goes directly into Flask's static folder — no manual copying needed
-    outDir: path.resolve(__dirname, '../app/dashboard/static/globe'),
+    // Build output sits next to frontend/ source — not inside the Python app
+    outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
   },
 
-  // Dev-only: proxy /api calls to Flask so hot-reload works without CORS issues
   server: {
     port: 3000,
     proxy: {
