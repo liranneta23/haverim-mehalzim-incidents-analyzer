@@ -1,9 +1,6 @@
 import os
 import requests
-from datetime import datetime
 from app.config import BOARD_ID, MONDAY_URL, MONDAY_HEADERS
-
-_AUDIT_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'missing_locations_audit.txt')
 
 # Only the columns the app actually uses — avoids fetching stale / irrelevant data.
 _NEEDED_COLUMNS = [
@@ -36,20 +33,6 @@ _QUERY = """
 """ % (BOARD_ID, _COL_IDS)
 
 
-def _write_audit(missing: list[dict]) -> None:
-    """Overwrite the audit file with the current set of location-less incidents."""
-    lines = [
-        f"# Missing-location audit — generated {datetime.now().isoformat()}",
-        f"# Total incidents with no location/country: {len(missing)}",
-        "",
-    ]
-    for inc in missing:
-        lines.append(f"{inc['id']}\t{inc['name']}")
-
-    with open(_AUDIT_PATH, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines) + '\n')
-
-
 def fetch_monday_data():
     try:
         response = requests.post(MONDAY_URL, json={'query': _QUERY}, headers=MONDAY_HEADERS)
@@ -67,7 +50,7 @@ def fetch_monday_data():
         items = data['data']['boards'][0]['items_page']['items']
 
         processed_rows = []
-        missing_location = []
+        missing_count = 0
 
         for item in items:
             row = {'name': item['name'], 'id': item['id']}
@@ -78,15 +61,14 @@ def fetch_monday_data():
             country  = row.get('country_mkmb91h3',  '').strip()
 
             if not location and not country:
-                missing_location.append({'id': row['id'], 'name': row['name']})
+                missing_count += 1
             else:
                 processed_rows.append(row)
 
-        _write_audit(missing_location)
         print(
             f"[fetch_monday_data] total={len(items)} "
             f"with_location={len(processed_rows)} "
-            f"missing_location={len(missing_location)}"
+            f"missing_location={missing_count}"
         )
 
         return processed_rows

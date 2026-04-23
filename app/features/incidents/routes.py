@@ -95,7 +95,12 @@ def get_incidents_summary():
 
 @incidents_bp.route('/api/debug/locations')
 def debug_locations():
-    """Returns every unique location + country value in the board — for coordinate-map maintenance."""
+    import os
+    from flask import request
+    expected = os.getenv('DEBUG_TOKEN')
+    if not expected or request.args.get('token') != expected:
+        return jsonify({'error': 'Forbidden'}), 403
+
     incidents = fetch_monday_data()
     if incidents is None:
         return jsonify({'success': False}), 500
