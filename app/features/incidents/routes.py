@@ -93,6 +93,29 @@ def get_incidents_summary():
     }), 200
 
 
+@incidents_bp.route('/api/debug/locations')
+def debug_locations():
+    """Returns every unique location + country value in the board — for coordinate-map maintenance."""
+    incidents = fetch_monday_data()
+    if incidents is None:
+        return jsonify({'success': False}), 500
+
+    locations: dict = {}
+    countries: dict = {}
+    for r in incidents:
+        loc = (r.get('location_mkmbv7be') or '').strip()
+        cty = (r.get('country_mkmb91h3')  or '').strip()
+        if loc:
+            locations[loc] = locations.get(loc, 0) + 1
+        if cty:
+            countries[cty] = countries.get(cty, 0) + 1
+
+    return jsonify({
+        'locations': dict(sorted(locations.items(), key=lambda x: -x[1])),
+        'countries':  dict(sorted(countries.items(),  key=lambda x: -x[1])),
+    }), 200
+
+
 @incidents_bp.route('/api/health')
 def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()}), 200
