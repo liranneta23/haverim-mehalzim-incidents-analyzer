@@ -54,10 +54,11 @@ export default function TacticalGlobe() {
   const [dots,       setDots]       = useState('');
   const [error,      setError]      = useState<string | null>(null);
 
-  const liveIncidents     = useMemo(() => incidents.filter(i => i.isLive), [incidents]);
-  const resolvedIncidents = useMemo(() => incidents.filter(i => i.isResolved && !i.isLive), [incidents]);
-  const activeIncidents   = useMemo(() => incidents.filter(i => !i.isLive && !i.isResolved), [incidents]);
-  const ringData          = useMemo(() => [...liveIncidents, ...activeIncidents], [liveIncidents, activeIncidents]);
+  const liveIncidents     = useMemo(() => incidents.filter(i => i.isLive),     [incidents]);
+  const resolvedIncidents = useMemo(() => incidents.filter(i => i.isResolved), [incidents]);
+  // Incidents with no matching status (neither Live nor Resolved) are excluded from the map total
+  const filteredTotal     = useMemo(() => liveIncidents.length + resolvedIncidents.length, [liveIncidents, resolvedIncidents]);
+  const ringData          = useMemo(() => liveIncidents, [liveIncidents]);
 
   // ── Data loading ────────────────────────────────────────────────────────────
 
@@ -152,14 +153,10 @@ export default function TacticalGlobe() {
           ringsData={ringData}
           ringLat={(d: any) => d.lat}
           ringLng={(d: any) => d.lng}
-          ringColor={(d: any) =>
-            (d as GlobeIncident).isLive
-              ? (t: number) => `rgba(255,30,30,${Math.max(0, 1 - t)})`
-              : (t: number) => `rgba(255,120,50,${Math.max(0, 1 - t)})`
-          }
-          ringMaxRadius={(d: any) => ((d as GlobeIncident).isLive ? 4.5 : 3.0)}
-          ringPropagationSpeed={(d: any) => ((d as GlobeIncident).isLive ? 3.0 : 2.0)}
-          ringRepeatPeriod={(d: any) => ((d as GlobeIncident).isLive ? 700 : 950)}
+          ringColor={() => (t: number) => `rgba(255,30,30,${Math.max(0, 1 - t)})`}
+          ringMaxRadius={4.5}
+          ringPropagationSpeed={3.0}
+          ringRepeatPeriod={700}
           // Resolved incidents → amber dots
           pointsData={resolvedIncidents}
           pointLat={(d: any) => d.lat}
@@ -228,9 +225,8 @@ export default function TacticalGlobe() {
           <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase border-b border-[#00e6a0]/20 pb-1.5 mb-2">
             ◈ Status Board
           </div>
-          <StatusRow label="Total"    value={incidents.length}        color="text-white" />
+          <StatusRow label="Total"    value={filteredTotal}            color="text-white" />
           <StatusRow label="Live"     value={liveIncidents.length}     color="text-red-400" />
-          <StatusRow label="Active"   value={activeIncidents.length}   color="text-orange-400" />
           <StatusRow label="Resolved" value={resolvedIncidents.length} color="text-amber-400" />
         </div>
 
@@ -251,10 +247,6 @@ export default function TacticalGlobe() {
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-red-500" />
             </span>
             <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Live</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-orange-400 block" />
-            <span className="text-[9px] text-orange-400 tracking-[0.2em] uppercase">Active</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block" />

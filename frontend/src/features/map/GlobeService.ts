@@ -9,8 +9,8 @@ interface RawIncident {
   id: string;
   name: string;
   // Monday column IDs
-  status_mkmbjwef?: string;   // "Working on it" = live
-  color_mkvvrm1r?: string;    // handled status
+  status_mkmbjwef?: string;   // unified status: Live / Active / Working on it / Done / Completed
+  color_mkvvrm1r?: string;    // legacy Hebrew handled status (kept for dashboard compat)
   status_mkmb1zc6?: string;   // incident type
   location_mkmbv7be?: string; // primary coordinate source
   country_mkmb91h3?: string;  // fallback coordinate source
@@ -27,16 +27,17 @@ export interface GlobeIncident {
   lng: number;
   type: string;
   country: string;
-  isLive: boolean;      // status_mkmbjwef === 'Working on it'
-  isResolved: boolean;  // color_mkvvrm1r indicates handled
+  isLive: boolean;      // status_mkmbjwef in LIVE_STATUSES
+  isResolved: boolean;  // status_mkmbjwef in HANDLED_STATUSES
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Constants
+// Status constants — must mirror app/features/incidents/constants.py
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LIVE_STATUS     = 'Working on it';
-const HANDLED_STATUSES = new Set(['נפתח אירוע', 'טופל על ידי רון', 'אירוע משמעותי']);
+/** "Live" and "Active" are treated as the same category: Live */
+const LIVE_STATUSES    = new Set(['Live', 'Active', 'Working on it']);
+const HANDLED_STATUSES = new Set(['Done', 'Completed']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Processing
@@ -53,22 +54,24 @@ function resolveLocationName(location?: string, country?: string): string {
 }
 
 /**
- * Converts raw API incidents into typed GlobeIncident objects:
- *   1. Drops incidents with no resolvable coordinates.
- *   2. Sorts live ("Working on it") incidents to the front so they
- *      render on top in the globe data arrays.
+ * Converts raw API incidents into typed GlobeIncident objects.
+ * Returns [mapped, countWithCoords] so the caller can log the ratio.
  */
-export function processIncidents(raw: RawIncident[]): GlobeIncident[] {
+function processIncidents(raw: RawIncident[]): GlobeIncident[] {
   const mapped: GlobeIncident[] = [];
+  let coordMisses = 0;
 
   raw.forEach((inc, i) => {
     const coords = getCoordinates(inc.location_mkmbv7be, inc.country_mkmb91h3);
 
-    // Silently exclude incidents with no coordinate resolution
-    if (!coords) return;
+    if (!coords) {
+      coordMisses++;
+      return;
+    }
 
-    const isLive = inc.status_mkmbjwef?.trim() === LIVE_STATUS;
-    const isResolved = HANDLED_STATUSES.has(inc.color_mkvvrm1r?.trim() ?? '');
+    const status   = inc.status_mkmbjwef?.trim() ?? '';
+    const isLive     = LIVE_STATUSES.has(status);
+    const isResolved = HANDLED_STATUSES.has(status);
 
     mapped.push({
       id:           inc.id,
@@ -83,7 +86,11 @@ export function processIncidents(raw: RawIncident[]): GlobeIncident[] {
     });
   });
 
-  // Live incidents first — they get rendered on top of the ring layer
+  if (coordMisses > 0) {
+    console.warn(`[GlobeService] ${coordMisses} incident(s) dropped — no coordinate match for location/country value`);
+  }
+
+  // Live incidents first — rendered on top of the ring layer
   return mapped.sort((a, b) => Number(b.isLive) - Number(a.isLive));
 }
 
@@ -94,6 +101,21 @@ export function processIncidents(raw: RawIncident[]): GlobeIncident[] {
 export async function fetchGlobeIncidents(): Promise<GlobeIncident[]> {
   const res = await fetch('/api/incidents');
   if (!res.ok) throw new Error(`API error ${res.status}`);
+
   const json = await res.json();
-  return processIncidents((json.data ?? []) as RawIncident[]);
+  const raw   = (json.data ?? []) as RawIncident[];
+  const countReceived  = json.count_received  ?? raw.length;
+  const countDisplayed = json.count_displayed ?? raw.length;
+
+  const incidents = processIncidents(raw);
+
+  console.log(
+    `[GlobeService] received=${countReceived} ` +
+    `api_filtered=${countDisplayed} ` +
+    `coord_resolved=${incidents.length} ` +
+    `(live=${incidents.filter(i => i.isLive).length} ` +
+    `resolved=${incidents.filter(i => i.isResolved).length})`
+  );
+
+  return incidents;
 }

@@ -71,7 +71,13 @@ def get_incidents():
     incidents = fetch_monday_data()
     if incidents is None:
         return jsonify({'success': False, 'message': 'Failed to fetch incidents', 'data': []}), 500
-    return jsonify({'success': True, 'data': incidents, 'count': len(incidents)}), 200
+
+    return jsonify({
+        'success': True,
+        'data': incidents,
+        'count_received': len(incidents),
+        'count_displayed': len(incidents),
+    }), 200
 
 
 @incidents_bp.route('/api/incidents/summary')
