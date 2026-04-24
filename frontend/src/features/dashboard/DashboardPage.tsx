@@ -225,7 +225,7 @@ export default function DashboardPage() {
                   <div className="mission-stat-divider" />
                   <div className="mission-stat-item">
                     <div className="mission-stat-num teal">{successRate}%</div>
-                    <div className="mission-stat-lbl">Success Rate</div>
+                    <div className="mission-stat-lbl">Response Rate</div>
                   </div>
                   <div className="mission-stat-divider" />
                   <div className="mission-stat-item">
@@ -246,7 +246,7 @@ export default function DashboardPage() {
               <div className="kpi-grid">
                 <KpiCard color=""      value={data.summary.total_all_incidents}    label="Total Incidents"   icon={<IconSignal />} />
                 <KpiCard color=""      value={data.summary.total_handled_incidents} label="Handled"           icon={<IconShield />} />
-                <KpiCard color=""      value={`${successRate}%`}                    label="Success Rate"      icon={<IconRate />} />
+                <KpiCard color=""      value={`${successRate}%`}                    label="Response Rate"     icon={<IconRate />} />
                 <KpiCard color="blue"  value={data.summary.active_volunteers}       label="Active Volunteers" icon={<IconUsers />} />
                 <KpiCard color="amber" value={data.summary.countries_operated}      label="Countries Active"  icon={<IconGlobe />} />
               </div>
@@ -279,9 +279,14 @@ export default function DashboardPage() {
                   desc="24/7 coordination of emergency medical care for Israelis in distress abroad"
                 />
                 <EnablesCard
-                  icon="⛑️" title="Search & Rescue"
-                  count={(types['Rescue'] ?? 0) + (types['Search & Locate'] ?? 0)}
-                  desc="Locating and extracting Israelis in danger in remote or hostile environments"
+                  icon="⛑️" title="Rescue"
+                  count={types['Rescue'] ?? 0}
+                  desc="Emergency extraction of Israelis from dangerous or life-threatening situations"
+                />
+                <EnablesCard
+                  icon="🔍" title="Search & Locate"
+                  count={types['Search & Locate'] ?? 0}
+                  desc="Locating missing Israelis in remote, unfamiliar, or hostile environments"
                 />
                 <EnablesCard
                   icon="🧠" title="Mental Health"

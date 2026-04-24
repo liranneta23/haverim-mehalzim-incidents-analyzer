@@ -343,7 +343,7 @@ header {
 /* ─── ENABLES GRID ─── */
 .enables-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 40px;
 }
@@ -532,8 +532,8 @@ header {
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 1024px) {
-    .kpi-grid      { grid-template-columns: repeat(2, 1fr); }
-    .enables-grid  { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid      { grid-template-columns: repeat(3, 1fr); }
+    .enables-grid  { grid-template-columns: repeat(3, 1fr); }
     .three-col     { grid-template-columns: 1fr 1fr; }
     .mission-headline { font-size: 28px; }
 }
