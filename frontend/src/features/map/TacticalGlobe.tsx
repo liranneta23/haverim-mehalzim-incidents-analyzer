@@ -112,6 +112,18 @@ export default function TacticalGlobe() {
     return () => clearInterval(id);
   }, []);
 
+  // ── Rotation helpers ─────────────────────────────────────────────────────────
+
+  const pauseRotation  = useCallback(() => {
+    const c = globeRef.current?.controls();
+    if (c) c.autoRotate = false;
+  }, []);
+
+  const resumeRotation = useCallback(() => {
+    const c = globeRef.current?.controls();
+    if (c) c.autoRotate = true;
+  }, []);
+
   // ── Tooltip builders ─────────────────────────────────────────────────────────
 
   const pointLabel = useCallback(
@@ -165,6 +177,7 @@ export default function TacticalGlobe() {
           pointRadius={0.38}
           pointAltitude={0.015}
           pointLabel={pointLabel}
+          onPointHover={(point) => { if (point) pauseRotation(); }}
 
           // Live incident location labels — rendered as native globe labels
           labelsData={liveIncidents}
@@ -176,6 +189,7 @@ export default function TacticalGlobe() {
           labelColor={() => '#ff5050'}
           labelResolution={2}
           labelAltitude={0.015}
+          onGlobeClick={resumeRotation}
         />
 
       {/* ── Hex grid texture overlay ────────────────────────────────────────── */}
