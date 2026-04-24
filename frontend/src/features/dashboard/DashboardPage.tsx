@@ -38,13 +38,13 @@ function KpiCard({ color, value, label, icon }: {
 
 function TypeRows({ types }: { types: Record<string, number> }) {
   const entries = Object.entries(types).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) return <div className="empty">אין נתונים</div>;
+  if (!entries.length) return <div className="empty">No data</div>;
   const max = entries[0][1];
   return (
     <>
       {entries.map(([type, count]) => (
         <div className="type-row" key={type}>
-          <div className="type-name">{type || 'לא ידוע'}</div>
+          <div className="type-name">{type || 'Unknown'}</div>
           <div className="type-bar-container">
             <div className="type-bar" style={{ width: `${Math.round((count / max) * 100)}%` }} />
           </div>
@@ -57,13 +57,13 @@ function TypeRows({ types }: { types: Record<string, number> }) {
 
 function CountryRows({ countries }: { countries: Record<string, number> }) {
   const entries = Object.entries(countries).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) return <div className="empty">אין נתונים</div>;
+  if (!entries.length) return <div className="empty">No data</div>;
   return (
     <>
       {entries.map(([country, count], i) => (
         <div className="country-row" key={country}>
           <div className="country-rank">{String(i + 1).padStart(2, '0')}</div>
-          <div className="country-name">{country || 'לא ידוע'}</div>
+          <div className="country-name">{country || 'Unknown'}</div>
           <div className="country-badge">{count}</div>
         </div>
       ))}
@@ -120,7 +120,7 @@ export default function DashboardPage() {
     fetchDashboard()
       .then(d => {
         setData(d);
-        setLastUpdate(new Date().toLocaleTimeString('he-IL'));
+        setLastUpdate(new Date().toLocaleTimeString('en-GB'));
         setError(null);
       })
       .catch(e => setError(e.message));
@@ -132,7 +132,7 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, []);
 
-  const hebrewMonth = new Date().toLocaleString('he-IL', { month: 'long', year: 'numeric' });
+  const currentMonth = new Date().toLocaleString('en-GB', { month: 'long', year: 'numeric' });
 
   return (
     <div className="page-bg">
@@ -152,17 +152,17 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div>
-              <div className="brand-title">מנתח אירועים</div>
+              <div className="brand-title">Incidents Analyzer</div>
               <div className="brand-sub">Incident Command Dashboard</div>
             </div>
           </div>
           <div className="header-meta">
-            <Link to="/map" className="map-link">🌍 מפת אירועים</Link>
+            <Link to="/map" className="map-link">🌍 Incident Map</Link>
             <div className="status-pill">
               <div className="status-dot" />
               LIVE
             </div>
-            <div className="last-update">עודכן: {lastUpdate}</div>
+            <div className="last-update">Updated: {lastUpdate}</div>
           </div>
         </header>
 
@@ -179,64 +179,64 @@ export default function DashboardPage() {
         {/* ── Content ── */}
         {data && (
           <>
-            <SectionLabel text="סיכום כללי" />
+            <SectionLabel text="Overview" />
             <div className="kpi-grid">
-              <KpiCard color=""      value={data.summary.total_all_incidents}     label="סך הכל אירועים"   icon={<IconSignal />} />
-              <KpiCard color=""      value={data.summary.total_handled_incidents}  label="אירועים שטופלו"   icon={<IconShield />} />
-              <KpiCard color="blue"  value={data.summary.active_volunteers}        label="מתנדבים פעילים"   icon={<IconUsers />} />
-              <KpiCard color="amber" value={data.summary.countries_operated}       label="מדינות פעולה"     icon={<IconGlobe />} />
+              <KpiCard color=""      value={data.summary.total_all_incidents}     label="Total Incidents"    icon={<IconSignal />} />
+              <KpiCard color=""      value={data.summary.total_handled_incidents}  label="Handled Incidents"  icon={<IconShield />} />
+              <KpiCard color="blue"  value={data.summary.active_volunteers}        label="Active Volunteers"  icon={<IconUsers />} />
+              <KpiCard color="amber" value={data.summary.countries_operated}       label="Countries Active"   icon={<IconGlobe />} />
             </div>
 
-            <SectionLabel text="אימפקט" stagger="stagger-1" />
+            <SectionLabel text="Impact" stagger="stagger-1" />
             <div className="impact-strip fade-in stagger-2">
               <div className="impact-card danger">
                 <div className="impact-info">
-                  <div className="impact-label">מקרי חירום</div>
+                  <div className="impact-label">Life-Threatening Incidents</div>
                   <div className="impact-number">{data.impact.count_life_threatening_incidents}</div>
                 </div>
                 <div className="impact-badge">CRITICAL</div>
               </div>
               <div className="impact-card success">
                 <div className="impact-info">
-                  <div className="impact-label">חיים שניצלו</div>
+                  <div className="impact-label">Lives Saved</div>
                   <div className="impact-number">{data.impact.count_life_saved}</div>
                 </div>
                 <div className="impact-badge">SAVED</div>
               </div>
             </div>
 
-            <SectionLabel text="סוגי אירועים — סך הכל" stagger="stagger-2" />
+            <SectionLabel text="Incident Types — All Time" stagger="stagger-2" />
             <div className="two-col fade-in stagger-3">
-              <Panel title="כל האירועים" count={`${Object.keys(data.all_time.incident_types).length} סוגים`}>
+              <Panel title="All Incidents" count={`${Object.keys(data.all_time.incident_types).length} types`}>
                 <TypeRows types={data.all_time.incident_types} />
               </Panel>
-              <Panel title="אירועים שטופלו" count={`${Object.keys(data.all_time.handled_incident_types).length} סוגים`}>
+              <Panel title="Handled Incidents" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
                 <TypeRows types={data.all_time.handled_incident_types} />
               </Panel>
             </div>
 
-            <SectionLabel text="פריסה גיאוגרפית" stagger="stagger-3" />
+            <SectionLabel text="Geographic Distribution" stagger="stagger-3" />
             <div className="two-col fade-in stagger-4">
-              <Panel title="כל המדינות" count={`${Object.keys(data.all_time.countries).length} מדינות`}>
+              <Panel title="All Countries" count={`${Object.keys(data.all_time.countries).length} countries`}>
                 <CountryRows countries={data.all_time.countries} />
               </Panel>
-              <Panel title="מדינות שטיפלנו" count={`${Object.keys(data.all_time.handled_countries).length} מדינות`}>
+              <Panel title="Countries Handled" count={`${Object.keys(data.all_time.handled_countries).length} countries`}>
                 <CountryRows countries={data.all_time.handled_countries} />
               </Panel>
             </div>
 
-            <SectionLabel text={`החודש הנוכחי — ${hebrewMonth}`} stagger="stagger-4" />
+            <SectionLabel text={`Current Month — ${currentMonth}`} stagger="stagger-4" />
             <div className="month-hero fade-in stagger-5">
               <div className="month-stats">
                 <div className="month-stat">
                   <div className="month-stat-value">{data.current_month.total_incidents}</div>
-                  <div className="month-stat-label">סך אירועים בחודש</div>
+                  <div className="month-stat-label">Total this month</div>
                 </div>
                 <div className="month-stat">
                   <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>
                     {data.current_month.handled_incidents}
                   </div>
-                  <div className="month-stat-label">אירועים שטופלו</div>
+                  <div className="month-stat-label">Handled this month</div>
                 </div>
               </div>
               <div className="month-divider" />
@@ -246,10 +246,10 @@ export default function DashboardPage() {
             </div>
 
             <div className="two-col fade-in stagger-5">
-              <Panel title="מדינות בחודש — כל האירועים">
+              <Panel title="Countries This Month — All">
                 <CountryRows countries={data.current_month.countries} />
               </Panel>
-              <Panel title="מדינות בחודש — אירועים שטופלו">
+              <Panel title="Countries This Month — Handled">
                 <CountryRows countries={data.current_month.handled_countries} />
               </Panel>
             </div>

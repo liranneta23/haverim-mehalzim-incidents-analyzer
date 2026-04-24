@@ -256,6 +256,7 @@ export const COORDINATE_MAP: Record<string, Coords> = {
   // ── Hebrew location strings (location_mkmbv7be stored in Hebrew) ─────────────
   'אבו דאבי - Abu Dhabi - United Arab Emirates':                             { lat:  24.4539, lng:   54.3773 },
   'אהנגמה, Sri Lanka':                                                        { lat:   5.9818, lng:   80.3611 },
+  'אהנגאמה, Sri Lanka':                                                       { lat:   5.9818, lng:   80.3611 },
   'אינסברוק, Austria':                                                        { lat:  47.2692, lng:   11.4041 },
   'איסטנבול, İstanbul, Türkiye':                                             { lat:  41.0082, lng:   28.9784 },
   'אמסטרדם, Netherlands':                                                     { lat:  52.3676, lng:    4.9041 },
@@ -266,6 +267,7 @@ export const COORDINATE_MAP: Record<string, Coords> = {
   'האקובה, Nagano, Japan':                                                    { lat:  36.6979, lng:  137.8569 },
   'הולבוש, Mexico':                                                           { lat:  21.5233, lng:  -87.3796 },
   'ואנג וייניג, Laos':                                                        { lat:  18.9225, lng:  102.4454 },
+  'ואנג ויינג, Laos':                                                         { lat:  18.9225, lng:  102.4454 },
   'טוקיו, Japan':                                                             { lat:  35.6762, lng:  139.6503 },
   'יוטה, USA':                                                                { lat:  39.3210, lng: -111.0937 },
   'לואנג פרבאנג, Laos':                                                       { lat:  19.8845, lng:  102.1348 },
@@ -400,6 +402,57 @@ export const COUNTRY_MAP: Record<string, Coords> = {
   'יפן':                    { lat:  36.2048, lng:  138.2529 },
   'סינגפור':                { lat:   1.3521, lng:  103.8198 },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEBREW LOCATION → ENGLISH DISPLAY NAME
+// Maps the exact Hebrew strings stored in location_mkmbv7be to a clean English label.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HEBREW_LOCATION_NAMES: Record<string, string> = {
+  'אבו דאבי - Abu Dhabi - United Arab Emirates': 'Abu Dhabi, UAE',
+  'אהנגמה, Sri Lanka':                            'Ahangama, Sri Lanka',
+  'אהנגאמה, Sri Lanka':                           'Ahangama, Sri Lanka',
+  'אינסברוק, Austria':                            'Innsbruck, Austria',
+  'איסטנבול, İstanbul, Türkiye':                 'Istanbul, Turkey',
+  'אמסטרדם, Netherlands':                         'Amsterdam, Netherlands',
+  'ברום WA, Australia':                           'Broome, Australia',
+  'גואה, India':                                  'Goa, India',
+  'דרום אמריקה':                                  'South America',
+  'דרמסאלה, Himachal Pradesh, India':             'Dharamshala, India',
+  'האקובה, Nagano, Japan':                        'Hakuba, Japan',
+  'הולבוש, Mexico':                               'Holbox, Mexico',
+  'ואנג וייניג, Laos':                            'Vang Vieng, Laos',
+  'ואנג ויינג, Laos':                             'Vang Vieng, Laos',
+  'טוקיו, Japan':                                 'Tokyo, Japan',
+  'יוטה, USA':                                    'Utah, USA',
+  'לואנג פרבאנג, Laos':                           'Luang Prabang, Laos',
+  'לונדון, UK':                                   'London, UK',
+  'מקסיקו סיטי, Mexico':                          'Mexico City, Mexico',
+  'ניו אורלינס, LA, USA':                         'New Orleans, USA',
+  'ניו יורק, NY, USA':                            'New York, USA',
+  'נפאל':                                         'Nepal',
+  'סאו פאולו, São Paulo - State of São Paulo, Brazil': 'São Paulo, Brazil',
+  'פאי, Pai District, Mae Hong Son, Thailand':    'Pai, Thailand',
+  'פוקט, Mueang Phuket District, Phuket, Thailand': 'Phuket, Thailand',
+  'פוקט, Thailand':                               'Phuket, Thailand',
+  'פושקר, Rajasthan, India':                      'Pushkar, India',
+  'פנום פן, Cambodia':                            'Phnom Penh, Cambodia',
+  "צ'יאנג מאי, Mueang Chiang Mai District, Chiang Mai, Thailand": 'Chiang Mai, Thailand',
+  'קו טאו, Thailand':                             'Koh Tao, Thailand',
+  'קו סמוי, Ko Samui District, Surat Thani, Thailand': 'Koh Samui, Thailand',
+  'קו פה נגאן, Ko Pha-ngan District, Surat Thani, Thailand': 'Koh Phangan, Thailand',
+  'קו פי פי, Mueang Krabi District, Krabi, Thailand': 'Ko Phi Phi, Thailand',
+  'קנקון, Quintana Roo, Mexico':                  'Cancún, Mexico',
+  'שירגאו':                                       'Siargao, Philippines',
+};
+
+/**
+ * Returns a clean English display name for a location string.
+ * Falls back to the original value if no translation exists.
+ */
+export function toEnglishName(location: string): string {
+  return HEBREW_LOCATION_NAMES[location] ?? location;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITY

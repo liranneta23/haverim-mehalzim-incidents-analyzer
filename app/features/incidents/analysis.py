@@ -1,11 +1,12 @@
 from datetime import datetime
-from app.features.incidents.constants import SIGNIFICANT_INCIDENT
+from app.features.incidents.constants import SIGNIFICANT_INCIDENT, INCIDENT_TYPE_TRANSLATIONS
 
 
 def count_incidents_per_type(incidents_list):
     event_counts = {}
     for row in incidents_list:
-        event_type = row.get('status_mkmb1zc6') or "Unknown/Empty"
+        raw = (row.get('status_mkmb1zc6') or '').strip()
+        event_type = INCIDENT_TYPE_TRANSLATIONS.get(raw, raw) or 'Unknown'
         event_counts[event_type] = event_counts.get(event_type, 0) + 1
     return event_counts
 

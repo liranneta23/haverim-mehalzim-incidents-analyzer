@@ -1,4 +1,4 @@
-import { getCoordinates } from './utils/coordinateUtils';
+import { getCoordinates, toEnglishName } from './utils/coordinateUtils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -48,8 +48,8 @@ function buildLabel(index: number): string {
 }
 
 function resolveLocationName(location?: string, country?: string): string {
-  if (location?.trim()) return location.trim();
-  if (country?.trim())  return country.trim();
+  if (location?.trim()) return toEnglishName(location.trim());
+  if (country?.trim())  return toEnglishName(country.trim());
   return 'UNKNOWN';
 }
 
