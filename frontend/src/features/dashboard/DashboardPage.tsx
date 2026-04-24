@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import type { DashboardData } from './types';
 import './dashboard.css';
 
+// ── Replace with your real donation page URL ──────────────────────────────────
+const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
+const CONTACT_EMAIL = 'info@haverimmehalzim.org';
+
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
 async function fetchDashboard(): Promise<DashboardData> {
@@ -25,13 +29,26 @@ function SectionLabel({ text, stagger = '' }: { text: string; stagger?: string }
 }
 
 function KpiCard({ color, value, label, icon }: {
-  color: string; value: number; label: string; icon: React.ReactNode;
+  color: string; value: number | string; label: string; icon: React.ReactNode;
 }) {
   return (
     <div className={`kpi-card ${color} fade-in`}>
       <div className="kpi-icon">{icon}</div>
       <div className="kpi-number">{value}</div>
       <div className="kpi-label">{label}</div>
+    </div>
+  );
+}
+
+function EnablesCard({ icon, title, count, desc }: {
+  icon: string; title: string; count: number; desc: string;
+}) {
+  return (
+    <div className="enables-card fade-in">
+      <span className="enables-icon">{icon}</span>
+      <div className="enables-count">{count}</div>
+      <div className="enables-title">{title}</div>
+      <div className="enables-desc">{desc}</div>
     </div>
   );
 }
@@ -108,12 +125,17 @@ const IconGlobe = () => (
     <circle cx="8" cy="8" r="6" /><path d="M2 8h12M8 2a10 10 0 0 1 0 12M8 2a10 10 0 0 0 0 12" />
   </svg>
 );
+const IconRate = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="#00e6a0" strokeWidth="1.5" strokeLinecap="round">
+    <path d="M2 12L6 7l3 3 5-6" /><circle cx="14" cy="4" r="1.5" fill="#00e6a0" stroke="none" />
+  </svg>
+);
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [data, setData]         = useState<DashboardData | null>(null);
-  const [error, setError]       = useState<string | null>(null);
+  const [data, setData]             = useState<DashboardData | null>(null);
+  const [error, setError]           = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('—');
 
   const load = () => {
@@ -152,12 +174,11 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div>
-              <div className="brand-title">Incidents Analyzer</div>
+              <div className="brand-title">Haverim Mehalzim</div>
               <div className="brand-sub">Incident Command Dashboard</div>
             </div>
           </div>
           <div className="header-meta">
-            <Link to="/map" className="map-link">🌍 Incident Map</Link>
             <div className="status-pill">
               <div className="status-dot" />
               LIVE
@@ -177,84 +198,188 @@ export default function DashboardPage() {
         )}
 
         {/* ── Content ── */}
-        {data && (
-          <>
-            <SectionLabel text="Overview" />
-            <div className="kpi-grid">
-              <KpiCard color=""      value={data.summary.total_all_incidents}     label="Total Incidents"    icon={<IconSignal />} />
-              <KpiCard color=""      value={data.summary.total_handled_incidents}  label="Handled Incidents"  icon={<IconShield />} />
-              <KpiCard color="blue"  value={data.summary.active_volunteers}        label="Active Volunteers"  icon={<IconUsers />} />
-              <KpiCard color="amber" value={data.summary.countries_operated}       label="Countries Active"   icon={<IconGlobe />} />
-            </div>
+        {data && (() => {
+          const successRate = data.summary.total_all_incidents > 0
+            ? Math.round((data.summary.total_handled_incidents / data.summary.total_all_incidents) * 100)
+            : 0;
+          const types = data.all_time.incident_types;
 
-            <SectionLabel text="Impact" stagger="stagger-1" />
-            <div className="impact-strip fade-in stagger-2">
-              <div className="impact-card danger">
-                <div className="impact-info">
-                  <div className="impact-label">Life-Threatening Incidents</div>
-                  <div className="impact-number">{data.impact.count_life_threatening_incidents}</div>
-                </div>
-                <div className="impact-badge">CRITICAL</div>
-              </div>
-              <div className="impact-card success">
-                <div className="impact-info">
-                  <div className="impact-label">Lives Saved</div>
-                  <div className="impact-number">{data.impact.count_life_saved}</div>
-                </div>
-                <div className="impact-badge">SAVED</div>
-              </div>
-            </div>
-
-            <SectionLabel text="Incident Types — All Time" stagger="stagger-2" />
-            <div className="two-col fade-in stagger-3">
-              <Panel title="All Incidents" count={`${Object.keys(data.all_time.incident_types).length} types`}>
-                <TypeRows types={data.all_time.incident_types} />
-              </Panel>
-              <Panel title="Handled Incidents" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
-                <TypeRows types={data.all_time.handled_incident_types} />
-              </Panel>
-            </div>
-
-            <SectionLabel text="Geographic Distribution" stagger="stagger-3" />
-            <div className="two-col fade-in stagger-4">
-              <Panel title="All Countries" count={`${Object.keys(data.all_time.countries).length} countries`}>
-                <CountryRows countries={data.all_time.countries} />
-              </Panel>
-              <Panel title="Countries Handled" count={`${Object.keys(data.all_time.handled_countries).length} countries`}>
-                <CountryRows countries={data.all_time.handled_countries} />
-              </Panel>
-            </div>
-
-            <SectionLabel text={`Current Month — ${currentMonth}`} stagger="stagger-4" />
-            <div className="month-hero fade-in stagger-5">
-              <div className="month-stats">
-                <div className="month-stat">
-                  <div className="month-stat-value">{data.current_month.total_incidents}</div>
-                  <div className="month-stat-label">Total this month</div>
-                </div>
-                <div className="month-stat">
-                  <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>
-                    {data.current_month.handled_incidents}
+          return (
+            <>
+              {/* ── Mission Hero ── */}
+              <div className="mission-hero-strip fade-in">
+                <div className="mission-eyebrow">Haverim Mehalzim · Israelis Helping Israelis</div>
+                <h1 className="mission-headline">
+                  When Israelis are in distress,<br />we answer the call — worldwide.
+                </h1>
+                <p className="mission-body">
+                  Our volunteers respond 24/7 to medical emergencies, rescue operations,
+                  and mental health crises wherever Israelis travel or live — at no cost
+                  to the people we help. Every donation funds a real response.
+                </p>
+                <div className="mission-stats-row">
+                  <div className="mission-stat-item">
+                    <div className="mission-stat-num">{data.impact.count_life_saved}</div>
+                    <div className="mission-stat-lbl">Lives Saved</div>
                   </div>
-                  <div className="month-stat-label">Handled this month</div>
+                  <div className="mission-stat-divider" />
+                  <div className="mission-stat-item">
+                    <div className="mission-stat-num teal">{successRate}%</div>
+                    <div className="mission-stat-lbl">Success Rate</div>
+                  </div>
+                  <div className="mission-stat-divider" />
+                  <div className="mission-stat-item">
+                    <div className="mission-stat-num amber">{data.summary.countries_operated}</div>
+                    <div className="mission-stat-lbl">Countries Active</div>
+                  </div>
+                </div>
+                <div className="mission-actions">
+                  <Link to="/map" className="mission-btn-primary">View Live Operations →</Link>
+                  <a href={DONATE_URL} className="mission-btn-secondary" target="_blank" rel="noopener noreferrer">
+                    Support Our Mission
+                  </a>
                 </div>
               </div>
-              <div className="month-divider" />
-              <div className="month-breakdown">
-                <TypeRows types={data.current_month.incident_types} />
-              </div>
-            </div>
 
-            <div className="two-col fade-in stagger-5">
-              <Panel title="Countries This Month — All">
-                <CountryRows countries={data.current_month.countries} />
-              </Panel>
-              <Panel title="Countries This Month — Handled">
-                <CountryRows countries={data.current_month.handled_countries} />
-              </Panel>
-            </div>
-          </>
-        )}
+              {/* ── KPIs ── */}
+              <SectionLabel text="Operations Overview" />
+              <div className="kpi-grid">
+                <KpiCard color=""      value={data.summary.total_all_incidents}    label="Total Incidents"   icon={<IconSignal />} />
+                <KpiCard color=""      value={data.summary.total_handled_incidents} label="Handled"           icon={<IconShield />} />
+                <KpiCard color=""      value={`${successRate}%`}                    label="Success Rate"      icon={<IconRate />} />
+                <KpiCard color="blue"  value={data.summary.active_volunteers}       label="Active Volunteers" icon={<IconUsers />} />
+                <KpiCard color="amber" value={data.summary.countries_operated}      label="Countries Active"  icon={<IconGlobe />} />
+              </div>
+
+              {/* ── Impact ── */}
+              <SectionLabel text="Impact" stagger="stagger-1" />
+              <div className="impact-strip fade-in stagger-2">
+                <div className="impact-card danger">
+                  <div className="impact-info">
+                    <div className="impact-label">Life-Threatening Incidents</div>
+                    <div className="impact-number">{data.impact.count_life_threatening_incidents}</div>
+                  </div>
+                  <div className="impact-badge">CRITICAL</div>
+                </div>
+                <div className="impact-card success">
+                  <div className="impact-info">
+                    <div className="impact-label">Lives Saved</div>
+                    <div className="impact-number">{data.impact.count_life_saved}</div>
+                  </div>
+                  <div className="impact-badge">SAVED</div>
+                </div>
+              </div>
+
+              {/* ── What Your Support Enables ── */}
+              <SectionLabel text="What Your Support Enables" stagger="stagger-2" />
+              <div className="enables-grid stagger-2">
+                <EnablesCard
+                  icon="🏥" title="Medical Response"
+                  count={types['Medical'] ?? 0}
+                  desc="24/7 coordination of emergency medical care for Israelis in distress abroad"
+                />
+                <EnablesCard
+                  icon="⛑️" title="Search & Rescue"
+                  count={(types['Rescue'] ?? 0) + (types['Search & Locate'] ?? 0)}
+                  desc="Locating and extracting Israelis in danger in remote or hostile environments"
+                />
+                <EnablesCard
+                  icon="🧠" title="Mental Health"
+                  count={types['Mental Health'] ?? 0}
+                  desc="Immediate psychological support and crisis intervention during emergencies"
+                />
+                <EnablesCard
+                  icon="🌍" title="All Operations"
+                  count={data.summary.total_all_incidents}
+                  desc="Total incidents responded to since our founding — across every category"
+                />
+              </div>
+
+              {/* ── Live Operations Globe CTA ── */}
+              <Link to="/map" className="globe-cta-banner fade-in stagger-3">
+                <div className="globe-cta-text">
+                  <div className="globe-cta-label">◈ Live Operations</div>
+                  <div className="globe-cta-title">Watch Our Operations in Real Time</div>
+                  <div className="globe-cta-sub">
+                    See every active and resolved incident plotted on a live 3D world map
+                  </div>
+                </div>
+                <div className="globe-cta-arrow">Open Live Map →</div>
+              </Link>
+
+              {/* ── Incident Types ── */}
+              <SectionLabel text="Incident Types — All Time" stagger="stagger-3" />
+              <div className="two-col fade-in stagger-4">
+                <Panel title="All Incidents" count={`${Object.keys(data.all_time.incident_types).length} types`}>
+                  <TypeRows types={data.all_time.incident_types} />
+                </Panel>
+                <Panel title="Handled Incidents" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
+                  <TypeRows types={data.all_time.handled_incident_types} />
+                </Panel>
+              </div>
+
+              {/* ── Geographic Distribution ── */}
+              <SectionLabel text="Geographic Distribution" stagger="stagger-4" />
+              <div className="two-col fade-in stagger-5">
+                <Panel title="All Countries" count={`${Object.keys(data.all_time.countries).length} countries`}>
+                  <CountryRows countries={data.all_time.countries} />
+                </Panel>
+                <Panel title="Countries Handled" count={`${Object.keys(data.all_time.handled_countries).length} countries`}>
+                  <CountryRows countries={data.all_time.handled_countries} />
+                </Panel>
+              </div>
+
+              {/* ── Current Month ── */}
+              <SectionLabel text={`Current Month — ${currentMonth}`} stagger="stagger-5" />
+              <div className="month-hero fade-in stagger-5">
+                <div className="month-stats">
+                  <div className="month-stat">
+                    <div className="month-stat-value">{data.current_month.total_incidents}</div>
+                    <div className="month-stat-label">Total this month</div>
+                  </div>
+                  <div className="month-stat">
+                    <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>
+                      {data.current_month.handled_incidents}
+                    </div>
+                    <div className="month-stat-label">Handled this month</div>
+                  </div>
+                </div>
+                <div className="month-divider" />
+                <div className="month-breakdown">
+                  <TypeRows types={data.current_month.incident_types} />
+                </div>
+              </div>
+
+              <div className="two-col fade-in stagger-5">
+                <Panel title="Countries This Month — All">
+                  <CountryRows countries={data.current_month.countries} />
+                </Panel>
+                <Panel title="Countries This Month — Handled">
+                  <CountryRows countries={data.current_month.handled_countries} />
+                </Panel>
+              </div>
+
+              {/* ── Support CTA ── */}
+              <div className="support-section fade-in">
+                <div className="support-eyebrow">Make a Difference</div>
+                <h2 className="support-headline">Every donation funds a real response.</h2>
+                <p className="support-body">
+                  Our volunteers are on call 24/7 — your support covers coordination,
+                  medical consulting, legal assistance, and rescue operations for Israelis
+                  in crisis anywhere in the world.
+                </p>
+                <div className="support-actions">
+                  <a href={DONATE_URL} className="support-donate-btn" target="_blank" rel="noopener noreferrer">
+                    Donate Now
+                  </a>
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="support-contact-btn">
+                    Get in Touch
+                  </a>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );
