@@ -539,14 +539,35 @@ header {
 }
 @media (max-width: 700px) {
     .page-wrapper  { padding: 0 16px 40px; }
+    header         { flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px 0 24px; }
+    .header-meta   { gap: 12px; }
     .kpi-grid      { grid-template-columns: 1fr 1fr; }
     .enables-grid  { grid-template-columns: 1fr 1fr; }
     .two-col, .impact-strip, .three-col { grid-template-columns: 1fr; }
     .month-hero    { grid-template-columns: 1fr; }
-    .mission-hero-strip { padding: 32px 24px; }
-    .mission-headline   { font-size: 24px; }
-    .mission-stat-num   { font-size: 36px; }
-    .globe-cta-banner   { flex-direction: column; align-items: flex-start; }
-    .support-section    { padding: 36px 24px; }
-    .mission-stats-row  { gap: 0; flex-wrap: wrap; }
+    .mission-hero-strip { padding: 28px 20px; }
+    .mission-headline   { font-size: 22px; }
+    .mission-stat-num   { font-size: 32px; }
+    .mission-stat-item  { padding: 0 16px; }
+    .mission-body       { font-size: 13px; }
+    .globe-cta-banner   { flex-direction: column; align-items: flex-start; padding: 20px 20px; }
+    .globe-cta-title    { font-size: 16px; }
+    .support-section    { padding: 32px 20px; }
+    .support-headline   { font-size: 24px; }
+    .mission-stats-row  { flex-wrap: wrap; }
+    .impact-number      { font-size: 40px; }
+}
+@media (max-width: 480px) {
+    .kpi-grid           { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-number         { font-size: 32px; }
+    .kpi-card           { padding: 16px 16px; }
+    .enables-grid       { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .enables-card       { padding: 16px; }
+    .enables-count      { font-size: 24px; }
+    .mission-stat-num   { font-size: 28px; }
+    .mission-stat-item  { padding: 0 12px; }
+    .mission-stat-divider { height: 36px; }
+    .impact-number      { font-size: 36px; }
+    .support-headline   { font-size: 20px; }
+    .last-update        { display: none; }
 }

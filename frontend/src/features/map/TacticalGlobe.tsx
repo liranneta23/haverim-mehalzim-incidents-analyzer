@@ -251,9 +251,19 @@ export default function TacticalGlobe() {
         </span>
       </div>
 
+      {/* ── Mobile back button (hidden on md+) ───────────────────────────────── */}
+      <div className="md:hidden absolute top-4 left-4 z-10">
+        <Link to="/"
+          className="flex items-center gap-1.5 text-[9px] tracking-[0.18em] uppercase
+                     text-[#00e6a0] border border-[#00e6a0]/30 bg-[#0B0E11]/85
+                     px-3 py-1.5 hover:bg-[#00e6a0]/10 transition-colors">
+          ← Back
+        </Link>
+      </div>
+
       {/* ── Status board (top-right) ──────────────────────────────────────────── */}
-      <div className="absolute top-10 right-6 pointer-events-none">
-        <div className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-4 py-3" style={{ minWidth: 180 }}>
+      <div className="absolute top-4 md:top-10 right-4 md:right-6 pointer-events-none">
+        <div className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-3 md:px-4 py-2 md:py-3" style={{ minWidth: 140 }}>
           <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase border-b border-[#00e6a0]/20 pb-1.5 mb-2">
             ◈ Status Board
           </div>
@@ -274,7 +284,7 @@ export default function TacticalGlobe() {
       </div>
 
       {/* ── Left sidebar: back button + incident detail + filter + legend ───────── */}
-      <div className="absolute top-10 bottom-10 left-6 flex flex-col gap-3 pointer-events-none" style={{ width: 190 }}>
+      <div className="hidden md:flex absolute top-10 bottom-10 left-6 flex-col gap-3 pointer-events-none" style={{ width: 190 }}>
 
         {/* Back to Dashboard */}
         <div className="pointer-events-auto">
@@ -366,8 +376,8 @@ export default function TacticalGlobe() {
         </div>
       </div>
 
-      {/* ── Donate CTA (bottom-right) ─────────────────────────────────────────── */}
-      <div className="absolute bottom-10 right-6">
+      {/* ── Donate CTA (bottom-right, desktop only) ──────────────────────────── */}
+      <div className="hidden md:block absolute bottom-10 right-6">
         <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 px-4 py-2
                      border border-[#00e6a0]/40 bg-[#0B0E11]/90
