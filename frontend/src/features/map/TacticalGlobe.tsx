@@ -407,7 +407,8 @@ export default function TacticalGlobe() {
 
       {/* ── Mobile: bottom action bar ────────────────────────────────────────── */}
       <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between
-                      px-4 py-3 bg-[#0B0E11]/95 border-t border-[#00e6a0]/25 pointer-events-auto">
+                      px-4 bg-[#0B0E11]/95 border-t border-[#00e6a0]/25 pointer-events-auto"
+           style={{ paddingTop: 12, paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}>
         <button
           onClick={() => { setMobileFilterOpen(o => !o); setSelectedIncident(null); }}
           className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase transition-colors"

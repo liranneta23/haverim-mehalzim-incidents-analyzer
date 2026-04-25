@@ -7,7 +7,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/"    element={<DashboardPage />} />
-        <Route path="/map" element={<div style={{ width: '100vw', height: '100vh' }}><TacticalGlobe /></div>} />
+        <Route path="/map" element={<div style={{ width: '100dvw', height: '100dvh' }}><TacticalGlobe /></div>} />
       </Routes>
     </BrowserRouter>
   );
