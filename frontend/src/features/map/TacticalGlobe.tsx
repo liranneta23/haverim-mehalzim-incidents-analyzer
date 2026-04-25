@@ -3,12 +3,7 @@ import { Link } from 'react-router-dom';
 import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
 
-// ── Replace with your real donation page URL ──────────────────────────────────
-const DONATE_URL = 'https://www.haverimmehalzim.org/donate';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
+const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 
 const GEO_URL =
   'https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
@@ -44,6 +39,50 @@ function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
   return <div className={`${base} ${map[position]}`} />;
 }
 
+function FilterList({
+  incidentTypeCounts,
+  selectedTypes,
+  toggleType,
+  resetTypes,
+}: {
+  incidentTypeCounts: [string, number][];
+  selectedTypes: Set<string>;
+  toggleType: (t: string) => void;
+  resetTypes: () => void;
+}) {
+  return (
+    <>
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase">Filter by Type</span>
+        {selectedTypes.size > 0 && (
+          <button onClick={resetTypes}
+            className="text-[9px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">
+            Reset
+          </button>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        {incidentTypeCounts.map(([type, count]) => {
+          const isSelected = selectedTypes.has(type);
+          const active     = selectedTypes.size === 0 || isSelected;
+          return (
+            <button key={type} onClick={() => toggleType(type)}
+              className="flex items-center justify-between px-3 py-2 rounded text-left transition-colors"
+              style={{
+                background: isSelected ? '#00e6a022' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${isSelected ? '#00e6a055' : 'rgba(255,255,255,0.06)'}`,
+                opacity: active ? 1 : 0.4,
+              }}>
+              <span className="text-[11px] text-[#c0d0e0]">{type}</span>
+              <span className="text-[11px] font-bold tabular-nums text-[#00e6a0]">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,13 +91,15 @@ export default function TacticalGlobe() {
   const globeRef     = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [countries,       setCountries]       = useState<any[]>([]);
-  const [incidents,       setIncidents]       = useState<GlobeIncident[]>([]);
-  const [dimensions,      setDimensions]      = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [dots,            setDots]            = useState('');
-  const [error,           setError]           = useState<string | null>(null);
-  const [selectedTypes,   setSelectedTypes]   = useState<Set<string>>(new Set());
-  const [selectedIncident, setSelectedIncident] = useState<GlobeIncident | null>(null);
+  const [countries,         setCountries]         = useState<any[]>([]);
+  const [incidents,         setIncidents]         = useState<GlobeIncident[]>([]);
+  const [dimensions,        setDimensions]        = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [error,             setError]             = useState<string | null>(null);
+  const [selectedTypes,     setSelectedTypes]     = useState<Set<string>>(new Set());
+  const [selectedIncident,  setSelectedIncident]  = useState<GlobeIncident | null>(null);
+  const [mobileFilterOpen,  setMobileFilterOpen]  = useState(false);
+
+  const isMobile = dimensions.width < 768;
 
   // ── Derived data ─────────────────────────────────────────────────────────────
 
@@ -109,17 +150,10 @@ export default function TacticalGlobe() {
       g.controls().autoRotate      = true;
       g.controls().autoRotateSpeed = 0.35;
       g.controls().enableZoom      = true;
-      g.pointOfView({ lat: 28, lng: 25, altitude: 2.4 }, 1200);
+      g.pointOfView({ lat: 28, lng: 25, altitude: isMobile ? 1.9 : 2.4 }, 1200);
     }, 300);
     return () => clearTimeout(timer);
-  }, [countries]);
-
-  // ── Scanning ticker ───────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const id = setInterval(() => setDots(d => (d.length >= 3 ? '' : d + '.')), 550);
-    return () => clearInterval(id);
-  }, []);
+  }, [countries]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Rotation helpers ──────────────────────────────────────────────────────────
 
@@ -128,23 +162,26 @@ export default function TacticalGlobe() {
 
   // ── Filter toggle ─────────────────────────────────────────────────────────────
 
-  const toggleType = useCallback((type: string) => {
+  const toggleType  = useCallback((type: string) => {
     setSelectedTypes(prev => {
       const next = new Set(prev);
       next.has(type) ? next.delete(type) : next.add(type);
       return next;
     });
   }, []);
+  const resetTypes  = useCallback(() => setSelectedTypes(new Set()), []);
 
   // ── Incident selection ────────────────────────────────────────────────────────
 
   const handlePointClick = useCallback((point: any) => {
     setSelectedIncident(point as GlobeIncident);
+    setMobileFilterOpen(false);
     pauseRotation();
   }, [pauseRotation]);
 
   const handleLabelClick = useCallback((label: any) => {
     setSelectedIncident(label as GlobeIncident);
+    setMobileFilterOpen(false);
     pauseRotation();
   }, [pauseRotation]);
 
@@ -237,39 +274,26 @@ export default function TacticalGlobe() {
         </div>
       </div>
 
-      {/* ── Top title ────────────────────────────────────────────────────────── */}
-      <div aria-hidden className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none text-center">
+      {/* ════════════════════════════════════════════════════════════════════════
+          DESKTOP LAYOUT  (md and above)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      {/* ── Desktop: top title ───────────────────────────────────────────────── */}
+      <div aria-hidden className="hidden md:block absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none text-center">
         <div className="text-[10px] text-[#00e6a0] tracking-[0.3em] uppercase opacity-60">
           Haverim Mehalzim · Live Operations
         </div>
       </div>
 
-      {/* ── Scanning ticker ──────────────────────────────────────────────────── */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
-        <span className="text-[10px] text-[#00e6a0] tracking-[0.25em] uppercase opacity-55 w-28 inline-block">
-          SCANNING{dots}
-        </span>
-      </div>
-
-      {/* ── Mobile back button (hidden on md+) ───────────────────────────────── */}
-      <div className="md:hidden absolute top-4 left-4 z-10">
-        <Link to="/"
-          className="flex items-center gap-1.5 text-[9px] tracking-[0.18em] uppercase
-                     text-[#00e6a0] border border-[#00e6a0]/30 bg-[#0B0E11]/85
-                     px-3 py-1.5 hover:bg-[#00e6a0]/10 transition-colors">
-          ← Back
-        </Link>
-      </div>
-
-      {/* ── Status board (top-right) ──────────────────────────────────────────── */}
-      <div className="absolute top-4 md:top-10 right-4 md:right-6 pointer-events-none">
-        <div className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-3 md:px-4 py-2 md:py-3" style={{ minWidth: 140 }}>
+      {/* ── Desktop: status board (top-right) ───────────────────────────────── */}
+      <div className="hidden md:block absolute top-10 right-6 pointer-events-none">
+        <div className="border border-[#00e6a0]/30 bg-[#0B0E11]/85 px-4 py-3" style={{ minWidth: 180 }}>
           <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase border-b border-[#00e6a0]/20 pb-1.5 mb-2">
             ◈ Status Board
           </div>
-          <StatusRow label="Operations" value={filteredTotal} color="text-white" />
-          <StatusRow label="Live"       value={liveIncidents.length}          color="text-red-400" />
-          <StatusRow label="Resolved"   value={resolvedIncidents.length}      color="text-amber-400" />
+          <StatusRow label="Operations" value={filteredTotal}          color="text-white" />
+          <StatusRow label="Live"       value={liveIncidents.length}   color="text-red-400" />
+          <StatusRow label="Resolved"   value={resolvedIncidents.length} color="text-amber-400" />
           {selectedTypes.size > 0 && (
             <div className="mt-2 pt-2 border-t border-[#00e6a0]/15 text-[8px] text-[#00e6a0] tracking-wider">
               FILTERED · {selectedTypes.size} TYPE{selectedTypes.size > 1 ? 'S' : ''}
@@ -283,10 +307,9 @@ export default function TacticalGlobe() {
         )}
       </div>
 
-      {/* ── Left sidebar: back button + incident detail + filter + legend ───────── */}
+      {/* ── Desktop: left sidebar ────────────────────────────────────────────── */}
       <div className="hidden md:flex absolute top-10 bottom-10 left-6 flex-col gap-3 pointer-events-none" style={{ width: 190 }}>
 
-        {/* Back to Dashboard */}
         <div className="pointer-events-auto">
           <Link to="/"
             className="flex items-center gap-1.5 text-[9px] tracking-[0.18em] uppercase
@@ -296,21 +319,16 @@ export default function TacticalGlobe() {
           </Link>
         </div>
 
-        {/* Incident detail panel */}
         {selectedIncident && (
           <div className="border border-[#00e6a0]/40 bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto">
             <div className="flex justify-between items-start mb-2">
-              <span className="text-[8px] tracking-[0.2em] uppercase text-[#00e6a0]">
-                ◈ Incident Detail
-              </span>
+              <span className="text-[8px] tracking-[0.2em] uppercase text-[#00e6a0]">◈ Incident Detail</span>
               <button onClick={() => setSelectedIncident(null)}
                 className="text-[#3d5a72] hover:text-white text-xs leading-none">✕</button>
             </div>
             <div className="text-[10px] text-white font-bold mb-1">{selectedIncident.label}</div>
             <div className="text-[10px] text-[#7a9ab5] mb-0.5">{selectedIncident.locationName}</div>
-            <div className="text-[10px] text-[#c0d0e0] mb-0.5">
-              {selectedIncident.type}
-            </div>
+            <div className="text-[10px] text-[#c0d0e0] mb-0.5">{selectedIncident.type}</div>
             <div className="text-[9px] text-[#3d5a72] mb-3">
               {selectedIncident.isLive ? '● LIVE' : '● RESOLVED'}
             </div>
@@ -326,40 +344,17 @@ export default function TacticalGlobe() {
           </div>
         )}
 
-        {/* Type filter panel */}
         {incidentTypeCounts.length > 0 && (
           <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-3 pointer-events-auto">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase">Filter by Type</span>
-              {selectedTypes.size > 0 && (
-                <button onClick={() => setSelectedTypes(new Set())}
-                  className="text-[8px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">
-                  Reset
-                </button>
-              )}
-            </div>
-            <div className="flex flex-col gap-1">
-              {incidentTypeCounts.map(([type, count]) => {
-                const isSelected = selectedTypes.has(type);
-                const active     = selectedTypes.size === 0 || isSelected;
-                return (
-                  <button key={type} onClick={() => toggleType(type)}
-                    className="flex items-center justify-between px-2 py-1 rounded text-left transition-colors"
-                    style={{
-                      background: isSelected ? '#00e6a022' : 'transparent',
-                      border: `1px solid ${isSelected ? '#00e6a055' : 'transparent'}`,
-                      opacity: active ? 1 : 0.4,
-                    }}>
-                    <span className="text-[9px] text-[#c0d0e0] tracking-wide">{type}</span>
-                    <span className="text-[9px] font-bold tabular-nums text-[#00e6a0]">{count}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <FilterList
+              incidentTypeCounts={incidentTypeCounts}
+              selectedTypes={selectedTypes}
+              toggleType={toggleType}
+              resetTypes={resetTypes}
+            />
           </div>
         )}
 
-        {/* Legend */}
         <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-2">
           <div className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase mb-1">Legend</div>
           <div className="flex items-center gap-2">
@@ -376,7 +371,7 @@ export default function TacticalGlobe() {
         </div>
       </div>
 
-      {/* ── Donate CTA (bottom-right, desktop only) ──────────────────────────── */}
+      {/* ── Desktop: donate CTA (bottom-right) ──────────────────────────────── */}
       <div className="hidden md:block absolute bottom-10 right-6">
         <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 px-4 py-2
@@ -387,6 +382,149 @@ export default function TacticalGlobe() {
           <span>Support Our Mission</span>
         </a>
       </div>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          MOBILE LAYOUT  (below md)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      {/* ── Mobile: top HUD bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden absolute top-0 left-0 right-0 z-50 flex items-center justify-between
+                      px-4 py-3 bg-[#0B0E11]/95 border-b border-[#00e6a0]/25">
+        <Link to="/"
+          className="flex items-center gap-1.5 text-[11px] tracking-[0.12em] uppercase font-bold
+                     text-[#00e6a0] active:opacity-70 transition-opacity">
+          ← Back
+        </Link>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[9px] text-[#00e6a0] tracking-[0.25em] uppercase opacity-60">Live Ops</span>
+          <span className="text-[13px] font-bold text-white tabular-nums">{filteredTotal} ops</span>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[12px] font-bold text-red-400 tabular-nums">{liveIncidents.length} live</span>
+          <span className="text-[11px] font-bold text-amber-400 tabular-nums">{resolvedIncidents.length} resolved</span>
+        </div>
+      </div>
+
+      {/* ── Mobile: bottom action bar ────────────────────────────────────────── */}
+      <div className="md:hidden absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between
+                      px-4 py-3 bg-[#0B0E11]/95 border-t border-[#00e6a0]/25 pointer-events-auto">
+        <button
+          onClick={() => { setMobileFilterOpen(o => !o); setSelectedIncident(null); }}
+          className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase transition-colors"
+          style={{ color: (mobileFilterOpen || selectedTypes.size > 0) ? '#00e6a0' : '#7a9ab5' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <line x1="2" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="4" y1="7" x2="10" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="6" y1="10" x2="8"  y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Filter{selectedTypes.size > 0 ? ` (${selectedTypes.size})` : ''}
+        </button>
+
+        <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase
+                     text-[#00e6a0] bg-[#00e6a0]/10 border border-[#00e6a0]/30
+                     px-3 py-1.5 active:opacity-70 transition-opacity">
+          ♥ Donate
+        </a>
+      </div>
+
+      {/* ── Mobile: filter bottom sheet ──────────────────────────────────────── */}
+      {/* Backdrop */}
+      {mobileFilterOpen && (
+        <div className="md:hidden absolute inset-0 z-30 bg-black/40"
+          onClick={() => setMobileFilterOpen(false)} />
+      )}
+      <div
+        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl
+                   bg-[#0d1117] border-t border-[#00e6a0]/30 overflow-hidden
+                   transition-transform duration-300 ease-out"
+        style={{
+          transform: mobileFilterOpen ? 'translateY(0)' : 'translateY(100%)',
+          pointerEvents: mobileFilterOpen ? 'auto' : 'none',
+          maxHeight: '70vh',
+        }}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-[#3d5a72]" />
+        </div>
+        <div className="overflow-y-auto px-5 pb-20 pt-2" style={{ maxHeight: 'calc(70vh - 32px)' }}>
+          <FilterList
+            incidentTypeCounts={incidentTypeCounts}
+            selectedTypes={selectedTypes}
+            toggleType={toggleType}
+            resetTypes={resetTypes}
+          />
+          <div className="border-t border-[#00e6a0]/15 mt-4 pt-4 space-y-2.5">
+            <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase mb-2">Legend</div>
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 border-2 border-red-500" />
+              </span>
+              <span className="text-[12px] text-red-400">Live incident</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
+              <span className="text-[12px] text-amber-400">Resolved incident</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile: incident detail bottom sheet ─────────────────────────────── */}
+      {/* Backdrop */}
+      {selectedIncident && (
+        <div className="md:hidden absolute inset-0 z-30 bg-black/40"
+          onClick={() => { setSelectedIncident(null); resumeRotation(); }} />
+      )}
+      <div
+        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl
+                   bg-[#0d1117] border-t border-[#00e6a0]/30
+                   transition-transform duration-300 ease-out"
+        style={{
+          transform: selectedIncident ? 'translateY(0)' : 'translateY(100%)',
+          pointerEvents: selectedIncident ? 'auto' : 'none',
+        }}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-[#3d5a72]" />
+        </div>
+        {selectedIncident && (
+          <div className="px-5 pb-20 pt-2">
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[9px] tracking-[0.2em] uppercase text-[#00e6a0]">◈ Incident Detail</span>
+              <button onClick={() => { setSelectedIncident(null); resumeRotation(); }}
+                className="text-[#3d5a72] hover:text-white text-base leading-none px-1">✕</button>
+            </div>
+            <div className="text-base text-white font-bold mb-1">{selectedIncident.label}</div>
+            <div className="text-sm text-[#7a9ab5] mb-1">{selectedIncident.locationName}</div>
+            <div className="text-sm text-[#c0d0e0] mb-1">{selectedIncident.type}</div>
+            <div className="text-xs mb-4"
+              style={{ color: selectedIncident.isLive ? '#ff5050' : '#ffb930' }}>
+              {selectedIncident.isLive ? '● LIVE' : '● RESOLVED'}
+            </div>
+            <p className="text-xs text-[#7a9ab5] leading-relaxed mb-4 border-t border-[#ffffff10] pt-3">
+              Your support funds responses like this one — 24/7, at no cost to the people we help.
+            </p>
+            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+              className="block text-center text-sm tracking-[0.15em] uppercase font-bold
+                         bg-[#00e6a0] text-[#0B0E11] px-4 py-3 rounded
+                         active:opacity-85 transition-opacity">
+              Support This Mission
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* ── Error (both layouts) ──────────────────────────────────────────────── */}
+      {error && (
+        <div className="md:hidden absolute top-16 left-4 right-4 z-10
+                        border border-red-500/40 bg-[#0B0E11]/90 px-3 py-2 text-[9px] text-red-400 tracking-wider">
+          ⚠ {error}
+        </div>
+      )}
     </div>
   );
 }
