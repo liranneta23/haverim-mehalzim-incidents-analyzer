@@ -20,17 +20,6 @@ const HEX_TILE_URI = `data:image/svg+xml,${encodeURIComponent(
   </svg>`,
 )}`;
 
-const TYPE_COLORS: Record<string, string> = {
-  'Medical':          '#ff4d6a',
-  'Rescue':           '#ffb930',
-  'Mental Health':    '#4da6ff',
-  'Search & Locate':  '#00e6a0',
-  'Antisemitism':     '#ff7730',
-  'Haverot Mehalzot': '#a855f7',
-  'Other':            '#7a9ab5',
-};
-const typeColor = (type: string) => TYPE_COLORS[type] ?? '#7a9ab5';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,9 +157,8 @@ export default function TacticalGlobe() {
 
   const pointLabel = useCallback((d: any) => {
     const inc = d as GlobeIncident;
-    const color = typeColor(inc.type);
-    return `<div style="background:#0b0e11ee;border:1px solid ${color};padding:6px 10px;
-                color:${color};font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
+    return `<div style="background:#0b0e11ee;border:1px solid #ffb930;padding:6px 10px;
+                color:#ffb930;font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
       <strong>${inc.label}</strong> · ${inc.locationName}<br/>
       ${inc.type} · RESOLVED
     </div>`;
@@ -210,7 +198,7 @@ export default function TacticalGlobe() {
         pointsData={resolvedIncidents}
         pointLat={(d: any) => d.lat}
         pointLng={(d: any) => d.lng}
-        pointColor={(d: any) => typeColor((d as GlobeIncident).type)}
+        pointColor={() => '#ffb930'}
         pointRadius={0.42}
         pointAltitude={0.015}
         pointLabel={pointLabel}
@@ -256,16 +244,6 @@ export default function TacticalGlobe() {
         </div>
       </div>
 
-      {/* ── Back to Dashboard ────────────────────────────────────────────────── */}
-      <div className="absolute top-10 left-6 z-10">
-        <Link to="/"
-          className="flex items-center gap-1.5 text-[9px] tracking-[0.18em] uppercase
-                     text-[#00e6a0] border border-[#00e6a0]/30 bg-[#0B0E11]/85
-                     px-3 py-1.5 hover:bg-[#00e6a0]/10 transition-colors">
-          ← Dashboard
-        </Link>
-      </div>
-
       {/* ── Scanning ticker ──────────────────────────────────────────────────── */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
         <span className="text-[10px] text-[#00e6a0] tracking-[0.25em] uppercase opacity-55 w-28 inline-block">
@@ -279,7 +257,7 @@ export default function TacticalGlobe() {
           <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase border-b border-[#00e6a0]/20 pb-1.5 mb-2">
             ◈ Status Board
           </div>
-          <StatusRow label="Operations" value={`${filteredTotal} worldwide`} color="text-white" />
+          <StatusRow label="Operations" value={filteredTotal} color="text-white" />
           <StatusRow label="Live"       value={liveIncidents.length}          color="text-red-400" />
           <StatusRow label="Resolved"   value={resolvedIncidents.length}      color="text-amber-400" />
           {selectedTypes.size > 0 && (
@@ -295,16 +273,24 @@ export default function TacticalGlobe() {
         )}
       </div>
 
-      {/* ── Left sidebar: incident detail + filter + legend ───────────────────── */}
+      {/* ── Left sidebar: back button + incident detail + filter + legend ───────── */}
       <div className="absolute top-10 bottom-10 left-6 flex flex-col gap-3 pointer-events-none" style={{ width: 190 }}>
+
+        {/* Back to Dashboard */}
+        <div className="pointer-events-auto">
+          <Link to="/"
+            className="flex items-center gap-1.5 text-[9px] tracking-[0.18em] uppercase
+                       text-[#00e6a0] border border-[#00e6a0]/30 bg-[#0B0E11]/85
+                       px-3 py-1.5 hover:bg-[#00e6a0]/10 transition-colors">
+            ← Dashboard
+          </Link>
+        </div>
 
         {/* Incident detail panel */}
         {selectedIncident && (
-          <div className="border bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
-            style={{ borderColor: typeColor(selectedIncident.type) + '66' }}>
+          <div className="border border-[#00e6a0]/40 bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto">
             <div className="flex justify-between items-start mb-2">
-              <span className="text-[8px] tracking-[0.2em] uppercase"
-                style={{ color: typeColor(selectedIncident.type) }}>
+              <span className="text-[8px] tracking-[0.2em] uppercase text-[#00e6a0]">
                 ◈ Incident Detail
               </span>
               <button onClick={() => setSelectedIncident(null)}
@@ -312,7 +298,7 @@ export default function TacticalGlobe() {
             </div>
             <div className="text-[10px] text-white font-bold mb-1">{selectedIncident.label}</div>
             <div className="text-[10px] text-[#7a9ab5] mb-0.5">{selectedIncident.locationName}</div>
-            <div className="text-[10px] mb-0.5" style={{ color: typeColor(selectedIncident.type) }}>
+            <div className="text-[10px] text-[#c0d0e0] mb-0.5">
               {selectedIncident.type}
             </div>
             <div className="text-[9px] text-[#3d5a72] mb-3">
@@ -344,21 +330,18 @@ export default function TacticalGlobe() {
             </div>
             <div className="flex flex-col gap-1">
               {incidentTypeCounts.map(([type, count]) => {
-                const active = selectedTypes.size === 0 || selectedTypes.has(type);
-                const color  = typeColor(type);
+                const isSelected = selectedTypes.has(type);
+                const active     = selectedTypes.size === 0 || isSelected;
                 return (
                   <button key={type} onClick={() => toggleType(type)}
                     className="flex items-center justify-between px-2 py-1 rounded text-left transition-colors"
                     style={{
-                      background: selectedTypes.has(type) ? color + '22' : 'transparent',
-                      border: `1px solid ${selectedTypes.has(type) ? color + '55' : 'transparent'}`,
+                      background: isSelected ? '#00e6a022' : 'transparent',
+                      border: `1px solid ${isSelected ? '#00e6a055' : 'transparent'}`,
                       opacity: active ? 1 : 0.4,
                     }}>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                      <span className="text-[9px] text-[#c0d0e0] tracking-wide">{type}</span>
-                    </span>
-                    <span className="text-[9px] font-bold tabular-nums" style={{ color }}>{count}</span>
+                    <span className="text-[9px] text-[#c0d0e0] tracking-wide">{type}</span>
+                    <span className="text-[9px] font-bold tabular-nums text-[#00e6a0]">{count}</span>
                   </button>
                 );
               })}
@@ -368,16 +351,17 @@ export default function TacticalGlobe() {
 
         {/* Legend */}
         <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-2">
+          <div className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase mb-1">Legend</div>
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-red-500" />
             </span>
-            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Live</span>
+            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Live incident</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block" />
-            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase">Resolved · color = type</span>
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
+            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase">Resolved incident</span>
           </div>
         </div>
       </div>

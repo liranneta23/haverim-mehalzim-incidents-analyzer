@@ -32,6 +32,24 @@ export interface GlobeIncident {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Incident type translation — must mirror INCIDENT_TYPE_TRANSLATIONS in constants.py
+// ─────────────────────────────────────────────────────────────────────────────
+
+const INCIDENT_TYPE_TRANSLATIONS: Record<string, string> = {
+  'רפואי':          'Medical',
+  'נפשי':           'Mental Health',
+  'חילוץ':          'Rescue',
+  'איתור':          'Search & Locate',
+  'אנטישמיות':      'Antisemitism',
+  'חברות מחלצות':   'Haverot Mehalzot',
+  'אחר':            'Other',
+};
+
+function translateType(raw: string): string {
+  return INCIDENT_TYPE_TRANSLATIONS[raw] ?? (raw || 'Unknown');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Status constants — must mirror app/features/incidents/constants.py
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -79,7 +97,7 @@ function processIncidents(raw: RawIncident[]): GlobeIncident[] {
       locationName: resolveLocationName(inc.location_mkmbv7be, inc.country_mkmb91h3),
       lat:          coords.lat,
       lng:          coords.lng,
-      type:         inc.status_mkmb1zc6?.trim() ?? 'Unknown',
+      type:         translateType(inc.status_mkmb1zc6?.trim() ?? ''),
       country:      inc.country_mkmb91h3?.trim() ?? 'Unknown',
       isLive,
       isResolved,
