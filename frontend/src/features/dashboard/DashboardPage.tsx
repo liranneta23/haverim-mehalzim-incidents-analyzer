@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { DashboardData } from './types';
+import LiveMissionFeed from './LiveMissionFeed';
 import './dashboard.css';
 
 // ── Replace with your real donation page URL ──────────────────────────────────
@@ -268,6 +269,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="impact-badge">SAVED</div>
                 </div>
+              </div>
+
+              {/* ── Live Mission Feed ── */}
+              <SectionLabel text="Live Operations" stagger="stagger-2" />
+              <div className="stagger-2" style={{ marginBottom: 40 }}>
+                <LiveMissionFeed />
               </div>
 
               {/* ── What Your Support Enables ── */}

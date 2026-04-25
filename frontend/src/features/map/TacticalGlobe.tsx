@@ -4,6 +4,17 @@ import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
+const GOLD = '#D4AF37';
+
+const SUCCESS_METRICS: Record<string, string> = {
+  'Medical':          'Medical Care Delivered',
+  'Rescue':           'Safe Extraction Completed',
+  'Mental Health':    'Crisis Support Delivered',
+  'Search & Locate':  'Person Located Successfully',
+  'Antisemitism':     'Incident Documented & Reported',
+  'Haverot Mehalzot': 'Response Coordinated',
+  'Other':            'Mission Completed',
+};
 
 const GEO_URL =
   'https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
@@ -18,6 +29,82 @@ const HEX_TILE_URI = `data:image/svg+xml,${encodeURIComponent(
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
+
+function IncidentDetail({
+  incident,
+  onClose,
+  compact = false,
+}: {
+  incident: GlobeIncident;
+  onClose: () => void;
+  compact?: boolean;
+}) {
+  const isResolved = incident.isResolved;
+  const accentColor = isResolved ? GOLD : '#00e6a0';
+  const metric = SUCCESS_METRICS[incident.type] ?? 'Mission Completed';
+
+  const labelSize  = compact ? 'text-[8px]'  : 'text-[10px]';
+  const titleSize  = compact ? 'text-[10px]' : 'text-base';
+  const bodySize   = compact ? 'text-[10px]' : 'text-sm';
+  const smallSize  = compact ? 'text-[9px]'  : 'text-xs';
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex justify-between items-start mb-3">
+        <span className={`${labelSize} tracking-[0.2em] uppercase font-bold`} style={{ color: accentColor }}>
+          {isResolved ? '◈ Impact Report' : '◈ Incident Detail'}
+        </span>
+        <button onClick={onClose} className="text-[#3d5a72] hover:text-white leading-none px-1 text-sm">✕</button>
+      </div>
+
+      {/* Core info */}
+      <div className={`${titleSize} text-white font-bold mb-1`}>{incident.label}</div>
+      <div className={`${bodySize} text-[#7a9ab5] mb-0.5`}>{incident.locationName}</div>
+      <div className={`${bodySize} text-[#c0d0e0] mb-1`}>{incident.type}</div>
+      <div className={`${smallSize} font-bold mb-3`}
+        style={{ color: incident.isLive ? '#ff5050' : accentColor }}>
+        {incident.isLive ? '● LIVE' : '✓ RESOLVED'}
+      </div>
+
+      {/* Success metric — resolved only */}
+      {isResolved && (
+        <div className="mb-3 px-3 py-2 rounded"
+          style={{ background: `${GOLD}12`, border: `1px solid ${GOLD}33` }}>
+          <div className={`${smallSize} mb-0.5`} style={{ color: `${GOLD}99` }}>Outcome</div>
+          <div className={`${compact ? 'text-[10px]' : 'text-sm'} font-bold`} style={{ color: GOLD }}>
+            ✓ {metric}
+          </div>
+        </div>
+      )}
+
+      {/* Donor badge — resolved only */}
+      {isResolved && (
+        <div className={`${smallSize} flex items-center gap-1.5 mb-3 pb-3 border-b`}
+          style={{ borderColor: `${GOLD}20`, color: `${GOLD}bb` }}>
+          <span>🏅</span>
+          <span>Funded by Donors Like You</span>
+        </div>
+      )}
+
+      {/* Live: brief copy */}
+      {!isResolved && (
+        <p className={`${smallSize} text-[#7a9ab5] leading-relaxed mb-3 border-t border-[#ffffff10] pt-2`}>
+          Your support funds responses like this one — 24/7, at no cost to the people we help.
+        </p>
+      )}
+
+      {/* CTA */}
+      <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+        className={`block text-center ${smallSize} tracking-[0.15em] uppercase font-bold px-3 py-2 rounded transition-opacity hover:opacity-85`}
+        style={isResolved
+          ? { background: GOLD, color: '#0B0E11' }
+          : { background: '#00e6a0', color: '#0B0E11' }}>
+        {isResolved ? 'Fund the Next Rescue' : 'Support This Mission'}
+      </a>
+    </div>
+  );
+}
 
 function StatusRow({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
@@ -320,27 +407,15 @@ export default function TacticalGlobe() {
         </div>
 
         {selectedIncident && (
-          <div className="border border-[#00e6a0]/40 bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[8px] tracking-[0.2em] uppercase text-[#00e6a0]">◈ Incident Detail</span>
-              <button onClick={() => setSelectedIncident(null)}
-                className="text-[#3d5a72] hover:text-white text-xs leading-none">✕</button>
-            </div>
-            <div className="text-[10px] text-white font-bold mb-1">{selectedIncident.label}</div>
-            <div className="text-[10px] text-[#7a9ab5] mb-0.5">{selectedIncident.locationName}</div>
-            <div className="text-[10px] text-[#c0d0e0] mb-0.5">{selectedIncident.type}</div>
-            <div className="text-[9px] text-[#3d5a72] mb-3">
-              {selectedIncident.isLive ? '● LIVE' : '● RESOLVED'}
-            </div>
-            <div className="text-[9px] text-[#7a9ab5] leading-relaxed mb-3 border-t border-[#ffffff10] pt-2">
-              Your support funds responses like this one — 24/7, at no cost to the people we help.
-            </div>
-            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-              className="block text-center text-[9px] tracking-[0.15em] uppercase font-bold
-                         bg-[#00e6a0] text-[#0B0E11] px-3 py-1.5 pointer-events-auto
-                         hover:opacity-85 transition-opacity">
-              Support This Mission
-            </a>
+          <div className="bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
+            style={{
+              border: `1px solid ${selectedIncident.isResolved ? GOLD + '55' : '#00e6a066'}`,
+            }}>
+            <IncidentDetail
+              incident={selectedIncident}
+              onClose={() => setSelectedIncident(null)}
+              compact
+            />
           </div>
         )}
 
@@ -481,10 +556,12 @@ export default function TacticalGlobe() {
           onClick={() => { setSelectedIncident(null); resumeRotation(); }} />
       )}
       <div
-        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl
-                   bg-[#0d1117] border-t border-[#00e6a0]/30
+        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl bg-[#0d1117]
                    transition-transform duration-300 ease-out"
         style={{
+          borderTop: selectedIncident
+            ? `1px solid ${selectedIncident.isResolved ? GOLD + '55' : '#00e6a04d'}`
+            : '1px solid transparent',
           transform: selectedIncident ? 'translateY(0)' : 'translateY(100%)',
           pointerEvents: selectedIncident ? 'auto' : 'none',
         }}
@@ -494,27 +571,10 @@ export default function TacticalGlobe() {
         </div>
         {selectedIncident && (
           <div className="px-5 pb-20 pt-2">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[9px] tracking-[0.2em] uppercase text-[#00e6a0]">◈ Incident Detail</span>
-              <button onClick={() => { setSelectedIncident(null); resumeRotation(); }}
-                className="text-[#3d5a72] hover:text-white text-base leading-none px-1">✕</button>
-            </div>
-            <div className="text-base text-white font-bold mb-1">{selectedIncident.label}</div>
-            <div className="text-sm text-[#7a9ab5] mb-1">{selectedIncident.locationName}</div>
-            <div className="text-sm text-[#c0d0e0] mb-1">{selectedIncident.type}</div>
-            <div className="text-xs mb-4"
-              style={{ color: selectedIncident.isLive ? '#ff5050' : '#ffb930' }}>
-              {selectedIncident.isLive ? '● LIVE' : '● RESOLVED'}
-            </div>
-            <p className="text-xs text-[#7a9ab5] leading-relaxed mb-4 border-t border-[#ffffff10] pt-3">
-              Your support funds responses like this one — 24/7, at no cost to the people we help.
-            </p>
-            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-              className="block text-center text-sm tracking-[0.15em] uppercase font-bold
-                         bg-[#00e6a0] text-[#0B0E11] px-4 py-3 rounded
-                         active:opacity-85 transition-opacity">
-              Support This Mission
-            </a>
+            <IncidentDetail
+              incident={selectedIncident}
+              onClose={() => { setSelectedIncident(null); resumeRotation(); }}
+            />
           </div>
         )}
       </div>
