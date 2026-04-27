@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
@@ -54,6 +54,39 @@ function EnablesCard({ icon, title, count, desc }: {
   );
 }
 
+function YearTypeRows({ received, handled }: { received: Record<string, number>; handled: Record<string, number> }) {
+  const allTypes = Array.from(new Set([...Object.keys(received), ...Object.keys(handled)]));
+  allTypes.sort((a, b) => (received[b] ?? 0) - (received[a] ?? 0));
+  if (!allTypes.length) return <div className="empty">No data</div>;
+  const maxReceived = Math.max(...allTypes.map(t => received[t] ?? 0), 1);
+  return (
+    <>
+      {/* Column headers */}
+      <div className="type-row" style={{ paddingBottom: 6, borderBottom: '1px solid var(--border-dim)' }}>
+        <div className="type-name" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Type</div>
+        <div style={{ flex: 1 }} />
+        <div className="type-count" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 64 }}>All</div>
+        <div className="type-count" style={{ fontSize: 10, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 56 }}>Handled</div>
+      </div>
+      {allTypes.map(type => {
+        const recv = received[type] ?? 0;
+        const done = handled[type] ?? 0;
+        const pct  = Math.round((recv / maxReceived) * 100);
+        return (
+          <div className="type-row" key={type}>
+            <div className="type-name">{type || 'Unknown'}</div>
+            <div className="type-bar-container">
+              <div className="type-bar" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="type-count" style={{ minWidth: 64 }}>{recv}</div>
+            <div className="type-count" style={{ minWidth: 56, color: 'var(--accent-teal)' }}>{done}</div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 function TypeRows({ types }: { types: Record<string, number> }) {
   const entries = Object.entries(types).sort((a, b) => b[1] - a[1]);
   if (!entries.length) return <div className="empty">No data</div>;
@@ -86,6 +119,106 @@ function CountryRows({ countries }: { countries: Record<string, number> }) {
         </div>
       ))}
     </>
+  );
+}
+
+type PeriodTab = 'month' | 'year';
+
+function PeriodCard({
+  currentMonth,
+  currentYear,
+  monthData,
+  yearData,
+}: {
+  currentMonth: string;
+  currentYear: number;
+  monthData: { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
+  yearData:  { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
+}) {
+  const [tab, setTab] = useState<PeriodTab>('month');
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const monthBtnRef  = useRef<HTMLButtonElement>(null);
+  const yearBtnRef   = useRef<HTMLButtonElement>(null);
+
+  // Slide the active-tab underline indicator
+  useEffect(() => {
+    const btn = tab === 'month' ? monthBtnRef.current : yearBtnRef.current;
+    const ind = indicatorRef.current;
+    if (!btn || !ind) return;
+    ind.style.left  = `${btn.offsetLeft}px`;
+    ind.style.width = `${btn.offsetWidth}px`;
+  }, [tab]);
+
+  const d = tab === 'month' ? monthData : yearData;
+  const label = tab === 'month' ? currentMonth : String(currentYear);
+
+  return (
+    <div className="panel fade-in">
+      {/* Tab header */}
+      <div className="panel-header" style={{ paddingBottom: 0, borderBottom: 'none', flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div className="panel-title">Performance by Period</div>
+          <span className="panel-count">{label}</span>
+        </div>
+        {/* Tabs */}
+        <div style={{ position: 'relative', display: 'flex', gap: 0, borderBottom: '1px solid var(--border-dim)' }}>
+          {(['month', 'year'] as PeriodTab[]).map(t => (
+            <button
+              key={t}
+              ref={t === 'month' ? monthBtnRef : yearBtnRef}
+              onClick={() => setTab(t)}
+              style={{
+                padding: '8px 20px',
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'color 0.2s',
+              }}
+            >
+              {t === 'month' ? 'This Month' : 'This Year'}
+            </button>
+          ))}
+          {/* Sliding underline */}
+          <div
+            ref={indicatorRef}
+            style={{
+              position: 'absolute',
+              bottom: -1,
+              height: 2,
+              background: 'var(--accent-teal)',
+              borderRadius: 1,
+              transition: 'left 0.25s ease, width 0.25s ease',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Stats + breakdown */}
+      <div className="month-hero" style={{ borderRadius: 0, border: 'none', padding: '24px 22px', marginBottom: 0 }}>
+        <div className="month-stats">
+          <div className="month-stat">
+            <div className="month-stat-value">{d.total}</div>
+            <div className="month-stat-label">All Incidents</div>
+          </div>
+          <div className="month-stat">
+            <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>{d.handled}</div>
+            <div className="month-stat-label">Incidents Handled</div>
+          </div>
+        </div>
+        <div className="month-divider" />
+        <div className="month-breakdown">
+          {tab === 'month'
+            ? <TypeRows types={d.types} />
+            : <YearTypeRows received={d.types} handled={d.handled_types} />
+          }
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -325,9 +458,29 @@ export default function DashboardPage() {
                 <Panel title="All Incidents" count={`${Object.keys(data.all_time.incident_types).length} types`}>
                   <TypeRows types={data.all_time.incident_types} />
                 </Panel>
-                <Panel title="Handled Incidents" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
+                <Panel title="Incidents Handled" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
                   <TypeRows types={data.all_time.handled_incident_types} />
                 </Panel>
+              </div>
+
+              {/* ── Performance by Period (combined month + year) ── */}
+              <div style={{ marginBottom: 40 }}>
+              <PeriodCard
+                currentMonth={currentMonth}
+                currentYear={new Date().getFullYear()}
+                monthData={{
+                  total:         data.current_month.total_incidents,
+                  handled:       data.current_month.handled_incidents,
+                  types:         data.current_month.incident_types,
+                  handled_types: data.current_month.handled_incident_types,
+                }}
+                yearData={{
+                  total:         data.current_year.total_incidents,
+                  handled:       data.current_year.handled_incidents,
+                  types:         data.current_year.incident_types,
+                  handled_types: data.current_year.handled_incident_types,
+                }}
+              />
               </div>
 
               {/* ── Geographic Distribution ── */}
@@ -341,27 +494,7 @@ export default function DashboardPage() {
                 </Panel>
               </div>
 
-              {/* ── Current Month ── */}
-              <SectionLabel text={`Current Month — ${currentMonth}`} stagger="stagger-5" />
-              <div className="month-hero fade-in stagger-5">
-                <div className="month-stats">
-                  <div className="month-stat">
-                    <div className="month-stat-value">{data.current_month.total_incidents}</div>
-                    <div className="month-stat-label">Total this month</div>
-                  </div>
-                  <div className="month-stat">
-                    <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>
-                      {data.current_month.handled_incidents}
-                    </div>
-                    <div className="month-stat-label">Handled this month</div>
-                  </div>
-                </div>
-                <div className="month-divider" />
-                <div className="month-breakdown">
-                  <TypeRows types={data.current_month.incident_types} />
-                </div>
-              </div>
-
+              {/* ── Countries This Month ── */}
               <div className="two-col fade-in stagger-5">
                 <Panel title="Countries This Month — All">
                   <CountryRows countries={data.current_month.countries} />

@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify
 from app.features.incidents.service import fetch_monday_data
 from app.features.incidents.analysis import (
     count_incidents_per_type,
+    get_incidents_current_year,
     get_incidents_current_month,
     get_countries_of_incidents,
     get_our_impact,
@@ -29,8 +30,10 @@ def get_dashboard_data():
 
         filtered = [r for r in all_incidents if r.get('color_mkvvrm1r') in HANDLED_STATUSES]
 
-        month_all = get_incidents_current_month(all_incidents)
-        month_filtered = get_incidents_current_month(filtered)
+        year_all      = get_incidents_current_year(all_incidents)
+        year_filtered = get_incidents_current_year(filtered)
+        month_all     = get_incidents_current_month(all_incidents)
+        month_filtered= get_incidents_current_month(filtered)
 
         return jsonify({
             'success': True,
@@ -49,6 +52,12 @@ def get_dashboard_data():
                     'handled_incident_types': count_incidents_per_type(filtered),
                     'countries': get_countries_of_incidents(all_incidents),
                     'handled_countries': get_countries_of_incidents(filtered),
+                },
+                'current_year': {
+                    'total_incidents': len(year_all),
+                    'handled_incidents': len(year_filtered),
+                    'incident_types': count_incidents_per_type(year_all),
+                    'handled_incident_types': count_incidents_per_type(year_filtered),
                 },
                 'current_month': {
                     'total_incidents': len(month_all),

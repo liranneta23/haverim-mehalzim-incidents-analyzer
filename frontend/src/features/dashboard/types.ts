@@ -14,6 +14,12 @@ export interface DashboardData {
     countries: Record<string, number>;
     handled_countries: Record<string, number>;
   };
+  current_year: {
+    total_incidents: number;
+    handled_incidents: number;
+    incident_types: Record<string, number>;
+    handled_incident_types: Record<string, number>;
+  };
   current_month: {
     total_incidents: number;
     handled_incidents: number;

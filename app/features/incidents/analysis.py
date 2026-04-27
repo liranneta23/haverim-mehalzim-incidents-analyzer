@@ -11,6 +11,21 @@ def count_incidents_per_type(incidents_list):
     return event_counts
 
 
+def get_incidents_current_year(incidents_list):
+    now = datetime.now()
+    result = []
+    for row in incidents_list:
+        timeline = row.get('timeline_mkmbcabh')
+        if timeline and '-' in timeline:
+            try:
+                start = datetime.strptime(timeline.split(' - ')[0].strip(), '%Y-%m-%d')
+                if start.year == now.year:
+                    result.append(row)
+            except Exception as e:
+                print(f"Skipping row due to date error: {e}")
+    return result
+
+
 def get_incidents_current_month(incidents_list):
     now = datetime.now()
     result = []
