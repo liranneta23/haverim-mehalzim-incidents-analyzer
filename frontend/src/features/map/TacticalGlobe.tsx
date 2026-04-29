@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
+import { Tooltip } from '../../components/Tooltip';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const GOLD = '#D4AF37';
@@ -140,7 +141,10 @@ function FilterList({
   return (
     <>
       <div className="flex justify-between items-center mb-3">
-        <span className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase">Filter by Type</span>
+        <span className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase flex items-center gap-1">
+          Filter by Type
+          <Tooltip text="Tap a type to show only those incidents on the globe" />
+        </span>
         {selectedTypes.size > 0 && (
           <button onClick={resetTypes}
             className="text-[9px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">
@@ -437,11 +441,17 @@ export default function TacticalGlobe() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-red-500" />
             </span>
-            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase">Live incident</span>
+            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase flex items-center gap-1">
+              Live incident
+              <Tooltip text="Incident currently open — our volunteers are actively responding" />
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
-            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase">Resolved incident</span>
+            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase flex items-center gap-1">
+              Resolved incident
+              <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
+            </span>
           </div>
         </div>
       </div>
@@ -539,11 +549,17 @@ export default function TacticalGlobe() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 border-2 border-red-500" />
               </span>
-              <span className="text-[12px] text-red-400">Live incident</span>
+              <span className="text-[12px] text-red-400 flex items-center gap-1">
+                Live incident
+                <Tooltip text="Incident currently open — our volunteers are actively responding" />
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
-              <span className="text-[12px] text-amber-400">Resolved incident</span>
+              <span className="text-[12px] text-amber-400 flex items-center gap-1">
+                Resolved incident
+                <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
+              </span>
             </div>
           </div>
         </div>

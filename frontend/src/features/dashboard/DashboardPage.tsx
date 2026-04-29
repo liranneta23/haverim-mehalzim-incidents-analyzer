@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
+import { Tooltip } from '../../components/Tooltip';
 import './dashboard.css';
 
 // ── Replace with your real donation page URL ──────────────────────────────────
@@ -29,14 +30,17 @@ function SectionLabel({ text, stagger = '' }: { text: string; stagger?: string }
   );
 }
 
-function KpiCard({ color, value, label, icon }: {
-  color: string; value: number | string; label: string; icon: React.ReactNode;
+function KpiCard({ color, value, label, icon, tooltip }: {
+  color: string; value: number | string; label: string; icon: React.ReactNode; tooltip?: string;
 }) {
   return (
     <div className={`kpi-card ${color} fade-in`}>
       <div className="kpi-icon">{icon}</div>
       <div className="kpi-number">{value}</div>
-      <div className="kpi-label">{label}</div>
+      <div className="kpi-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+        {label}
+        {tooltip && <Tooltip text={tooltip} />}
+      </div>
     </div>
   );
 }
@@ -65,8 +69,14 @@ function YearTypeRows({ received, handled }: { received: Record<string, number>;
       <div className="type-row" style={{ paddingBottom: 6, borderBottom: '1px solid var(--border-dim)' }}>
         <div className="type-name" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Type</div>
         <div style={{ flex: 1 }} />
-        <div className="type-count" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 64 }}>All</div>
-        <div className="type-count" style={{ fontSize: 10, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 56 }}>Handled</div>
+        <div className="type-count" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 64, display: 'flex', alignItems: 'center', gap: 2 }}>
+          All
+          <Tooltip text="Total incidents reported, regardless of outcome" />
+        </div>
+        <div className="type-count" style={{ fontSize: 10, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 56, display: 'flex', alignItems: 'center', gap: 2 }}>
+          Handled
+          <Tooltip text="Incidents where our volunteers successfully intervened" />
+        </div>
       </div>
       {allTypes.map(type => {
         const recv = received[type] ?? 0;
@@ -359,7 +369,10 @@ export default function DashboardPage() {
                   <div className="mission-stat-divider" />
                   <div className="mission-stat-item">
                     <div className="mission-stat-num teal">{successRate}%</div>
-                    <div className="mission-stat-lbl">Response Rate</div>
+                    <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                      Response Rate
+                      <Tooltip text="Percentage of all reported incidents successfully handled by our volunteers" />
+                    </div>
                   </div>
                   <div className="mission-stat-divider" />
                   <div className="mission-stat-item">
@@ -380,7 +393,7 @@ export default function DashboardPage() {
               <div className="kpi-grid">
                 <KpiCard color=""      value={data.summary.total_all_incidents}    label="Total Incidents"   icon={<IconSignal />} />
                 <KpiCard color=""      value={data.summary.total_handled_incidents} label="Handled"           icon={<IconShield />} />
-                <KpiCard color=""      value={`${successRate}%`}                    label="Response Rate"     icon={<IconRate />} />
+                <KpiCard color=""      value={`${successRate}%`}                    label="Response Rate"     icon={<IconRate />} tooltip="Percentage of all reported incidents that were successfully handled by our volunteers" />
                 <KpiCard color="blue"  value={data.summary.active_volunteers}       label="Active Volunteers" icon={<IconUsers />} />
                 <KpiCard color="amber" value={data.summary.countries_operated}      label="Countries Active"  icon={<IconGlobe />} />
               </div>
@@ -397,7 +410,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="impact-card success">
                   <div className="impact-info">
-                    <div className="impact-label">Lives Saved</div>
+                    <div className="impact-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      Lives Saved
+                      <Tooltip text="Incidents classified as significant — where our intervention directly prevented loss of life" />
+                    </div>
                     <div className="impact-number">{data.impact.count_life_saved}</div>
                   </div>
                   <div className="impact-badge">SAVED</div>
