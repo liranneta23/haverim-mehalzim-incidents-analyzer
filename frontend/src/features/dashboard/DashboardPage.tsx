@@ -45,18 +45,6 @@ function KpiCard({ color, value, label, icon, tooltip }: {
   );
 }
 
-function EnablesCard({ icon, title, count, desc }: {
-  icon: string; title: string; count: number; desc: string;
-}) {
-  return (
-    <div className="enables-card fade-in">
-      <span className="enables-icon">{icon}</span>
-      <div className="enables-count">{count}</div>
-      <div className="enables-title">{title}</div>
-      <div className="enables-desc">{desc}</div>
-    </div>
-  );
-}
 
 function YearTypeRows({ received, handled }: { received: Record<string, number>; handled: Record<string, number> }) {
   const allTypes = Array.from(new Set([...Object.keys(received), ...Object.keys(handled)]));
@@ -246,6 +234,109 @@ function Panel({ title, count, children }: {
   );
 }
 
+// ─── Hero globe visual ───────────────────────────────────────────────────────
+
+const HQ_X = 172, HQ_Y = 131;
+const GLOBE_MARKERS = [
+  { cx: 116, cy: 100 },  // Western Europe
+  { cx: 65,  cy: 115 },  // East Coast USA
+  { cx: 48,  cy: 135 },  // West Coast USA
+  { cx: 216, cy: 150 },  // Southeast Asia
+  { cx: 80,  cy: 192 },  // South America
+  { cx: 153, cy: 196 },  // Southern Africa
+  { cx: 232, cy: 196 },  // Australia
+  { cx: 184, cy: 108 },  // Eastern Europe / Turkey
+];
+
+function HeroGlobe() {
+  return (
+    <div className="hero-visual-wrap">
+      <div className="hud-corner hud-tl" />
+      <div className="hud-corner hud-tr" />
+      <div className="hud-corner hud-bl" />
+      <div className="hud-corner hud-br" />
+      <div className="hud-tag hud-tag-tl">◈ LIVE OPS</div>
+      <div className="hud-tag hud-tag-br">GLOBAL NET</div>
+      <svg viewBox="0 0 300 300" className="hero-globe-svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="hgGlobe" cx="38%" cy="35%" r="65%">
+            <stop offset="0%"   stopColor="#0d2a1e" />
+            <stop offset="100%" stopColor="#040c09" />
+          </radialGradient>
+          <filter id="hgGlow">
+            <feGaussianBlur stdDeviation="2.5" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="hgDot">
+            <feGaussianBlur stdDeviation="1.2" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* Globe body */}
+        <circle cx="150" cy="150" r="115" fill="url(#hgGlobe)" />
+        <circle cx="150" cy="150" r="115" fill="none" stroke="rgba(0,230,160,0.22)" strokeWidth="1" />
+
+        {/* Latitude lines */}
+        <ellipse cx="150" cy="50"  rx="58"  ry="13"  fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+        <ellipse cx="150" cy="93"  rx="100" ry="22"  fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+        <ellipse cx="150" cy="150" rx="115" ry="27"  fill="none" stroke="rgba(0,230,160,0.11)" strokeWidth="0.7" />
+        <ellipse cx="150" cy="207" rx="100" ry="22"  fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+        <ellipse cx="150" cy="250" rx="58"  ry="13"  fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+
+        {/* Longitude lines */}
+        <line x1="150" y1="35" x2="150" y2="265" stroke="rgba(0,230,160,0.09)" strokeWidth="0.6" />
+        <ellipse cx="150" cy="150" rx="58"  ry="115" fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+        <ellipse cx="150" cy="150" rx="100" ry="115" fill="none" stroke="rgba(0,230,160,0.07)" strokeWidth="0.6" />
+
+        {/* Radar sweep */}
+        <g className="hg-sweep">
+          <path d="M 150 150 L 150 35 A 115 115 0 0 1 250 93 Z" fill="rgba(0,230,160,0.05)" />
+          <line x1="150" y1="150" x2="150" y2="35" stroke="rgba(0,230,160,0.6)" strokeWidth="1.2" />
+        </g>
+
+        {/* Outer dashed ring */}
+        <circle cx="150" cy="150" r="118" fill="none" stroke="rgba(0,230,160,0.22)"
+          strokeWidth="0.8" strokeDasharray="3 4" className="hg-outer-ring" />
+
+        {/* Connection arcs from HQ to each marker */}
+        {GLOBE_MARKERS.map(({ cx, cy }, i) => {
+          const cpx = (HQ_X + cx) / 2 + (150 - (HQ_X + cx) / 2) * 0.3;
+          const cpy = (HQ_Y + cy) / 2 + (150 - (HQ_Y + cy) / 2) * 0.3 - 16;
+          return (
+            <path key={i}
+              d={`M ${HQ_X} ${HQ_Y} Q ${cpx} ${cpy} ${cx} ${cy}`}
+              fill="none" stroke="rgba(0,230,160,0.22)" strokeWidth="0.8"
+              className="hg-arc" style={{ animationDelay: `${i * 0.35}s` }}
+            />
+          );
+        })}
+
+        {/* Pulse rings */}
+        {GLOBE_MARKERS.map(({ cx, cy }, i) => (
+          <circle key={i} cx={cx} cy={cy} r="7" fill="none"
+            stroke="rgba(0,230,160,0.55)" strokeWidth="0.9"
+            className="hg-pulse" style={{ animationDelay: `${i * 0.32}s` }}
+          />
+        ))}
+
+        {/* Incident dots */}
+        {GLOBE_MARKERS.map(({ cx, cy }, i) => (
+          <circle key={i} cx={cx} cy={cy} r="2.5" fill="#00e6a0" filter="url(#hgDot)" />
+        ))}
+
+        {/* HQ marker */}
+        <circle cx={HQ_X} cy={HQ_Y} r="16" fill="none" stroke="rgba(0,230,160,0.2)"
+          strokeWidth="0.8" className="hg-pulse" style={{ animationDelay: '0.6s' }} />
+        <circle cx={HQ_X} cy={HQ_Y} r="9"  fill="none" stroke="rgba(0,230,160,0.5)" strokeWidth="1" />
+        <circle cx={HQ_X} cy={HQ_Y} r="4"  fill="#00e6a0" filter="url(#hgGlow)" />
+        <text x={HQ_X + 7} y={HQ_Y - 7} fontSize="5.5" fill="rgba(0,230,160,0.75)"
+          fontFamily="monospace" letterSpacing="0.08em">HQ</text>
+      </svg>
+    </div>
+  );
+}
+
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 
 const IconSignal = () => (
@@ -346,46 +437,45 @@ export default function DashboardPage() {
           const successRate = data.summary.total_all_incidents > 0
             ? Math.round((data.summary.total_handled_incidents / data.summary.total_all_incidents) * 100)
             : 0;
-          const types = data.all_time.incident_types;
 
           return (
             <>
               {/* ── Mission Hero ── */}
               <div className="mission-hero-strip fade-in">
-                <div className="mission-eyebrow">Haverim Mehalzim · Israelis Helping Israelis</div>
-                <h1 className="mission-headline">
-                  When Israelis are in distress,<br />we answer the call — worldwide.
-                </h1>
-                <p className="mission-body">
-                  Our volunteers respond 24/7 to medical emergencies, rescue operations,
-                  and mental health crises wherever Israelis travel or live — at no cost
-                  to the people we help. Every donation funds a real response.
-                </p>
-                <div className="mission-stats-row">
-                  <div className="mission-stat-item">
-                    <div className="mission-stat-num">{data.impact.count_life_saved}</div>
-                    <div className="mission-stat-lbl">Lives Saved</div>
-                  </div>
-                  <div className="mission-stat-divider" />
-                  <div className="mission-stat-item">
-                    <div className="mission-stat-num teal">{successRate}%</div>
-                    <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                      Response Rate
-                      <Tooltip text="Percentage of all reported incidents successfully handled by our volunteers" />
+                <div className="mission-hero-content">
+                  <div className="mission-eyebrow">Haverim Mehalzim · Israelis Helping Israelis</div>
+                  <h1 className="mission-headline">
+                    When Israelis are in distress,<br />we answer the call — worldwide.
+                  </h1>
+                  <p className="mission-body">
+                    Our volunteers respond 24/7 to medical emergencies, rescue operations,
+                    and mental health crises wherever Israelis travel or live — at no cost
+                    to the people we help. Every donation funds a real response.
+                  </p>
+                  <div className="mission-stats-row">
+                    <div className="mission-stat-item">
+                      <div className="mission-stat-num">{data.impact.count_life_saved}</div>
+                      <div className="mission-stat-lbl">Lives Saved</div>
+                    </div>
+                    <div className="mission-stat-divider" />
+                    <div className="mission-stat-item">
+                      <div className="mission-stat-num teal">{successRate}%</div>
+                      <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                        Response Rate
+                        <Tooltip text="Percentage of all reported incidents successfully handled by our volunteers" />
+                      </div>
+                    </div>
+                    <div className="mission-stat-divider" />
+                    <div className="mission-stat-item">
+                      <div className="mission-stat-num amber">{data.summary.countries_operated}</div>
+                      <div className="mission-stat-lbl">Countries Active</div>
                     </div>
                   </div>
-                  <div className="mission-stat-divider" />
-                  <div className="mission-stat-item">
-                    <div className="mission-stat-num amber">{data.summary.countries_operated}</div>
-                    <div className="mission-stat-lbl">Countries Active</div>
+                  <div className="mission-actions">
+                    <Link to="/map" className="mission-btn-primary">View Live Operations →</Link>
                   </div>
                 </div>
-                <div className="mission-actions">
-                  <Link to="/map" className="mission-btn-primary">View Live Operations →</Link>
-                  <a href={DONATE_URL} className="mission-btn-secondary" target="_blank" rel="noopener noreferrer">
-                    Support Our Mission
-                  </a>
-                </div>
+                <HeroGlobe />
               </div>
 
               {/* ── KPIs ── */}
@@ -424,36 +514,6 @@ export default function DashboardPage() {
               <SectionLabel text="Live Operations" stagger="stagger-2" />
               <div className="stagger-2" style={{ marginBottom: 40 }}>
                 <LiveMissionFeed />
-              </div>
-
-              {/* ── What Your Support Enables ── */}
-              <SectionLabel text="What Your Support Enables" stagger="stagger-2" />
-              <div className="enables-grid stagger-2">
-                <EnablesCard
-                  icon="🏥" title="Medical Response"
-                  count={types['Medical'] ?? 0}
-                  desc="24/7 coordination of emergency medical care for Israelis in distress abroad"
-                />
-                <EnablesCard
-                  icon="⛑️" title="Rescue"
-                  count={types['Rescue'] ?? 0}
-                  desc="Emergency extraction of Israelis from dangerous or life-threatening situations"
-                />
-                <EnablesCard
-                  icon="🔍" title="Search & Locate"
-                  count={types['Search & Locate'] ?? 0}
-                  desc="Locating missing Israelis in remote, unfamiliar, or hostile environments"
-                />
-                <EnablesCard
-                  icon="🧠" title="Mental Health"
-                  count={types['Mental Health'] ?? 0}
-                  desc="Immediate psychological support and crisis intervention during emergencies"
-                />
-                <EnablesCard
-                  icon="🌍" title="All Operations"
-                  count={data.summary.total_all_incidents}
-                  desc="Total incidents responded to since our founding — across every category"
-                />
               </div>
 
               {/* ── Live Operations Globe CTA ── */}

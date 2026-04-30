@@ -14,8 +14,8 @@
   --border-mid: rgba(255,255,255,0.1);
   --border-accent: rgba(0,230,160,0.3);
   --text-primary: #f0f4f8;
-  --text-secondary: #7a9ab5;
-  --text-muted: #3d5a72;
+  --text-secondary: #9fbdd4;
+  --text-muted: #526d82;
   --accent-teal: #00e6a0;
   --accent-teal-dim: rgba(0,230,160,0.12);
   --accent-red: #ff4d6a;
@@ -24,7 +24,8 @@
   --accent-amber-dim: rgba(255,185,48,0.12);
   --accent-blue: #4da6ff;
   --accent-blue-dim: rgba(77,166,255,0.12);
-  --font-display: 'Syne', sans-serif;
+  --font-body: 'Syne', sans-serif;
+  --font-display: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-hebrew: 'Noto Sans Hebrew', sans-serif;
 }
@@ -34,6 +35,10 @@ html, body, #root {
   height: 100%;
   background: var(--bg-void);
   color: var(--text-primary);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
+  font-size: 15px;
   direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
