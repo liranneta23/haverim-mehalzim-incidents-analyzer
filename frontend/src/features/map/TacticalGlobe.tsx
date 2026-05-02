@@ -189,6 +189,7 @@ export default function TacticalGlobe() {
   const [selectedTypes,     setSelectedTypes]     = useState<Set<string>>(new Set());
   const [selectedIncident,  setSelectedIncident]  = useState<GlobeIncident | null>(null);
   const [mobileFilterOpen,  setMobileFilterOpen]  = useState(false);
+  const [statusFilter,      setStatusFilter]      = useState<'all' | 'live' | 'resolved'>('all');
 
   const isMobile = dimensions.width < 768;
 
@@ -200,9 +201,12 @@ export default function TacticalGlobe() {
     return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
   }, [incidents]);
 
-  const displayedIncidents = useMemo(() =>
-    selectedTypes.size === 0 ? incidents : incidents.filter(i => selectedTypes.has(i.type)),
-  [incidents, selectedTypes]);
+  const displayedIncidents = useMemo(() => {
+    let result = selectedTypes.size === 0 ? incidents : incidents.filter(i => selectedTypes.has(i.type));
+    if (statusFilter === 'live')     result = result.filter(i => i.isLive);
+    if (statusFilter === 'resolved') result = result.filter(i => i.isResolved);
+    return result;
+  }, [incidents, selectedTypes, statusFilter]);
 
   const liveIncidents     = useMemo(() => displayedIncidents.filter(i => i.isLive),     [displayedIncidents]);
   const resolvedIncidents = useMemo(() => displayedIncidents.filter(i => i.isResolved), [displayedIncidents]);
@@ -262,16 +266,14 @@ export default function TacticalGlobe() {
   }, []);
   const resetTypes  = useCallback(() => setSelectedTypes(new Set()), []);
 
+  const toggleStatusFilter = useCallback((status: 'live' | 'resolved') => {
+    setStatusFilter(prev => prev === status ? 'all' : status);
+  }, []);
+
   // ── Incident selection ────────────────────────────────────────────────────────
 
   const handlePointClick = useCallback((point: any) => {
     setSelectedIncident(point as GlobeIncident);
-    setMobileFilterOpen(false);
-    pauseRotation();
-  }, [pauseRotation]);
-
-  const handleLabelClick = useCallback((label: any) => {
-    setSelectedIncident(label as GlobeIncident);
     setMobileFilterOpen(false);
     pauseRotation();
   }, [pauseRotation]);
@@ -285,10 +287,12 @@ export default function TacticalGlobe() {
 
   const pointLabel = useCallback((d: any) => {
     const inc = d as GlobeIncident;
-    return `<div style="background:#0b0e11ee;border:1px solid #ffb930;padding:6px 10px;
-                color:#ffb930;font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
+    const accent = inc.isLive ? '#ff5050' : '#ffb930';
+    const status = inc.isLive ? '● LIVE' : '✓ RESOLVED';
+    return `<div style="background:#0b0e11ee;border:1px solid ${accent};padding:6px 10px;
+                color:${accent};font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
       <strong>${inc.label}</strong> · ${inc.locationName}<br/>
-      ${inc.type} · RESOLVED
+      ${inc.type} · ${status}
     </div>`;
   }, []);
 
@@ -323,26 +327,15 @@ export default function TacticalGlobe() {
         ringPropagationSpeed={3.0}
         ringRepeatPeriod={700}
 
-        pointsData={resolvedIncidents}
+        pointsData={displayedIncidents}
         pointLat={(d: any) => d.lat}
         pointLng={(d: any) => d.lng}
-        pointColor={() => '#ffb930'}
-        pointRadius={0.42}
-        pointAltitude={0.015}
+        pointColor={(d: any) => (d as GlobeIncident).isLive ? '#ff5050' : '#ffb930'}
+        pointRadius={(d: any) => (d as GlobeIncident).isLive ? 0.45 : 0.42}
+        pointAltitude={(d: any) => (d as GlobeIncident).isLive ? 0.025 : 0.015}
         pointLabel={pointLabel}
         onPointHover={(point) => { if (point) pauseRotation(); }}
         onPointClick={handlePointClick}
-
-        labelsData={liveIncidents}
-        labelLat={(d: any) => d.lat}
-        labelLng={(d: any) => d.lng}
-        labelText={(d: any) => (d as GlobeIncident).locationName.toUpperCase()}
-        labelSize={0.6}
-        labelDotRadius={0.4}
-        labelColor={() => '#ff5050'}
-        labelResolution={2}
-        labelAltitude={0.015}
-        onLabelClick={handleLabelClick}
 
         onGlobeClick={handleGlobeClick}
       />
@@ -434,25 +427,43 @@ export default function TacticalGlobe() {
           </div>
         )}
 
-        <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-2">
-          <div className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase mb-1">Legend</div>
-          <div className="flex items-center gap-2">
+        <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-1.5 pointer-events-auto">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase">Legend</span>
+            {statusFilter !== 'all'
+              ? <button onClick={() => setStatusFilter('all')} className="text-[8px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
+              : <span className="text-[8px] text-[#3d5a72] tracking-wider">tap to filter</span>
+            }
+          </div>
+          <button
+            onClick={() => toggleStatusFilter('live')}
+            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded transition-colors"
+            style={{
+              background: statusFilter === 'live' ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${statusFilter === 'live' ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
+              opacity: statusFilter === 'resolved' ? 0.35 : 1,
+            }}
+          >
             <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 border-2 border-red-500" />
             </span>
-            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase flex items-center gap-1">
-              Live incident
-              <Tooltip text="Incident currently open — our volunteers are actively responding" />
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-red-400 tracking-[0.2em] uppercase flex-1">Live incident</span>
+            <Tooltip text="Incident currently open — our volunteers are actively responding" />
+          </button>
+          <button
+            onClick={() => toggleStatusFilter('resolved')}
+            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded transition-colors"
+            style={{
+              background: statusFilter === 'resolved' ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${statusFilter === 'resolved' ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
+              opacity: statusFilter === 'live' ? 0.35 : 1,
+            }}
+          >
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
-            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase flex items-center gap-1">
-              Resolved incident
-              <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
-            </span>
-          </div>
+            <span className="text-[9px] text-amber-400 tracking-[0.2em] uppercase flex-1">Resolved incident</span>
+            <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
+          </button>
         </div>
       </div>
 
@@ -542,25 +553,43 @@ export default function TacticalGlobe() {
             toggleType={toggleType}
             resetTypes={resetTypes}
           />
-          <div className="border-t border-[#00e6a0]/15 mt-4 pt-4 space-y-2.5">
-            <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase mb-2">Legend</div>
-            <div className="flex items-center gap-3">
+          <div className="border-t border-[#00e6a0]/15 mt-4 pt-4 space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase">Legend</span>
+              {statusFilter !== 'all'
+                ? <button onClick={() => setStatusFilter('all')} className="text-[9px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
+                : <span className="text-[9px] text-[#3d5a72] tracking-wider">tap to filter</span>
+              }
+            </div>
+            <button
+              onClick={() => toggleStatusFilter('live')}
+              className="flex items-center gap-3 w-full text-left px-3 py-2 rounded"
+              style={{
+                background: statusFilter === 'live' ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${statusFilter === 'live' ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                opacity: statusFilter === 'resolved' ? 0.35 : 1,
+              }}
+            >
               <span className="relative flex h-3 w-3 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 border-2 border-red-500" />
               </span>
-              <span className="text-[12px] text-red-400 flex items-center gap-1">
-                Live incident
-                <Tooltip text="Incident currently open — our volunteers are actively responding" />
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
+              <span className="text-[12px] text-red-400 flex-1">Live incident</span>
+              <Tooltip text="Incident currently open — our volunteers are actively responding" />
+            </button>
+            <button
+              onClick={() => toggleStatusFilter('resolved')}
+              className="flex items-center gap-3 w-full text-left px-3 py-2 rounded"
+              style={{
+                background: statusFilter === 'resolved' ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${statusFilter === 'resolved' ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
+                opacity: statusFilter === 'live' ? 0.35 : 1,
+              }}
+            >
               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
-              <span className="text-[12px] text-amber-400 flex items-center gap-1">
-                Resolved incident
-                <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
-              </span>
-            </div>
+              <span className="text-[12px] text-amber-400 flex-1">Resolved incident</span>
+              <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
+            </button>
           </div>
         </div>
       </div>
