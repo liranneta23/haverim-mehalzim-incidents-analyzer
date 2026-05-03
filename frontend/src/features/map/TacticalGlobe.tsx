@@ -28,16 +28,105 @@ const HEX_TILE_URI = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Cluster type + helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GlobeCluster {
+  id: string;
+  lat: number;
+  lng: number;
+  locationName: string;
+  incidents: GlobeIncident[];
+  count: number;
+  liveCount: number;
+  resolvedCount: number;
+  hasLive: boolean;
+}
+
+// Merge incidents within this many degrees of each other (~90 km)
+const PROXIMITY_DEG = 0.8;
+
+function clusterByLocation(incidents: GlobeIncident[]): GlobeCluster[] {
+  const result: GlobeCluster[] = [];
+
+  for (const inc of incidents) {
+    let nearest: GlobeCluster | null = null;
+    let nearestDist = Infinity;
+
+    for (const c of result) {
+      const dlat = inc.lat - c.lat;
+      const dlng = inc.lng - c.lng;
+      const dist = Math.sqrt(dlat * dlat + dlng * dlng);
+      if (dist < PROXIMITY_DEG && dist < nearestDist) {
+        nearest = c;
+        nearestDist = dist;
+      }
+    }
+
+    if (nearest) {
+      nearest.incidents.push(inc);
+      nearest.count++;
+      if (inc.isLive)    { nearest.liveCount++; nearest.hasLive = true; }
+      if (inc.isResolved)  nearest.resolvedCount++;
+    } else {
+      result.push({
+        id: `${inc.lat.toFixed(4)},${inc.lng.toFixed(4)}`,
+        lat: inc.lat,
+        lng: inc.lng,
+        locationName: inc.locationName,
+        incidents: [inc],
+        count: 1,
+        liveCount: inc.isLive ? 1 : 0,
+        resolvedCount: inc.isResolved ? 1 : 0,
+        hasLive: inc.isLive,
+      });
+    }
+  }
+
+  // For clusters that absorbed multiple cities, build a readable display name
+  for (const c of result) {
+    if (c.count > 1) {
+      const locCounts = new Map<string, number>();
+      for (const inc of c.incidents) {
+        locCounts.set(inc.locationName, (locCounts.get(inc.locationName) ?? 0) + 1);
+      }
+      const sorted = [...locCounts.entries()].sort((a, b) => b[1] - a[1]);
+      c.locationName = sorted.length === 1
+        ? sorted[0][0]
+        : `${sorted[0][0]} +${sorted.length - 1}`;
+    }
+  }
+
+  return result.sort((a, b) => Number(b.hasLive) - Number(a.hasLive));
+}
+
+function clusterColor(c: GlobeCluster): string {
+  return c.hasLive ? '#ff5050' : '#ffb930';
+}
+
+function clusterRadius(c: GlobeCluster): number {
+  if (c.count === 1) return c.hasLive ? 0.45 : 0.42;
+  return Math.min(0.55 + (c.count - 1) * 0.12, 1.6);
+}
+
+function clusterAltitude(c: GlobeCluster): number {
+  if (c.count === 1) return c.hasLive ? 0.025 : 0.015;
+  return Math.min(0.03 + c.count * 0.005, 0.08);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
 function IncidentDetail({
   incident,
   onClose,
+  onBack,
   compact = false,
 }: {
   incident: GlobeIncident;
   onClose: () => void;
+  onBack?: () => void;
   compact?: boolean;
 }) {
   const isResolved = incident.isResolved;
@@ -56,7 +145,16 @@ function IncidentDetail({
         <span className={`${labelSize} tracking-[0.2em] uppercase font-bold`} style={{ color: accentColor }}>
           {isResolved ? '◈ Impact Report' : '◈ Incident Detail'}
         </span>
-        <button onClick={onClose} className="text-[#3d5a72] hover:text-white leading-none px-1 text-sm">✕</button>
+        <div className="flex items-center gap-0.5">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="text-[#3d5a72] hover:text-[#00e6a0] transition-colors leading-none px-1 text-sm"
+              title="Back to list"
+            >‹</button>
+          )}
+          <button onClick={onClose} className="text-[#3d5a72] hover:text-white leading-none px-1 text-sm">✕</button>
+        </div>
       </div>
 
       {/* Core info */}
@@ -103,6 +201,92 @@ function IncidentDetail({
           : { background: '#00e6a0', color: '#0B0E11' }}>
         {isResolved ? 'Fund the Next Rescue' : 'Support This Mission'}
       </a>
+    </div>
+  );
+}
+
+function ClusterPanel({
+  cluster,
+  onSelectIncident,
+  onClose,
+  compact = false,
+}: {
+  cluster: GlobeCluster;
+  onSelectIncident: (inc: GlobeIncident) => void;
+  onClose: () => void;
+  compact?: boolean;
+}) {
+  const headerSize = compact ? 'text-[9px]'  : 'text-[10px]';
+  const metaSize   = compact ? 'text-[8px]'  : 'text-[9px]';
+  const rowLabel   = compact ? 'text-[8px]'  : 'text-[9px]';
+  const rowMeta    = compact ? 'text-[7px]'  : 'text-[8px]';
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex justify-between items-start mb-1.5">
+        <div>
+          <span className={`${headerSize} tracking-[0.2em] uppercase font-bold text-[#00e6a0]`}>
+            ◈ {cluster.locationName}
+          </span>
+          <div className={`${metaSize} text-[#7a9ab5] mt-0.5 flex gap-2 flex-wrap`}>
+            <span>{cluster.count} incidents</span>
+            {cluster.liveCount > 0 && (
+              <span className="text-red-400">{cluster.liveCount} live</span>
+            )}
+            {cluster.resolvedCount > 0 && (
+              <span className="text-amber-400">{cluster.resolvedCount} resolved</span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-[#3d5a72] hover:text-white leading-none px-1 text-sm flex-shrink-0 ml-2"
+        >✕</button>
+      </div>
+
+      <div className="border-t border-[#00e6a0]/15 mb-2" />
+
+      {/* Incident rows */}
+      <div
+        className={`flex flex-col gap-1 overflow-y-auto pr-0.5 ${compact ? 'max-h-52' : 'max-h-64'}`}
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#1e3040 transparent' }}
+      >
+        {cluster.incidents.map((inc) => {
+          const accent = inc.isLive ? '#ff5050' : '#ffb930';
+          return (
+            <button
+              key={inc.id}
+              onClick={() => onSelectIncident(inc)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded text-left w-full transition-colors hover:bg-white/5 group"
+              style={{
+                border: `1px solid ${inc.isLive ? 'rgba(255,80,80,0.18)' : 'rgba(255,185,48,0.14)'}`,
+                background: inc.isLive ? 'rgba(255,80,80,0.04)' : 'rgba(255,185,48,0.03)',
+              }}
+            >
+              {inc.isLive ? (
+                <span className="relative flex h-2 w-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+              ) : (
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className={`${rowLabel} font-bold text-white truncate`}>{inc.label}</div>
+                <div className={`${rowMeta} text-[#7a9ab5] truncate`}>{inc.locationName} · {inc.type}</div>
+              </div>
+              <span
+                className={`${rowMeta} tracking-wider font-bold flex-shrink-0`}
+                style={{ color: accent }}
+              >
+                {inc.isLive ? 'LIVE' : 'DONE'}
+              </span>
+              <span className="text-[#3d5a72] text-[10px] group-hover:text-[#00e6a0] transition-colors">›</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -188,8 +372,12 @@ export default function TacticalGlobe() {
   const [error,             setError]             = useState<string | null>(null);
   const [selectedTypes,     setSelectedTypes]     = useState<Set<string>>(new Set());
   const [selectedIncident,  setSelectedIncident]  = useState<GlobeIncident | null>(null);
+  const [selectedCluster,   setSelectedCluster]   = useState<GlobeCluster | null>(null);
   const [mobileFilterOpen,  setMobileFilterOpen]  = useState(false);
   const [statusFilter,      setStatusFilter]      = useState<'all' | 'live' | 'resolved'>('all');
+
+  const selectedClusterRef = useRef<GlobeCluster | null>(null);
+  useEffect(() => { selectedClusterRef.current = selectedCluster; }, [selectedCluster]);
 
   const isMobile = dimensions.width < 768;
 
@@ -208,10 +396,12 @@ export default function TacticalGlobe() {
     return result;
   }, [incidents, selectedTypes, statusFilter]);
 
+  const clusters = useMemo(() => clusterByLocation(displayedIncidents), [displayedIncidents]);
+
   const liveIncidents     = useMemo(() => displayedIncidents.filter(i => i.isLive),     [displayedIncidents]);
   const resolvedIncidents = useMemo(() => displayedIncidents.filter(i => i.isResolved), [displayedIncidents]);
   const filteredTotal     = useMemo(() => liveIncidents.length + resolvedIncidents.length, [liveIncidents, resolvedIncidents]);
-  const ringData          = useMemo(() => liveIncidents, [liveIncidents]);
+  const ringData          = useMemo(() => clusters.filter(c => c.hasLive), [clusters]);
 
   // ── Data loading ─────────────────────────────────────────────────────────────
 
@@ -270,29 +460,71 @@ export default function TacticalGlobe() {
     setStatusFilter(prev => prev === status ? 'all' : status);
   }, []);
 
-  // ── Incident selection ────────────────────────────────────────────────────────
+  // ── Cluster / incident selection ──────────────────────────────────────────────
 
-  const handlePointClick = useCallback((point: any) => {
-    setSelectedIncident(point as GlobeIncident);
+  const handleClusterClick = useCallback((point: any) => {
+    const cluster = point as GlobeCluster;
     setMobileFilterOpen(false);
     pauseRotation();
+    if (cluster.count === 1) {
+      setSelectedIncident(cluster.incidents[0]);
+      setSelectedCluster(null);
+    } else {
+      setSelectedCluster(cluster);
+      setSelectedIncident(null);
+    }
   }, [pauseRotation]);
+
+  const handleSelectFromCluster = useCallback((inc: GlobeIncident) => {
+    setSelectedIncident(inc);
+  }, []);
+
+  const handleCloseIncident = useCallback(() => {
+    setSelectedIncident(null);
+    if (!selectedClusterRef.current) resumeRotation();
+  }, [resumeRotation]);
+
+  const handleBackToCluster = useCallback(() => {
+    setSelectedIncident(null);
+  }, []);
+
+  const handleCloseCluster = useCallback(() => {
+    setSelectedCluster(null);
+    setSelectedIncident(null);
+    resumeRotation();
+  }, [resumeRotation]);
 
   const handleGlobeClick = useCallback(() => {
     setSelectedIncident(null);
+    setSelectedCluster(null);
     resumeRotation();
   }, [resumeRotation]);
 
   // ── Tooltips ──────────────────────────────────────────────────────────────────
 
   const pointLabel = useCallback((d: any) => {
-    const inc = d as GlobeIncident;
-    const accent = inc.isLive ? '#ff5050' : '#ffb930';
-    const status = inc.isLive ? '● LIVE' : '✓ RESOLVED';
+    const c = d as GlobeCluster;
+    const accent = clusterColor(c);
+
+    if (c.count === 1) {
+      const inc = c.incidents[0];
+      const status = inc.isLive ? '● LIVE' : '✓ RESOLVED';
+      return `<div style="background:#0b0e11ee;border:1px solid ${accent};padding:6px 10px;
+                  color:${accent};font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
+        <strong>${inc.label}</strong> · ${inc.locationName}<br/>
+        ${inc.type} · ${status}
+      </div>`;
+    }
+
+    const liveText     = c.liveCount > 0     ? `<span style="color:#ff5050">${c.liveCount} live</span>`         : '';
+    const resolvedText = c.resolvedCount > 0 ? `<span style="color:#ffb930">${c.resolvedCount} resolved</span>` : '';
+    const sep          = c.liveCount > 0 && c.resolvedCount > 0 ? ' · ' : '';
+
     return `<div style="background:#0b0e11ee;border:1px solid ${accent};padding:6px 10px;
                 color:${accent};font:11px/1.6 'JetBrains Mono',monospace;border-radius:3px;">
-      <strong>${inc.label}</strong> · ${inc.locationName}<br/>
-      ${inc.type} · ${status}
+      <strong>${c.locationName}</strong><br/>
+      ${c.count} incidents · ${liveText}${sep}${resolvedText}<br/>
+      <span style="color:#3d5a72;font-size:9px">click to view all</span>
     </div>`;
   }, []);
 
@@ -320,22 +552,23 @@ export default function TacticalGlobe() {
         polygonAltitude={0.006}
 
         ringsData={ringData}
-        ringLat={(d: any) => d.lat}
-        ringLng={(d: any) => d.lng}
+        ringLat={(d: any) => (d as GlobeCluster).lat}
+        ringLng={(d: any) => (d as GlobeCluster).lng}
+        ringAltitude={0.01}
         ringColor={() => (t: number) => `rgba(255,30,30,${Math.max(0, 1 - t)})`}
         ringMaxRadius={4.5}
         ringPropagationSpeed={3.0}
         ringRepeatPeriod={700}
 
-        pointsData={displayedIncidents}
-        pointLat={(d: any) => d.lat}
-        pointLng={(d: any) => d.lng}
-        pointColor={(d: any) => (d as GlobeIncident).isLive ? '#ff5050' : '#ffb930'}
-        pointRadius={(d: any) => (d as GlobeIncident).isLive ? 0.45 : 0.42}
-        pointAltitude={(d: any) => (d as GlobeIncident).isLive ? 0.025 : 0.015}
+        pointsData={clusters}
+        pointLat={(d: any) => (d as GlobeCluster).lat}
+        pointLng={(d: any) => (d as GlobeCluster).lng}
+        pointColor={(d: any) => clusterColor(d as GlobeCluster)}
+        pointRadius={(d: any) => clusterRadius(d as GlobeCluster)}
+        pointAltitude={(d: any) => clusterAltitude(d as GlobeCluster)}
         pointLabel={pointLabel}
         onPointHover={(point) => { if (point) pauseRotation(); }}
-        onPointClick={handlePointClick}
+        onPointClick={handleClusterClick}
 
         onGlobeClick={handleGlobeClick}
       />
@@ -403,6 +636,7 @@ export default function TacticalGlobe() {
           </Link>
         </div>
 
+        {/* Incident detail panel */}
         {selectedIncident && (
           <div className="bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
             style={{
@@ -410,7 +644,21 @@ export default function TacticalGlobe() {
             }}>
             <IncidentDetail
               incident={selectedIncident}
-              onClose={() => setSelectedIncident(null)}
+              onClose={handleCloseIncident}
+              onBack={selectedCluster ? handleBackToCluster : undefined}
+              compact
+            />
+          </div>
+        )}
+
+        {/* Cluster panel */}
+        {selectedCluster && !selectedIncident && (
+          <div className="bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
+            style={{ border: `1px solid ${clusterColor(selectedCluster)}44` }}>
+            <ClusterPanel
+              cluster={selectedCluster}
+              onSelectIncident={handleSelectFromCluster}
+              onClose={handleCloseCluster}
               compact
             />
           </div>
@@ -506,7 +754,7 @@ export default function TacticalGlobe() {
                       px-4 bg-[#0B0E11]/95 border-t border-[#00e6a0]/25 pointer-events-auto"
            style={{ paddingTop: 12, paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}>
         <button
-          onClick={() => { setMobileFilterOpen(o => !o); setSelectedIncident(null); }}
+          onClick={() => { setMobileFilterOpen(o => !o); setSelectedIncident(null); setSelectedCluster(null); }}
           className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase transition-colors"
           style={{ color: (mobileFilterOpen || selectedTypes.size > 0) ? '#00e6a0' : '#7a9ab5' }}
         >
@@ -527,7 +775,6 @@ export default function TacticalGlobe() {
       </div>
 
       {/* ── Mobile: filter bottom sheet ──────────────────────────────────────── */}
-      {/* Backdrop */}
       {mobileFilterOpen && (
         <div className="md:hidden absolute inset-0 z-30 bg-black/40"
           onClick={() => setMobileFilterOpen(false)} />
@@ -542,7 +789,6 @@ export default function TacticalGlobe() {
           maxHeight: '70vh',
         }}
       >
-        {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-[#3d5a72]" />
         </div>
@@ -594,11 +840,41 @@ export default function TacticalGlobe() {
         </div>
       </div>
 
+      {/* ── Mobile: cluster bottom sheet ─────────────────────────────────────── */}
+      {selectedCluster && !selectedIncident && (
+        <div className="md:hidden absolute inset-0 z-30 bg-black/40"
+          onClick={handleCloseCluster} />
+      )}
+      <div
+        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl bg-[#0d1117]
+                   transition-transform duration-300 ease-out"
+        style={{
+          borderTop: selectedCluster && !selectedIncident
+            ? `1px solid ${clusterColor(selectedCluster)}44`
+            : '1px solid transparent',
+          transform: (selectedCluster && !selectedIncident) ? 'translateY(0)' : 'translateY(100%)',
+          pointerEvents: (selectedCluster && !selectedIncident) ? 'auto' : 'none',
+          maxHeight: '65vh',
+        }}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-[#3d5a72]" />
+        </div>
+        {selectedCluster && !selectedIncident && (
+          <div className="px-5 pb-20 pt-2 overflow-y-auto" style={{ maxHeight: 'calc(65vh - 32px)' }}>
+            <ClusterPanel
+              cluster={selectedCluster}
+              onSelectIncident={handleSelectFromCluster}
+              onClose={handleCloseCluster}
+            />
+          </div>
+        )}
+      </div>
+
       {/* ── Mobile: incident detail bottom sheet ─────────────────────────────── */}
-      {/* Backdrop */}
       {selectedIncident && (
         <div className="md:hidden absolute inset-0 z-30 bg-black/40"
-          onClick={() => { setSelectedIncident(null); resumeRotation(); }} />
+          onClick={() => { handleCloseIncident(); }} />
       )}
       <div
         className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl bg-[#0d1117]
@@ -618,7 +894,8 @@ export default function TacticalGlobe() {
           <div className="px-5 pb-20 pt-2">
             <IncidentDetail
               incident={selectedIncident}
-              onClose={() => { setSelectedIncident(null); resumeRotation(); }}
+              onClose={handleCloseIncident}
+              onBack={selectedCluster ? handleBackToCluster : undefined}
             />
           </div>
         )}
