@@ -8,13 +8,20 @@ interface TooltipProps {
 
 export function Tooltip({ text, children }: TooltipProps) {
   const [visible, setVisible] = useState(false);
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [coords, setCoords] = useState({ x: 0, y: 0, arrowOffset: 0 });
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!visible || !ref.current) return;
     const r = ref.current.getBoundingClientRect();
-    setCoords({ x: r.left + r.width / 2, y: r.top });
+    const TIP_W = 200;
+    const MARGIN = 8;
+    const rawX = r.left + r.width / 2;
+    const clampedX = Math.min(
+      Math.max(rawX, MARGIN + TIP_W / 2),
+      window.innerWidth - MARGIN - TIP_W / 2,
+    );
+    setCoords({ x: clampedX, y: r.top, arrowOffset: rawX - clampedX });
   }, [visible]);
 
   const tooltip = visible
@@ -49,7 +56,7 @@ export function Tooltip({ text, children }: TooltipProps) {
           <span style={{
             position: 'absolute',
             top: '100%',
-            left: '50%',
+            left: `calc(50% + ${coords.arrowOffset}px)`,
             transform: 'translateX(-50%)',
             width: 0,
             height: 0,

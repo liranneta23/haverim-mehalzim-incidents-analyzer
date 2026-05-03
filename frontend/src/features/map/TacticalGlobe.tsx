@@ -445,7 +445,8 @@ export default function TacticalGlobe() {
   const [selectedIncident,  setSelectedIncident]  = useState<GlobeIncident | null>(null);
   const [selectedCluster,   setSelectedCluster]   = useState<GlobeCluster | null>(null);
   const [mobileFilterOpen,  setMobileFilterOpen]  = useState(false);
-  const [statusFilter,      setStatusFilter]      = useState<'all' | 'live' | 'resolved'>('all');
+  const [filterLive,        setFilterLive]        = useState(false);
+  const [filterResolved,    setFilterResolved]    = useState(false);
 
   const selectedClusterRef = useRef<GlobeCluster | null>(null);
   useEffect(() => { selectedClusterRef.current = selectedCluster; }, [selectedCluster]);
@@ -462,10 +463,11 @@ export default function TacticalGlobe() {
 
   const displayedIncidents = useMemo(() => {
     let result = selectedTypes.size === 0 ? incidents : incidents.filter(i => selectedTypes.has(i.type));
-    if (statusFilter === 'live')     result = result.filter(i => i.isLive);
-    if (statusFilter === 'resolved') result = result.filter(i => i.isResolved);
+    if (filterLive && !filterResolved)    result = result.filter(i => i.isLive);
+    if (filterResolved && !filterLive)    result = result.filter(i => i.isResolved);
+    if (filterLive && filterResolved)     result = result.filter(i => i.isLive || i.isResolved);
     return result;
-  }, [incidents, selectedTypes, statusFilter]);
+  }, [incidents, selectedTypes, filterLive, filterResolved]);
 
   const clusters = useMemo(() => clusterByLocation(displayedIncidents), [displayedIncidents]);
 
@@ -527,9 +529,9 @@ export default function TacticalGlobe() {
   }, []);
   const resetTypes  = useCallback(() => setSelectedTypes(new Set()), []);
 
-  const toggleStatusFilter = useCallback((status: 'live' | 'resolved') => {
-    setStatusFilter(prev => prev === status ? 'all' : status);
-  }, []);
+  const toggleLiveFilter     = useCallback(() => setFilterLive(v => !v),     []);
+  const toggleResolvedFilter = useCallback(() => setFilterResolved(v => !v), []);
+  const resetStatusFilter    = useCallback(() => { setFilterLive(false); setFilterResolved(false); }, []);
 
   // ── Cluster / incident selection ──────────────────────────────────────────────
 
@@ -734,18 +736,17 @@ export default function TacticalGlobe() {
         <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-2.5 space-y-1.5 pointer-events-auto">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[8px] text-[#00e6a0] tracking-[0.2em] uppercase">Legend</span>
-            {statusFilter !== 'all'
-              ? <button onClick={() => setStatusFilter('all')} className="text-[8px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
+            {(filterLive || filterResolved)
+              ? <button onClick={resetStatusFilter} className="text-[8px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
               : <span className="text-[8px] text-[#3d5a72] tracking-wider">tap to filter</span>
             }
           </div>
           <button
-            onClick={() => toggleStatusFilter('live')}
+            onClick={toggleLiveFilter}
             className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded transition-colors"
             style={{
-              background: statusFilter === 'live' ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${statusFilter === 'live' ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
-              opacity: statusFilter === 'resolved' ? 0.35 : 1,
+              background: filterLive ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${filterLive ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
             }}
           >
             <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -756,12 +757,11 @@ export default function TacticalGlobe() {
             <Tooltip text="Incident currently open — our volunteers are actively responding" />
           </button>
           <button
-            onClick={() => toggleStatusFilter('resolved')}
+            onClick={toggleResolvedFilter}
             className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded transition-colors"
             style={{
-              background: statusFilter === 'resolved' ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${statusFilter === 'resolved' ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
-              opacity: statusFilter === 'live' ? 0.35 : 1,
+              background: filterResolved ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${filterResolved ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
             }}
           >
             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
@@ -812,7 +812,7 @@ export default function TacticalGlobe() {
         <button
           onClick={() => { setMobileFilterOpen(o => !o); setSelectedIncident(null); setSelectedCluster(null); }}
           className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase transition-colors"
-          style={{ color: (mobileFilterOpen || selectedTypes.size > 0) ? '#00e6a0' : '#7a9ab5' }}
+          style={{ color: (mobileFilterOpen || selectedTypes.size > 0 || filterLive || filterResolved) ? '#00e6a0' : '#7a9ab5' }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <line x1="2" y1="4" x2="12" y2="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -858,18 +858,17 @@ export default function TacticalGlobe() {
           <div className="border-t border-[#00e6a0]/15 mt-4 pt-4 space-y-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase">Legend</span>
-              {statusFilter !== 'all'
-                ? <button onClick={() => setStatusFilter('all')} className="text-[9px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
+              {(filterLive || filterResolved)
+                ? <button onClick={resetStatusFilter} className="text-[9px] text-[#3d5a72] hover:text-[#00e6a0] tracking-wider uppercase transition-colors">Reset</button>
                 : <span className="text-[9px] text-[#3d5a72] tracking-wider">tap to filter</span>
               }
             </div>
             <button
-              onClick={() => toggleStatusFilter('live')}
+              onClick={toggleLiveFilter}
               className="flex items-center gap-3 w-full text-left px-3 py-2 rounded"
               style={{
-                background: statusFilter === 'live' ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${statusFilter === 'live' ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                opacity: statusFilter === 'resolved' ? 0.35 : 1,
+                background: filterLive ? 'rgba(255,80,80,0.12)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${filterLive ? 'rgba(255,80,80,0.35)' : 'rgba(255,255,255,0.08)'}`,
               }}
             >
               <span className="relative flex h-3 w-3 flex-shrink-0">
@@ -880,12 +879,11 @@ export default function TacticalGlobe() {
               <Tooltip text="Incident currently open — our volunteers are actively responding" />
             </button>
             <button
-              onClick={() => toggleStatusFilter('resolved')}
+              onClick={toggleResolvedFilter}
               className="flex items-center gap-3 w-full text-left px-3 py-2 rounded"
               style={{
-                background: statusFilter === 'resolved' ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${statusFilter === 'resolved' ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
-                opacity: statusFilter === 'live' ? 0.35 : 1,
+                background: filterResolved ? 'rgba(255,185,48,0.10)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${filterResolved ? 'rgba(255,185,48,0.30)' : 'rgba(255,255,255,0.08)'}`,
               }}
             >
               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#ffb930' }} />
