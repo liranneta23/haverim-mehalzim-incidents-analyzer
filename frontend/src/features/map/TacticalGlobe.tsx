@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
@@ -118,88 +118,159 @@ function clusterAltitude(c: GlobeCluster): number {
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
+function StorySection({
+  accent,
+  label,
+  text,
+}: {
+  accent: string;
+  label: string;
+  text: string;
+}) {
+  return (
+    <div className="mb-5 pl-4" style={{ borderLeft: `2px solid ${accent}55` }}>
+      <div
+        className="text-[10px] tracking-[0.25em] uppercase font-bold mb-2"
+        style={{ color: `${accent}99` }}
+      >
+        {label}
+      </div>
+      <p className="text-[15px] leading-[1.75] text-[#b0c8dc]">
+        {text}
+      </p>
+    </div>
+  );
+}
+
 function IncidentDetail({
   incident,
   onClose,
   onBack,
-  compact = false,
 }: {
   incident: GlobeIncident;
   onClose: () => void;
   onBack?: () => void;
-  compact?: boolean;
 }) {
-  const isResolved = incident.isResolved;
+  const isResolved  = incident.isResolved;
   const accentColor = isResolved ? GOLD : '#00e6a0';
-  const metric = SUCCESS_METRICS[incident.type] ?? 'Mission Completed';
-
-  const labelSize  = compact ? 'text-[8px]'  : 'text-[10px]';
-  const titleSize  = compact ? 'text-[10px]' : 'text-base';
-  const bodySize   = compact ? 'text-[10px]' : 'text-sm';
-  const smallSize  = compact ? 'text-[9px]'  : 'text-xs';
+  const metric      = SUCCESS_METRICS[incident.type] ?? 'Mission Completed';
+  const hasStory    = incident.description || incident.assistance;
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex justify-between items-start mb-3">
-        <span className={`${labelSize} tracking-[0.2em] uppercase font-bold`} style={{ color: accentColor }}>
-          {isResolved ? '◈ Impact Report' : '◈ Incident Detail'}
+      {/* Header row */}
+      <div className="flex justify-between items-center mb-5">
+        <span
+          className="text-[11px] tracking-[0.28em] uppercase font-bold"
+          style={{ color: accentColor }}
+        >
+          {isResolved ? '◈ Impact Report' : '◈ Live Mission'}
         </span>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
           {onBack && (
             <button
               onClick={onBack}
-              className="text-[#3d5a72] hover:text-[#00e6a0] transition-colors leading-none px-1 text-sm"
+              className="text-[#3d5a72] hover:text-[#00e6a0] transition-colors text-lg leading-none px-1"
               title="Back to list"
             >‹</button>
           )}
-          <button onClick={onClose} className="text-[#3d5a72] hover:text-white leading-none px-1 text-sm">✕</button>
+          <button
+            onClick={onClose}
+            className="text-[#3d5a72] hover:text-white transition-colors text-lg leading-none px-1"
+          >✕</button>
         </div>
       </div>
 
-      {/* Core info */}
-      <div className={`${titleSize} text-white font-bold mb-1`}>{incident.label}</div>
-      <div className={`${bodySize} text-[#7a9ab5] mb-0.5`}>{incident.locationName}</div>
-      <div className={`${bodySize} text-[#c0d0e0] mb-1`}>{incident.type}</div>
-      <div className={`${smallSize} font-bold mb-3`}
-        style={{ color: incident.isLive ? '#ff5050' : accentColor }}>
-        {incident.isLive ? '● LIVE' : '✓ RESOLVED'}
+      {/* Identity block */}
+      <div className="mb-5">
+        <div className="text-[11px] tracking-[0.2em] text-[#3d5a72] uppercase mb-1">
+          {incident.locationName} · {incident.type}
+        </div>
+        <div className="text-2xl font-bold text-white mb-2">{incident.label}</div>
+        <div
+          className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.2em] uppercase px-2.5 py-1 rounded-sm"
+          style={{
+            color: incident.isLive ? '#ff5050' : accentColor,
+            background: incident.isLive ? 'rgba(255,80,80,0.1)' : `${accentColor}15`,
+            border: `1px solid ${incident.isLive ? 'rgba(255,80,80,0.3)' : accentColor + '33'}`,
+          }}
+        >
+          {incident.isLive && (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+            </span>
+          )}
+          {incident.isLive ? 'Live — Responding Now' : '✓ Mission Resolved'}
+        </div>
       </div>
 
-      {/* Success metric — resolved only */}
+      <div className="border-t border-[#ffffff08] mb-5" />
+
+      {/* Story */}
+      {incident.description && (
+        <StorySection
+          accent={incident.isLive ? '#ff5050' : '#00e6a0'}
+          label="What Happened"
+          text={incident.description}
+        />
+      )}
+      {incident.assistance && (
+        <StorySection
+          accent={GOLD}
+          label={isResolved ? 'How We Helped' : 'Steps Taken'}
+          text={incident.assistance}
+        />
+      )}
+
+      {/* Outcome chip — resolved only */}
       {isResolved && (
-        <div className="mb-3 px-3 py-2 rounded"
-          style={{ background: `${GOLD}12`, border: `1px solid ${GOLD}33` }}>
-          <div className={`${smallSize} mb-0.5`} style={{ color: `${GOLD}99` }}>Outcome</div>
-          <div className={`${compact ? 'text-[10px]' : 'text-sm'} font-bold`} style={{ color: GOLD }}>
-            ✓ {metric}
+        <div
+          className="flex items-center gap-2 mb-4 px-4 py-3 rounded"
+          style={{ background: `${GOLD}12`, border: `1px solid ${GOLD}30` }}
+        >
+          <span className="text-lg" style={{ color: GOLD }}>✓</span>
+          <div>
+            <div className="text-[9px] tracking-[0.2em] uppercase mb-0.5" style={{ color: `${GOLD}77` }}>
+              Outcome
+            </div>
+            <div className="text-sm font-bold" style={{ color: GOLD }}>{metric}</div>
           </div>
         </div>
       )}
 
-      {/* Donor badge — resolved only */}
+      {/* Donor badge */}
       {isResolved && (
-        <div className={`${smallSize} flex items-center gap-1.5 mb-3 pb-3 border-b`}
-          style={{ borderColor: `${GOLD}20`, color: `${GOLD}bb` }}>
+        <div
+          className="flex items-center gap-2 text-sm mb-5 pb-5 border-b"
+          style={{ borderColor: `${GOLD}18`, color: `${GOLD}99` }}
+        >
           <span>🏅</span>
-          <span>Funded by Donors Like You</span>
+          <span>This mission was funded by donors like you</span>
         </div>
       )}
 
-      {/* Live: brief copy */}
+      {/* Live support copy */}
       {!isResolved && (
-        <p className={`${smallSize} text-[#7a9ab5] leading-relaxed mb-3 border-t border-[#ffffff10] pt-2`}>
-          Your support funds responses like this one — 24/7, at no cost to the people we help.
+        <p className="text-sm text-[#5a7a90] leading-relaxed mb-5">
+          {hasStory
+            ? 'Our volunteers are on the ground right now — your donation keeps them there.'
+            : 'Your support funds responses like this one — 24/7, at no cost to the people we help.'}
         </p>
       )}
 
       {/* CTA */}
-      <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-        className={`block text-center ${smallSize} tracking-[0.15em] uppercase font-bold px-3 py-2 rounded transition-opacity hover:opacity-85`}
+      <a
+        href={DONATE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 w-full text-sm tracking-[0.18em] uppercase font-bold px-4 py-3 rounded transition-opacity hover:opacity-90"
         style={isResolved
           ? { background: GOLD, color: '#0B0E11' }
-          : { background: '#00e6a0', color: '#0B0E11' }}>
-        {isResolved ? 'Fund the Next Rescue' : 'Support This Mission'}
+          : { background: '#00e6a0', color: '#0B0E11' }}
+      >
+        <span>♥</span>
+        <span>{isResolved ? 'Fund the Next Rescue' : 'Support This Mission'}</span>
       </a>
     </div>
   );
@@ -636,21 +707,6 @@ export default function TacticalGlobe() {
           </Link>
         </div>
 
-        {/* Incident detail panel */}
-        {selectedIncident && (
-          <div className="bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
-            style={{
-              border: `1px solid ${selectedIncident.isResolved ? GOLD + '55' : '#00e6a066'}`,
-            }}>
-            <IncidentDetail
-              incident={selectedIncident}
-              onClose={handleCloseIncident}
-              onBack={selectedCluster ? handleBackToCluster : undefined}
-              compact
-            />
-          </div>
-        )}
-
         {/* Cluster panel */}
         {selectedCluster && !selectedIncident && (
           <div className="bg-[#0B0E11]/95 px-4 py-3 pointer-events-auto"
@@ -871,35 +927,42 @@ export default function TacticalGlobe() {
         )}
       </div>
 
-      {/* ── Mobile: incident detail bottom sheet ─────────────────────────────── */}
+      {/* ── Incident detail modal (all screen sizes) ─────────────────────────── */}
       {selectedIncident && (
-        <div className="md:hidden absolute inset-0 z-30 bg-black/40"
-          onClick={() => { handleCloseIncident(); }} />
-      )}
-      <div
-        className="md:hidden absolute left-0 right-0 bottom-0 z-40 rounded-t-2xl bg-[#0d1117]
-                   transition-transform duration-300 ease-out"
-        style={{
-          borderTop: selectedIncident
-            ? `1px solid ${selectedIncident.isResolved ? GOLD + '55' : '#00e6a04d'}`
-            : '1px solid transparent',
-          transform: selectedIncident ? 'translateY(0)' : 'translateY(100%)',
-          pointerEvents: selectedIncident ? 'auto' : 'none',
-        }}
-      >
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-[#3d5a72]" />
-        </div>
-        {selectedIncident && (
-          <div className="px-5 pb-20 pt-2">
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center p-4 md:p-10"
+          style={{ background: 'rgba(8,11,14,0.82)', backdropFilter: 'blur(4px)' }}
+          onClick={handleCloseIncident}
+        >
+          <div
+            className="relative w-full bg-[#0d1117] overflow-y-auto px-7 py-7 md:px-10 md:py-8"
+            style={{
+              maxWidth: 520,
+              maxHeight: '88vh',
+              border: `1px solid ${selectedIncident.isResolved ? GOLD + '55' : '#00e6a04d'}`,
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#1e3040 transparent',
+              boxShadow: `0 0 48px ${selectedIncident.isResolved ? GOLD + '1a' : '#00e6a01a'}`,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* HUD corners */}
+            <div className="absolute top-3 left-3 w-4 h-4 pointer-events-none"
+              style={{ borderTop: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}`, borderLeft: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}` }} />
+            <div className="absolute top-3 right-3 w-4 h-4 pointer-events-none"
+              style={{ borderTop: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}`, borderRight: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}` }} />
+            <div className="absolute bottom-3 left-3 w-4 h-4 pointer-events-none"
+              style={{ borderBottom: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}`, borderLeft: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}` }} />
+            <div className="absolute bottom-3 right-3 w-4 h-4 pointer-events-none"
+              style={{ borderBottom: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}`, borderRight: `1.5px solid ${selectedIncident.isResolved ? GOLD : '#00e6a0'}` }} />
             <IncidentDetail
               incident={selectedIncident}
               onClose={handleCloseIncident}
               onBack={selectedCluster ? handleBackToCluster : undefined}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Error (both layouts) ──────────────────────────────────────────────── */}
       {error && (

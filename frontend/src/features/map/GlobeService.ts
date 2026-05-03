@@ -15,6 +15,8 @@ interface RawIncident {
   location_mkmbv7be?: string; // primary coordinate source
   country_mkmb91h3?: string;  // fallback coordinate source
   check_mkn3c7v8?: string;    // life-threatening flag
+  text_mm2rhefh?: string;     // incident description (what happened)
+  text_mm2rbp1q?: string;     // incident assistance (how we helped)
   [key: string]: unknown;
 }
 
@@ -29,6 +31,8 @@ export interface GlobeIncident {
   country: string;
   isLive: boolean;      // status_mkmbjwef in LIVE_STATUSES
   isResolved: boolean;  // status_mkmbjwef in HANDLED_STATUSES
+  description: string;  // what happened (text_mm2rhefh)
+  assistance: string;   // how we helped (text_mm2rbp1q)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,6 +105,8 @@ function processIncidents(raw: RawIncident[]): GlobeIncident[] {
       country:      inc.country_mkmb91h3?.trim() ?? 'Unknown',
       isLive,
       isResolved,
+      description:  inc.text_mm2rhefh?.trim() ?? '',
+      assistance:   inc.text_mm2rbp1q?.trim()  ?? '',
     });
   });
 

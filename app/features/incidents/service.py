@@ -11,6 +11,8 @@ _NEEDED_COLUMNS = [
     "country_mkmb91h3",  # fallback map coordinate / country breakdown
     "check_mkn3c7v8",    # life-threatening flag
     "timeline_mkmbcabh", # date range for current-month filter
+    "text_mm2rhefh",     # incident description (what happened)
+    "text_mm2rbp1q",     # incident assistance (how we helped)
 ]
 
 _COL_IDS = ', '.join(f'"{c}"' for c in _NEEDED_COLUMNS)
