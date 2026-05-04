@@ -593,6 +593,9 @@ export default function DashboardPage() {
                   <a href={DONATE_URL} className="support-donate-btn" target="_blank" rel="noopener noreferrer">
                     Donate Now
                   </a>
+                  <Link to="/fund-our-team" className="support-contact-btn">
+                    See How Funds Are Used
+                  </Link>
                   <a href={`mailto:${CONTACT_EMAIL}`} className="support-contact-btn">
                     Get in Touch
                   </a>
