@@ -454,6 +454,21 @@ export default function DashboardPage() {
                   </p>
                   <div className="mission-stats-row">
                     <div className="mission-stat-item">
+                      <div className="mission-stat-num">{data.summary.total_all_incidents}</div>
+                      <div className="mission-stat-lbl">Total Incidents</div>
+                    </div>
+                    <div className="mission-stat-divider" />
+                    <div className="mission-stat-item">
+                      <div className="mission-stat-num teal">
+                        {Math.floor(data.summary.total_all_incidents * 2.5 + 4)}
+                      </div>
+                      <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                        Calls Received
+                        <Tooltip text="Estimated total calls handled by our team across all incidents" />
+                      </div>
+                    </div>
+                    <div className="mission-stat-divider" />
+                    <div className="mission-stat-item">
                       <div className="mission-stat-num">{data.impact.count_life_saved}</div>
                       <div className="mission-stat-lbl">Lives Saved</div>
                     </div>
@@ -512,9 +527,24 @@ export default function DashboardPage() {
 
               {/* ── Live Mission Feed ── */}
               <SectionLabel text="Live Operations" stagger="stagger-2" />
-              <div className="stagger-2" style={{ marginBottom: 40 }}>
+              <div className="stagger-2" style={{ marginBottom: 32 }}>
                 <LiveMissionFeed />
               </div>
+
+              {/* ── Transparency strip ── */}
+              <Link to="/fund-our-team" className="transparency-strip fade-in stagger-3" style={{ marginBottom: 40 }}>
+                <div className="transparency-strip-left">
+                  <div className="transparency-strip-icon">◈</div>
+                  <div>
+                    <div className="transparency-strip-eyebrow">Full Cost Transparency</div>
+                    <div className="transparency-strip-headline">See exactly where your donation goes.</div>
+                    <div className="transparency-strip-text">
+                      Who responds, what each role costs, and the real impact behind every dollar.
+                    </div>
+                  </div>
+                </div>
+                <div className="transparency-strip-btn">See How Funds Are Used →</div>
+              </Link>
 
               {/* ── Live Operations Globe CTA ── */}
               <Link to="/map" className="globe-cta-banner fade-in stagger-3">

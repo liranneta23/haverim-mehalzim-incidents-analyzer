@@ -288,7 +288,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 0 32px;
+  padding: 0 22px;
 }
 .mission-stat-item:first-child { padding-left: 0; }
 .mission-stat-num {
@@ -425,6 +425,102 @@ header {
   0%   { transform: scale(0.4); opacity: 0.75; }
   60%  { opacity: 0.18; }
   100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* ─── TRANSPARENCY STRIP ─── */
+.transparency-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 28px 32px;
+  border: 1px solid rgba(0,230,160,0.2);
+  background: linear-gradient(135deg, rgba(0,230,160,0.06) 0%, rgba(0,230,160,0.02) 100%);
+  border-radius: 12px;
+  margin-bottom: 40px;
+  text-decoration: none;
+  transition: border-color 0.22s, background 0.22s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.transparency-strip::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent-teal);
+  opacity: 0.6;
+  border-radius: 12px 0 0 12px;
+}
+.transparency-strip:hover {
+  border-color: rgba(0,230,160,0.38);
+  background: linear-gradient(135deg, rgba(0,230,160,0.1) 0%, rgba(0,230,160,0.04) 100%);
+}
+.transparency-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+.transparency-strip-icon {
+  width: 52px; height: 52px;
+  border: 1px solid rgba(0,230,160,0.3);
+  border-radius: 12px;
+  background: rgba(0,230,160,0.09);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--accent-teal);
+}
+.transparency-strip-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+  margin-bottom: 6px;
+}
+.transparency-strip-headline {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+.transparency-strip-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.transparency-strip-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--bg-void);
+  background: var(--accent-teal);
+  border: 1px solid var(--accent-teal);
+  padding: 13px 26px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.transparency-strip:hover .transparency-strip-btn {
+  opacity: 0.85;
+}
+@media (max-width: 700px) {
+  .transparency-strip { flex-direction: column; align-items: flex-start; padding: 22px 20px; gap: 20px; }
+  .transparency-strip-btn { align-self: stretch; text-align: center; }
+  .transparency-strip-text { white-space: normal; }
+  .transparency-strip-headline { font-size: 16px; }
 }
 
 /* ─── GLOBE CTA BANNER ─── */

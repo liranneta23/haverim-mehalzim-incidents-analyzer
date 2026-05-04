@@ -349,11 +349,18 @@ function IncidentDetail({
       </a>
       <Link
         to="/fund-our-team"
-        className="flex items-center justify-center gap-1.5 w-full text-[10px] tracking-[0.18em] uppercase py-2 transition-colors hover:opacity-80"
-        style={{ color: `${accentColor}77` }}
+        className="flex items-center justify-center gap-2 w-full text-[10px] tracking-[0.18em] uppercase font-bold px-4 py-3 rounded transition-all"
+        style={{
+          color: accentColor,
+          border: `1px solid ${accentColor}44`,
+          background: `${accentColor}08`,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = `${accentColor}18`)}
+        onMouseLeave={e => (e.currentTarget.style.background = `${accentColor}08`)}
         onClick={onClose}
       >
-        See how every dollar is used →
+        <span style={{ fontSize: 10 }}>◈</span>
+        See How Funds Are Used
       </Link>
     </div>
   );
