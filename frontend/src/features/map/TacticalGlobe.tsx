@@ -862,7 +862,7 @@ export default function TacticalGlobe() {
       </div>
 
       {/* ── Desktop: donate CTA (bottom-right) ──────────────────────────────── */}
-      <div className="hidden md:block absolute bottom-10 right-6">
+      <div className="hidden md:flex absolute bottom-10 right-6 flex-col items-end gap-1.5">
         <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 px-4 py-2
                      border border-[#00e6a0]/40 bg-[#0B0E11]/90
@@ -871,6 +871,11 @@ export default function TacticalGlobe() {
           <span>♥</span>
           <span>Support Our Mission</span>
         </a>
+        <Link to="/fund-our-team"
+          className="text-[8px] tracking-[0.16em] uppercase text-[#3d5a72]
+                     hover:text-[#00e6a0] transition-colors px-1">
+          ◈ See How Funds Are Used →
+        </Link>
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════════
@@ -912,12 +917,19 @@ export default function TacticalGlobe() {
           Filter{selectedTypes.size > 0 ? ` (${selectedTypes.size})` : ''}
         </button>
 
-        <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase
-                     text-[#00e6a0] bg-[#00e6a0]/10 border border-[#00e6a0]/30
-                     px-3 py-1.5 active:opacity-70 transition-opacity">
-          ♥ Donate
-        </a>
+        <div className="flex items-center gap-2">
+          <Link to="/fund-our-team"
+            className="text-[9px] tracking-[0.14em] uppercase text-[#3d5a72]
+                       hover:text-[#00e6a0] active:opacity-70 transition-colors">
+            ◈ How we use funds
+          </Link>
+          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase
+                       text-[#00e6a0] bg-[#00e6a0]/10 border border-[#00e6a0]/30
+                       px-3 py-1.5 active:opacity-70 transition-opacity">
+            ♥ Donate
+          </a>
+        </div>
       </div>
 
       {/* ── Mobile: filter bottom sheet ──────────────────────────────────────── */}
