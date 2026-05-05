@@ -213,6 +213,27 @@ header {
     min-width: 36px; text-align: center;
 }
 
+/* ─── SHOW ALL BUTTON ─── */
+.show-all-btn {
+    display: block;
+    width: 100%;
+    padding: 11px 22px;
+    background: none;
+    border: none;
+    border-top: 1px solid var(--border-dim);
+    color: var(--accent-teal);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: center;
+}
+.show-all-btn:hover {
+    background: rgba(0,230,160,0.04);
+}
+
 /* ─── MONTH SECTION ─── */
 .month-hero {
     background: var(--bg-card); border: 1px solid var(--border-dim);
@@ -753,4 +774,416 @@ header {
     .support-actions    { flex-direction: column; }
     .support-donate-btn,
     .support-contact-btn { text-align: center; }
+}
+
+/* ─── GROWTH SNAPSHOT ─── */
+.growth-snapshot {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+.growth-snapshot::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent-teal);
+    opacity: 0.5;
+}
+.growth-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px 16px 28px;
+    border-bottom: 1px solid var(--border-dim);
+}
+.growth-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-teal);
+}
+.growth-period {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+.growth-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.growth-grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+.growth-metric {
+    padding: 24px 28px;
+    border-right: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.growth-metric:last-child { border-right: none; }
+.growth-metric-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.growth-metric-values {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.growth-metric-prev {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: -1px;
+    opacity: 0.6;
+}
+.growth-arrow {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--border-mid);
+}
+.growth-metric-curr {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.growth-metric-curr.gm-teal  { color: var(--accent-teal); text-shadow: 0 0 30px rgba(0,230,160,0.3); }
+.growth-metric-curr.gm-amber { color: var(--accent-amber); text-shadow: 0 0 30px rgba(255,185,48,0.3); }
+.growth-delta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    width: fit-content;
+}
+.growth-delta.gd-up   { color: #00e6a0; background: rgba(0,230,160,0.1);  border: 1px solid rgba(0,230,160,0.2); }
+.growth-delta.gd-down { color: #ff4040; background: rgba(255,64,64,0.08); border: 1px solid rgba(255,64,64,0.2); }
+.growth-delta.gd-flat { color: var(--text-muted); background: transparent; border: 1px solid var(--border-dim); }
+.growth-delta-pct     { opacity: 0.8; }
+
+/* Period card inline delta badges */
+.period-delta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+.period-delta.gd-up   { color: #00e6a0; background: rgba(0,230,160,0.1);  border: 1px solid rgba(0,230,160,0.2); }
+.period-delta.gd-down { color: #ff4040; background: rgba(255,64,64,0.08); border: 1px solid rgba(255,64,64,0.2); }
+
+/* ─── DONOR ROI SECTION ─── */
+.donor-roi-section {
+    background: linear-gradient(135deg, rgba(0,18,10,0.9) 0%, rgba(8,11,20,0.95) 100%);
+    border: 1px solid rgba(0,230,160,0.2);
+    border-radius: 16px;
+    padding: 40px 44px;
+    position: relative;
+    overflow: hidden;
+}
+.donor-roi-section::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,230,160,0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Header */
+.donor-roi-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 32px;
+}
+.donor-roi-header-left { flex: 1; min-width: 0; }
+.donor-roi-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-teal);
+    margin-bottom: 10px;
+}
+.donor-roi-headline {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+.donor-roi-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 560px;
+}
+.donor-roi-impact-badge {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 22px 28px;
+    border: 1px solid rgba(0,230,160,0.25);
+    border-radius: 12px;
+    background: rgba(0,230,160,0.05);
+}
+.donor-roi-impact-num {
+    font-family: var(--font-display);
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    color: var(--accent-teal);
+    text-shadow: 0 0 40px rgba(0,230,160,0.4);
+    margin-bottom: 6px;
+}
+.donor-roi-impact-lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    max-width: 120px;
+    line-height: 1.5;
+}
+
+/* ROI stats row */
+.donor-roi-stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 24px 0;
+    border-top: 1px solid var(--border-dim);
+    border-bottom: 1px solid var(--border-dim);
+    margin-bottom: 32px;
+}
+.donor-roi-stat {
+    flex: 1;
+    padding: 0 24px;
+}
+.donor-roi-stat:first-child { padding-left: 0; }
+.donor-roi-stat-num {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+.donor-roi-stat-num.roi-teal  { color: var(--accent-teal); }
+.donor-roi-stat-num.roi-amber { color: var(--accent-amber); }
+.donor-roi-stat-lbl {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.donor-roi-stat-div {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, transparent, var(--border-dim) 30%, var(--border-dim) 70%, transparent);
+    flex-shrink: 0;
+}
+
+/* Tier grid */
+.donor-tiers-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+.donor-tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.donor-tier-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    padding: 22px 18px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.donor-tier-card:hover {
+    border-color: var(--border-mid);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+.donor-tier-card.active {
+    border-color: rgba(0,230,160,0.5);
+    background: rgba(0,230,160,0.04);
+    box-shadow: 0 0 24px rgba(0,230,160,0.08);
+}
+.donor-tier-card.highlight {
+    border-color: rgba(0,230,160,0.3);
+    background: linear-gradient(135deg, rgba(0,18,12,0.9) 0%, rgba(0,10,8,0.95) 100%);
+}
+.donor-tier-card.highlight.active {
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 32px rgba(0,230,160,0.15);
+}
+.donor-tier-badge {
+    position: absolute;
+    top: -1px; right: 14px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bg-void);
+    background: var(--accent-teal);
+    padding: 3px 9px;
+    border-radius: 0 0 5px 5px;
+}
+.donor-tier-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+.donor-tier-amount {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: var(--text-primary);
+}
+.donor-tier-card.active .donor-tier-amount { color: var(--accent-teal); }
+.donor-tier-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.donor-tier-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+
+/* Footer: detail + CTA */
+.donor-roi-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border-dim);
+    flex-wrap: wrap;
+}
+.donor-tier-detail {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.donor-tier-detail-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.donor-tier-detail-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+.donor-roi-cta {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.donor-roi-btn-primary {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bg-void);
+    background: var(--accent-teal);
+    border: 1px solid var(--accent-teal);
+    padding: 12px 26px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+.donor-roi-btn-primary:hover { opacity: 0.85; }
+.donor-roi-btn-secondary {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border-mid);
+    padding: 12px 22px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.donor-roi-btn-secondary:hover { border-color: var(--border-accent); color: var(--accent-teal); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+    .donor-tiers-grid { grid-template-columns: 1fr 1fr; }
+    .donor-roi-header { flex-direction: column; }
+    .donor-roi-impact-badge { align-self: flex-start; }
+    .growth-metric-curr { font-size: 32px; }
+    .growth-metric-prev { font-size: 22px; }
+}
+@media (max-width: 700px) {
+    .growth-grid, .growth-grid-2 { grid-template-columns: 1fr; }
+    .growth-metric { border-right: none; border-bottom: 1px solid var(--border-dim); }
+    .growth-metric:last-child { border-bottom: none; }
+    .donor-roi-section { padding: 28px 20px; }
+    .donor-roi-stats { flex-wrap: wrap; gap: 20px; }
+    .donor-roi-stat-div { display: none; }
+    .donor-roi-stat { padding: 0; flex: none; width: calc(50% - 10px); }
+    .donor-tiers-grid { grid-template-columns: 1fr 1fr; }
+    .donor-roi-footer { flex-direction: column; align-items: flex-start; }
+    .donor-roi-cta { width: 100%; }
+    .donor-roi-btn-primary, .donor-roi-btn-secondary { flex: 1; text-align: center; }
+    .donor-roi-headline { font-size: 22px; }
+}
+@media (max-width: 480px) {
+    .donor-tiers-grid { grid-template-columns: 1fr; }
+    .growth-metric-curr { font-size: 36px; }
+    .donor-roi-impact-badge { width: 100%; }
+    .donor-roi-impact-num { font-size: 40px; }
 }

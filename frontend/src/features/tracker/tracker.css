@@ -1,0 +1,521 @@
+/* ─── Tracker page tokens ──────────────────────────────────────────────────── */
+.tracker-page {
+  --tr-bg:           #06090f;
+  --tr-surface:      #0c1522;
+  --tr-border:       rgba(0, 201, 177, 0.14);
+  --tr-teal:         #00c9b1;
+  --tr-teal-soft:    rgba(0, 201, 177, 0.55);
+  --tr-glow:         rgba(0, 201, 177, 0.22);
+  --tr-text:         #e2e8f0;
+  --tr-text-dim:     rgba(226, 232, 240, 0.45);
+  --tr-text-faint:   rgba(226, 232, 240, 0.18);
+  --tr-amber:        #f59e0b;
+  --tr-amber-glow:   rgba(245, 158, 11, 0.22);
+}
+
+/* Sensitive path: swap teal → amber everywhere */
+.tracker-page.sensitive {
+  --tr-teal:       #f59e0b;
+  --tr-teal-soft:  rgba(245, 158, 11, 0.55);
+  --tr-glow:       rgba(245, 158, 11, 0.22);
+  --tr-border:     rgba(245, 158, 11, 0.14);
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+.tracker-page {
+  min-height: 100dvh;
+  background: var(--tr-bg);
+  color: var(--tr-text);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Dot-grid background */
+.tracker-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0, 201, 177, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────────── */
+.tracker-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(6, 9, 15, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--tr-border);
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tracker-header-org {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  color: var(--tr-teal);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.tracker-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--tr-text-dim);
+  text-transform: uppercase;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.25rem 0.6rem;
+  border-radius: 100px;
+}
+
+.tracker-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: tr-dot-blink 1.8s ease-in-out infinite;
+}
+
+@keyframes tr-dot-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+.tracker-case-id {
+  font-size: 0.62rem;
+  color: var(--tr-text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* ─── Top progress bar ───────────────────────────────────────────────────────── */
+.tracker-topbar {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: visible;
+}
+
+.tracker-topbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--tr-teal), color-mix(in srgb, var(--tr-teal) 80%, white 20%));
+  border-radius: 2px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.tracker-topbar-fill::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tr-teal);
+  box-shadow: 0 0 14px 5px var(--tr-glow);
+  transition: opacity 0.3s;
+}
+
+/* ─── Main content ───────────────────────────────────────────────────────────── */
+.tracker-content {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Hero section ───────────────────────────────────────────────────────────── */
+.tracker-hero {
+  text-align: center;
+  padding: 2rem 0 2.5rem;
+}
+
+.tracker-ring-wrap {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  margin: 0 auto 1.75rem;
+}
+
+.tracker-ring-svg {
+  transform: rotate(-90deg);
+  width: 148px;
+  height: 148px;
+  overflow: visible;
+}
+
+.tracker-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 7;
+}
+
+.tracker-ring-fill {
+  fill: none;
+  stroke: var(--tr-teal);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 10px var(--tr-glow));
+}
+
+.tracker-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.tracker-ring-num {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--tr-teal);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.tracker-ring-denom {
+  font-size: 0.65rem;
+  color: var(--tr-text-dim);
+  letter-spacing: 0.06em;
+}
+
+.tracker-hero-eyebrow {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tr-teal);
+  margin-bottom: 0.55rem;
+  opacity: 0.8;
+}
+
+.tracker-hero-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--tr-text);
+  line-height: 1.2;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.02em;
+  font-family: 'Syne', sans-serif;
+}
+
+.tracker-hero-subtitle {
+  font-size: 0.88rem;
+  color: var(--tr-text-dim);
+  max-width: 360px;
+  margin: 0 auto;
+  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+}
+
+/* ─── Divider ────────────────────────────────────────────────────────────────── */
+.tracker-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tr-border), transparent);
+  margin: 0 0 2rem;
+}
+
+/* ─── Timeline ───────────────────────────────────────────────────────────────── */
+.tracker-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Connector line between steps */
+.tracker-connector {
+  width: 2px;
+  height: 20px;
+  margin-left: 19px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  transition: background 0.4s;
+}
+.tracker-connector.filled { background: var(--tr-teal); box-shadow: 0 0 6px var(--tr-glow); }
+.tracker-connector.empty  { background: rgba(255, 255, 255, 0.07); }
+
+/* Step row */
+.tracker-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-radius: 14px;
+  padding: 0.75rem 0.85rem;
+  position: relative;
+  transition: background 0.35s, border-color 0.35s;
+  border: 1px solid transparent;
+}
+
+.tracker-step.complete { opacity: 0.72; }
+.tracker-step.upcoming { opacity: 0.38; }
+
+.tracker-step.active {
+  background: rgba(0, 201, 177, 0.05);
+  border-color: rgba(0, 201, 177, 0.18);
+  opacity: 1;
+  overflow: hidden;
+}
+
+/* Scan-line sweep on active step */
+.tracker-step.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(0, 201, 177, 0.07) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: tr-scan 3.5s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: 14px;
+}
+
+@keyframes tr-scan {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Step node (circle) */
+.tracker-step-node {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0;
+}
+
+.tracker-step.complete .tracker-step-node {
+  background: rgba(0, 201, 177, 0.12);
+  border: 2px solid var(--tr-teal-soft);
+  color: var(--tr-teal);
+}
+
+.tracker-step.active .tracker-step-node {
+  background: rgba(0, 201, 177, 0.16);
+  border: 2px solid var(--tr-teal);
+  color: var(--tr-teal);
+  box-shadow: 0 0 0 5px rgba(0, 201, 177, 0.07), 0 0 22px var(--tr-glow);
+  animation: tr-node-pulse 2.6s ease-in-out infinite;
+}
+
+.tracker-step.upcoming .tracker-step-node {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes tr-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(0, 201, 177, 0.06), 0 0 16px var(--tr-glow); }
+  50%       { box-shadow: 0 0 0 9px rgba(0, 201, 177, 0.04), 0 0 30px var(--tr-glow); }
+}
+
+/* Step text */
+.tracker-step-body { flex: 1; min-width: 0; padding: 0.15rem 0; }
+
+.tracker-step-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tr-text);
+  margin-bottom: 0.3rem;
+  line-height: 1.3;
+  transition: color 0.3s;
+}
+
+.tracker-step-subtitle {
+  font-size: 0.76rem;
+  color: var(--tr-text-dim);
+  line-height: 1.55;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+}
+
+.tracker-step-pill {
+  display: inline-block;
+  font-size: 0.57rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 100px;
+  margin-top: 0.5rem;
+}
+
+.tracker-step.active .tracker-step-pill {
+  background: rgba(0, 201, 177, 0.14);
+  color: var(--tr-teal);
+  border: 1px solid rgba(0, 201, 177, 0.28);
+}
+
+.tracker-step.complete .tracker-step-pill {
+  background: rgba(0, 201, 177, 0.07);
+  color: var(--tr-teal-soft);
+  border: 1px solid rgba(0, 201, 177, 0.15);
+}
+
+/* ─── Completion banner ──────────────────────────────────────────────────────── */
+.tracker-done-banner {
+  background: linear-gradient(135deg, rgba(0, 201, 177, 0.07), rgba(0, 201, 177, 0.02));
+  border: 1px solid rgba(0, 201, 177, 0.2);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.tracker-done-mark {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 1.1rem;
+  color: var(--tr-teal);
+}
+
+.tracker-done-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--tr-teal);
+  margin-bottom: 0.6rem;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.tracker-done-subtitle {
+  font-size: 0.85rem;
+  color: var(--tr-text-dim);
+  line-height: 1.7;
+  max-width: 320px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────────── */
+.tracker-footer {
+  text-align: center;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tracker-footer-meta {
+  font-size: 0.6rem;
+  color: var(--tr-text-faint);
+  letter-spacing: 0.06em;
+}
+
+.tracker-footer-link {
+  font-size: 0.72rem;
+  color: var(--tr-teal);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s;
+}
+
+.tracker-footer-link:hover { opacity: 0.7; text-decoration: underline; }
+
+/* ─── Error / loading states ─────────────────────────────────────────────────── */
+.tracker-fullpage-state {
+  min-height: 100dvh;
+  background: #06090f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  color: #e2e8f0;
+}
+
+.tracker-state-code {
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.06);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin-bottom: 1.25rem;
+}
+
+.tracker-state-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 0.75rem;
+}
+
+.tracker-state-body {
+  font-size: 0.82rem;
+  color: rgba(226, 232, 240, 0.45);
+  max-width: 340px;
+  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tracker-state-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: #00c9b1;
+  font-size: 0.78rem;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+}
+
+.tracker-state-link:hover { text-decoration: underline; }
+
+/* Skeleton shimmer */
+.tr-skel {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: tr-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes tr-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Mobile ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .tracker-hero-title    { font-size: 1.35rem; }
+  .tracker-ring-num      { font-size: 2rem; }
+  .tracker-content       { padding: 1.75rem 1rem 4rem; }
+  .tracker-ring-wrap     { width: 128px; height: 128px; }
+  .tracker-ring-svg      { width: 128px; height: 128px; }
+  .tracker-header        { padding: 0.75rem 1rem; }
+  .tracker-header-org    { font-size: 0.62rem; }
+}

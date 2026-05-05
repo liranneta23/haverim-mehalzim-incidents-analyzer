@@ -20,6 +20,18 @@ export interface DashboardData {
     incident_types: Record<string, number>;
     handled_incident_types: Record<string, number>;
   };
+  last_year: {
+    total_incidents: number;
+    handled_incidents: number;
+    incident_types: Record<string, number>;
+    handled_incident_types: Record<string, number>;
+  };
+  year_before_last: {
+    total_incidents: number;
+    handled_incidents: number;
+    incident_types: Record<string, number>;
+    handled_incident_types: Record<string, number>;
+  };
   current_month: {
     total_incidents: number;
     handled_incidents: number;

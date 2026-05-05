@@ -41,6 +41,38 @@ def get_incidents_current_month(incidents_list):
     return result
 
 
+def get_incidents_year_before_last(incidents_list):
+    now = datetime.now()
+    target_year = now.year - 2
+    result = []
+    for row in incidents_list:
+        timeline = row.get('timeline_mkmbcabh')
+        if timeline and '-' in timeline:
+            try:
+                start = datetime.strptime(timeline.split(' - ')[0].strip(), '%Y-%m-%d')
+                if start.year == target_year:
+                    result.append(row)
+            except Exception as e:
+                print(f"Skipping row due to date error: {e}")
+    return result
+
+
+def get_incidents_last_year(incidents_list):
+    now = datetime.now()
+    target_year = now.year - 1
+    result = []
+    for row in incidents_list:
+        timeline = row.get('timeline_mkmbcabh')
+        if timeline and '-' in timeline:
+            try:
+                start = datetime.strptime(timeline.split(' - ')[0].strip(), '%Y-%m-%d')
+                if start.year == target_year:
+                    result.append(row)
+            except Exception as e:
+                print(f"Skipping row due to date error: {e}")
+    return result
+
+
 def get_incidents_last_month(incidents_list):
     now = datetime.now()
     if now.month == 1:

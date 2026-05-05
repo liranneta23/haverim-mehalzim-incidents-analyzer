@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
@@ -12,12 +13,13 @@ const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 const AVG_MISSION_COST = 350;   // USD — avg cost per handled incident
 const FIELD_PERCENT    = 92;    // % of donations that reach field operations
 
-const DONATION_TIERS = [
+interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; }
+const DONATION_TIERS: DonationTier[] = [
   { amount: 80,  title: 'Standby Officer',      desc: 'Funds one volunteer on immediate standby for a full mission shift',           icon: '⚡' },
   { amount: 150, title: 'Case Manager',         desc: 'Covers full case coordination — from first call through to closure',          icon: '◈' },
   { amount: 350, title: 'Full Mission',         desc: 'Deploys a complete, coordinated response team for one incident end-to-end',   icon: '♥', highlight: true },
   { amount: 530, title: 'Life-Saving Response', desc: 'Funds the full specialist team for a critical life-threatening emergency',    icon: '★' },
-] as const;
+];
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -79,6 +81,169 @@ function KpiCard({ color, value, label, icon, tooltip }: {
 }
 
 
+// ─── Growth + ROI components ──────────────────────────────────────────────────
+
+function GrowthMetric({
+  label, prev, curr, delta, prevNum, accent, deltaSuffix = '',
+}: {
+  label: string; prev: string; curr: string;
+  delta: number; prevNum: number; accent?: 'teal' | 'amber'; deltaSuffix?: string;
+}) {
+  const pct = prevNum > 0 ? Math.round(Math.abs(delta) / prevNum * 100) : null;
+  const dir = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+  return (
+    <div className="growth-metric">
+      <div className="growth-metric-label">{label}</div>
+      <div className="growth-metric-values">
+        <span className="growth-metric-prev">{prev}</span>
+        <span className="growth-arrow">→</span>
+        <span className={`growth-metric-curr${accent ? ` gm-${accent}` : ''}`}>{curr}</span>
+      </div>
+      <div className={`growth-delta gd-${dir}`}>
+        {dir === 'flat' ? '—' : (
+          <>
+            {dir === 'up' ? '↑' : '↓'}{' '}
+            {delta > 0 ? '+' : ''}{delta}{deltaSuffix}
+            {pct !== null && !deltaSuffix && <span className="growth-delta-pct"> ({pct}%)</span>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GrowthSnapshot({
+  currentYearLabel, lastYearLabel, currentData, lastData,
+}: {
+  currentYearLabel: string; lastYearLabel: string;
+  currentData: { total: number; handled: number };
+  lastData:    { total: number; handled: number };
+}) {
+  return (
+    <div className="growth-snapshot fade-in stagger-4">
+      <div className="growth-header">
+        <span className="growth-eyebrow">◈ Year over Year Growth</span>
+        <span className="growth-period">{lastYearLabel} → {currentYearLabel}</span>
+      </div>
+      <div className="growth-grid growth-grid-2">
+        <GrowthMetric
+          label="Incidents Received"
+          prev={lastData.total.toString()}
+          curr={currentData.total.toString()}
+          delta={currentData.total - lastData.total}
+          prevNum={lastData.total}
+        />
+        <GrowthMetric
+          label="Cases Managed"
+          prev={lastData.handled.toString()}
+          curr={currentData.handled.toString()}
+          delta={currentData.handled - lastData.handled}
+          prevNum={lastData.handled}
+          accent="teal"
+        />
+      </div>
+    </div>
+  );
+}
+
+function DonorROI({ data }: { data: DashboardData }) {
+  const [activeTierIdx, setActiveTierIdx] = useState(2);
+  const activeTier = DONATION_TIERS[activeTierIdx];
+
+  const yearHandled   = data.current_year.handled_incidents;
+  const yearDeployed  = yearHandled * AVG_MISSION_COST;
+  const livesSaved    = data.impact.count_life_saved;
+  const costPerLife   = livesSaved > 0 ? Math.round(yearDeployed / livesSaved) : null;
+  const currentYear   = new Date().getFullYear();
+
+  return (
+    <div className="donor-roi-section fade-in stagger-4">
+
+      {/* Header */}
+      <div className="donor-roi-header">
+        <div className="donor-roi-header-left">
+          <div className="donor-roi-eyebrow">◈ Your Donation in Action</div>
+          <h2 className="donor-roi-headline">See what your money actually does.</h2>
+          <p className="donor-roi-sub">
+            In {currentYear}, donors have funded{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{yearHandled} missions</strong>{' '}
+            — <strong style={{ color: 'var(--accent-teal)' }}>${yearDeployed.toLocaleString()}</strong> deployed
+            directly to field operations. Every dollar you give puts a trained volunteer on the ground.
+          </p>
+        </div>
+        <div className="donor-roi-impact-badge">
+          <div className="donor-roi-impact-num">{FIELD_PERCENT}%</div>
+          <div className="donor-roi-impact-lbl">of every dollar reaches the field</div>
+        </div>
+      </div>
+
+      {/* ROI stats row */}
+      <div className="donor-roi-stats">
+        <div className="donor-roi-stat">
+          <div className="donor-roi-stat-num">${AVG_MISSION_COST}</div>
+          <div className="donor-roi-stat-lbl">Average cost per mission</div>
+        </div>
+        <div className="donor-roi-stat-div" />
+        {costPerLife && (
+          <>
+            <div className="donor-roi-stat">
+              <div className="donor-roi-stat-num roi-amber">${costPerLife.toLocaleString()}</div>
+              <div className="donor-roi-stat-lbl">Cost per life stabilized</div>
+            </div>
+            <div className="donor-roi-stat-div" />
+          </>
+        )}
+        <div className="donor-roi-stat">
+          <div className="donor-roi-stat-num roi-teal">{yearHandled}</div>
+          <div className="donor-roi-stat-lbl">Missions funded this year</div>
+        </div>
+        <div className="donor-roi-stat-div" />
+        <div className="donor-roi-stat">
+          <div className="donor-roi-stat-num roi-teal">{livesSaved}</div>
+          <div className="donor-roi-stat-lbl">Lives stabilized, all time</div>
+        </div>
+      </div>
+
+      {/* Tier selector */}
+      <div className="donor-tiers-label">Choose your impact level</div>
+      <div className="donor-tiers-grid">
+        {DONATION_TIERS.map((tier, i) => (
+          <button
+            key={tier.amount}
+            className={`donor-tier-card${tier.highlight ? ' highlight' : ''}${activeTierIdx === i ? ' active' : ''}`}
+            onClick={() => setActiveTierIdx(i)}
+          >
+            {tier.highlight && <div className="donor-tier-badge">Most Impactful</div>}
+            <div className="donor-tier-icon">{tier.icon}</div>
+            <div className="donor-tier-amount">${tier.amount}</div>
+            <div className="donor-tier-title">{tier.title}</div>
+            <div className="donor-tier-desc">{tier.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Detail + CTA */}
+      <div className="donor-roi-footer">
+        <div className="donor-tier-detail">
+          <span className="donor-tier-detail-icon">{activeTier.icon}</span>
+          <span className="donor-tier-detail-text">
+            <strong>${activeTier.amount}</strong> {activeTier.desc.charAt(0).toLowerCase() + activeTier.desc.slice(1)}
+          </span>
+        </div>
+        <div className="donor-roi-cta">
+          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-roi-btn-primary">
+            ♥ Donate ${activeTier.amount} Now
+          </a>
+          <Link to="/fund-our-team" className="donor-roi-btn-secondary">
+            See Full Cost Breakdown →
+          </Link>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
 function YearTypeRows({ received, handled }: { received: Record<string, number>; handled: Record<string, number> }) {
   const allTypes = Array.from(new Set([...Object.keys(received), ...Object.keys(handled)]));
   allTypes.sort((a, b) => (received[b] ?? 0) - (received[a] ?? 0));
@@ -91,12 +256,12 @@ function YearTypeRows({ received, handled }: { received: Record<string, number>;
         <div className="type-name" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Type</div>
         <div style={{ flex: 1 }} />
         <div className="type-count" style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 64, display: 'flex', alignItems: 'center', gap: 2 }}>
-          All
-          <Tooltip text="Total incidents reported, regardless of outcome" />
+          Received
+          <Tooltip text="Total calls received by our Emergency Response Center" />
         </div>
         <div className="type-count" style={{ fontSize: 10, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.1em', minWidth: 56, display: 'flex', alignItems: 'center', gap: 2 }}>
-          Handled
-          <Tooltip text="Incidents where our volunteers successfully intervened" />
+          Cases
+          <Tooltip text="Emergency cases our team coordinated and managed end-to-end" />
         </div>
       </div>
       {allTypes.map(type => {
@@ -149,6 +314,134 @@ function CountryRows({ countries }: { countries: Record<string, number> }) {
           <div className="country-badge">{count}</div>
         </div>
       ))}
+    </>
+  );
+}
+
+function CountriesModal({ title, countries, onClose }: {
+  title: string; countries: Record<string, number>; onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  const total = Object.keys(countries).length;
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(4,8,12,0.88)', backdropFilter: 'blur(6px)',
+        padding: 24,
+        animation: 'fadeIn 0.15s ease',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#0d1117',
+          border: '1px solid rgba(0,230,160,0.2)',
+          borderRadius: 16,
+          width: '100%', maxWidth: 480,
+          maxHeight: '80vh',
+          overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+          boxShadow: '0 0 0 1px rgba(0,230,160,0.06), 0 32px 80px rgba(0,0,0,0.7)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 22px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+          background: 'rgba(0,230,160,0.03)',
+        }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+              {title}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-teal)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 3 }}>
+              {total} countries
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 8, cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: 18, lineHeight: 1,
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >×</button>
+        </div>
+        {/* Scrollable list */}
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          <CountryRows countries={countries} />
+        </div>
+        {/* Footer hint */}
+        <div style={{
+          padding: '10px 22px',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          fontFamily: 'var(--font-mono)', fontSize: 10,
+          color: 'rgba(255,255,255,0.18)', letterSpacing: '0.1em',
+          textAlign: 'center', flexShrink: 0,
+        }}>
+          Press ESC or click outside to close
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+const COUNTRY_PREVIEW = 5;
+
+function CountryPanel({ title, countries }: { title: string; countries: Record<string, number> }) {
+  const [open, setOpen] = useState(false);
+  const entries = Object.entries(countries).sort((a, b) => b[1] - a[1]);
+  const total = entries.length;
+  const preview = Object.fromEntries(entries.slice(0, COUNTRY_PREVIEW));
+
+  return (
+    <>
+      <div className="panel">
+        <div className="panel-header">
+          <div className="panel-title">{title}</div>
+          <div className="panel-count">{total} countries</div>
+        </div>
+        <div className="panel-body">
+          <CountryRows countries={preview} />
+        </div>
+        {total > COUNTRY_PREVIEW && (
+          <button
+            onClick={() => setOpen(true)}
+            className="show-all-btn"
+          >
+            Show all {total} countries ↗
+          </button>
+        )}
+      </div>
+      {open && (
+        <CountriesModal
+          title={title}
+          countries={countries}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
@@ -253,11 +546,11 @@ function PeriodCard({
         <div className="month-stats">
           <div className="month-stat">
             <div className="month-stat-value">{d.total}</div>
-            <div className="month-stat-label">All Incidents</div>
+            <div className="month-stat-label">Incidents Received</div>
           </div>
           <div className="month-stat">
             <div className="month-stat-value" style={{ color: 'var(--accent-teal)' }}>{d.handled}</div>
-            <div className="month-stat-label">Incidents Handled</div>
+            <div className="month-stat-label">Cases Managed</div>
           </div>
         </div>
         <div className="month-divider" />
@@ -523,7 +816,7 @@ export default function DashboardPage() {
                       <div className="mission-stat-num">
                         <CountUp to={data.summary.total_handled_incidents} delay={200} />
                       </div>
-                      <div className="mission-stat-lbl">Incidents Managed</div>
+                      <div className="mission-stat-lbl">Cases Managed</div>
                     </div>
                     <div className="mission-stat-divider" />
                     <div className="mission-stat-item">
@@ -583,16 +876,16 @@ export default function DashboardPage() {
               {/* ── Incident Types ── */}
               <SectionLabel text="Incident Types — All Time" stagger="stagger-3" />
               <div className="two-col fade-in stagger-4">
-                <Panel title="All Incidents" count={`${Object.keys(data.all_time.incident_types).length} types`}>
+                <Panel title="Incidents Received" count={`${Object.keys(data.all_time.incident_types).length} types`}>
                   <TypeRows types={data.all_time.incident_types} />
                 </Panel>
-                <Panel title="Incidents Handled" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
+                <Panel title="Cases Managed" count={`${Object.keys(data.all_time.handled_incident_types).length} types`}>
                   <TypeRows types={data.all_time.handled_incident_types} />
                 </Panel>
               </div>
 
               {/* ── Performance by Period (combined month + year) ── */}
-              <div style={{ marginBottom: 40 }}>
+              <div style={{ marginBottom: 24 }}>
               <PeriodCard
                 currentMonth={currentMonth}
                 lastMonth={lastMonth}
@@ -618,25 +911,39 @@ export default function DashboardPage() {
               />
               </div>
 
+              {/* ── Growth Snapshot ── */}
+              <div style={{ marginBottom: 40 }}>
+                <GrowthSnapshot
+                  currentYearLabel={String(new Date().getFullYear() - 1)}
+                  lastYearLabel={String(new Date().getFullYear() - 2)}
+                  currentData={{
+                    total:   data.last_year.total_incidents,
+                    handled: data.last_year.handled_incidents,
+                  }}
+                  lastData={{
+                    total:   data.year_before_last.total_incidents,
+                    handled: data.year_before_last.handled_incidents,
+                  }}
+                />
+              </div>
+
               {/* ── Geographic Distribution ── */}
               <SectionLabel text="Geographic Distribution" stagger="stagger-4" />
               <div className="two-col fade-in stagger-5">
-                <Panel title="All Countries" count={`${Object.keys(data.all_time.countries).length} countries`}>
-                  <CountryRows countries={data.all_time.countries} />
-                </Panel>
-                <Panel title="Countries Handled" count={`${Object.keys(data.all_time.handled_countries).length} countries`}>
-                  <CountryRows countries={data.all_time.handled_countries} />
-                </Panel>
+                <CountryPanel title="All Countries" countries={data.all_time.countries} />
+                <CountryPanel title="Cases Managed" countries={data.all_time.handled_countries} />
               </div>
 
               {/* ── Countries This Month ── */}
               <div className="two-col fade-in stagger-5">
-                <Panel title="Countries This Month — All">
-                  <CountryRows countries={data.current_month.countries} />
-                </Panel>
-                <Panel title="Countries This Month — Handled">
-                  <CountryRows countries={data.current_month.handled_countries} />
-                </Panel>
+                <CountryPanel title="Countries This Month — All" countries={data.current_month.countries} />
+                <CountryPanel title="Countries This Month — Cases" countries={data.current_month.handled_countries} />
+              </div>
+
+              {/* ── Donor ROI ── */}
+              <SectionLabel text="Your Donation in Action" stagger="stagger-4" />
+              <div style={{ marginBottom: 40 }}>
+                <DonorROI data={data} />
               </div>
 
               {/* ── Support CTA ── */}
