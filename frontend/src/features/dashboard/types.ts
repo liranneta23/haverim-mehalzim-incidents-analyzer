@@ -28,6 +28,14 @@ export interface DashboardData {
     countries: Record<string, number>;
     handled_countries: Record<string, number>;
   };
+  last_month: {
+    total_incidents: number;
+    handled_incidents: number;
+    incident_types: Record<string, number>;
+    handled_incident_types: Record<string, number>;
+    countries: Record<string, number>;
+    handled_countries: Record<string, number>;
+  };
   impact: {
     count_life_saved: number;
     count_life_threatening_incidents: number;

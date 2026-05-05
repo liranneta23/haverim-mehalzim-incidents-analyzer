@@ -287,32 +287,64 @@ header {
 .mission-stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 22px;
+  gap: 8px;
+  padding: 0 28px;
 }
 .mission-stat-item:first-child { padding-left: 0; }
 .mission-stat-num {
   font-family: var(--font-display);
-  font-size: 56px;
+  font-size: 72px;
   font-weight: 800;
-  letter-spacing: -2px;
+  letter-spacing: -3px;
   line-height: 1;
   color: var(--accent-red);
 }
-.mission-stat-num.teal  { color: var(--accent-teal); }
-.mission-stat-num.amber { color: var(--accent-amber); }
+.mission-stat-num.teal {
+  color: var(--accent-teal);
+  text-shadow: 0 0 40px rgba(0,230,160,0.45), 0 0 80px rgba(0,230,160,0.15);
+}
+.mission-stat-num.amber {
+  color: var(--accent-amber);
+  text-shadow: 0 0 40px rgba(255,185,48,0.45), 0 0 80px rgba(255,185,48,0.15);
+}
 .mission-stat-lbl {
   font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 .mission-stat-divider {
   width: 1px;
-  height: 48px;
-  background: var(--border-dim);
+  height: 64px;
+  background: linear-gradient(to bottom, transparent, var(--border-dim) 30%, var(--border-dim) 70%, transparent);
+  flex-shrink: 0;
 }
+.mission-stats-secondary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  gap: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-dim);
+  margin-bottom: 32px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.mission-stat-secondary-value {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+.mission-stat-secondary-dot {
+  margin: 0 14px;
+  color: var(--border-dim);
+  opacity: 0.6;
+}
+
 .mission-actions {
   display: flex;
   gap: 12px;
@@ -693,9 +725,9 @@ header {
     .mission-hero-strip { padding: 28px 20px; }
     .mission-headline   { font-size: 26px; }
     .mission-body       { font-size: 14px; }
-    .mission-stats-row  { flex-wrap: wrap; row-gap: 16px; }
-    .mission-stat-num   { font-size: 38px; }
-    .mission-stat-item  { padding: 0 16px; }
+    .mission-stats-row  { flex-wrap: wrap; row-gap: 20px; }
+    .mission-stat-num   { font-size: 52px; }
+    .mission-stat-item  { padding: 0 18px; }
     /* hide vertical dividers when stats row wraps */
     .mission-stat-divider { display: none; }
     .globe-cta-banner   { flex-direction: column; align-items: flex-start; padding: 20px; }
@@ -710,7 +742,7 @@ header {
     .kpi-card           { padding: 16px; }
     .kpi-number         { font-size: 36px; }
     .kpi-label          { font-size: 12px; }
-    .mission-stat-num   { font-size: 32px; }
+    .mission-stat-num   { font-size: 40px; }
     .mission-stat-item  { padding: 0 12px; }
     .mission-stat-item:first-child { padding-left: 0; }
     .impact-number      { font-size: 40px; }

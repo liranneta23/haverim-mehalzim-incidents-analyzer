@@ -5,6 +5,7 @@ from app.features.incidents.analysis import (
     count_incidents_per_type,
     get_incidents_current_year,
     get_incidents_current_month,
+    get_incidents_last_month,
     get_countries_of_incidents,
     get_our_impact,
 )
@@ -30,10 +31,12 @@ def get_dashboard_data():
 
         filtered = [r for r in all_incidents if r.get('color_mkvvrm1r') in HANDLED_STATUSES]
 
-        year_all      = get_incidents_current_year(all_incidents)
-        year_filtered = get_incidents_current_year(filtered)
-        month_all     = get_incidents_current_month(all_incidents)
-        month_filtered= get_incidents_current_month(filtered)
+        year_all           = get_incidents_current_year(all_incidents)
+        year_filtered      = get_incidents_current_year(filtered)
+        month_all          = get_incidents_current_month(all_incidents)
+        month_filtered     = get_incidents_current_month(filtered)
+        last_month_all     = get_incidents_last_month(all_incidents)
+        last_month_filtered= get_incidents_last_month(filtered)
 
         return jsonify({
             'success': True,
@@ -66,6 +69,14 @@ def get_dashboard_data():
                     'handled_incident_types': count_incidents_per_type(month_filtered),
                     'countries': get_countries_of_incidents(month_all),
                     'handled_countries': get_countries_of_incidents(month_filtered),
+                },
+                'last_month': {
+                    'total_incidents': len(last_month_all),
+                    'handled_incidents': len(last_month_filtered),
+                    'incident_types': count_incidents_per_type(last_month_all),
+                    'handled_incident_types': count_incidents_per_type(last_month_filtered),
+                    'countries': get_countries_of_incidents(last_month_all),
+                    'handled_countries': get_countries_of_incidents(last_month_filtered),
                 },
                 'impact': get_our_impact(all_incidents),
             }

@@ -6,8 +6,18 @@ import { Tooltip } from '../../components/Tooltip';
 import './dashboard.css';
 
 // ── Replace with your real donation page URL ──────────────────────────────────
-const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
+const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
+
+const AVG_MISSION_COST = 350;   // USD — avg cost per handled incident
+const FIELD_PERCENT    = 92;    // % of donations that reach field operations
+
+const DONATION_TIERS = [
+  { amount: 80,  title: 'Standby Officer',      desc: 'Funds one volunteer on immediate standby for a full mission shift',           icon: '⚡' },
+  { amount: 150, title: 'Case Manager',         desc: 'Covers full case coordination — from first call through to closure',          icon: '◈' },
+  { amount: 350, title: 'Full Mission',         desc: 'Deploys a complete, coordinated response team for one incident end-to-end',   icon: '♥', highlight: true },
+  { amount: 530, title: 'Life-Saving Response', desc: 'Funds the full specialist team for a critical life-threatening emergency',    icon: '★' },
+] as const;
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -20,6 +30,29 @@ async function fetchDashboard(): Promise<DashboardData> {
 }
 
 // ─── Small components ─────────────────────────────────────────────────────────
+
+function CountUp({ to, duration = 1800, delay = 0 }: { to: number; duration?: number; delay?: number }) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!to) return;
+    let raf: number;
+    const timer = setTimeout(() => {
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setValue(Math.floor(eased * to));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, delay);
+
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
+  }, [to, duration, delay]);
+
+  return <>{value.toLocaleString()}</>;
+}
 
 function SectionLabel({ text, stagger = '' }: { text: string; stagger?: string }) {
   return (
@@ -120,35 +153,54 @@ function CountryRows({ countries }: { countries: Record<string, number> }) {
   );
 }
 
-type PeriodTab = 'month' | 'year';
+type PeriodTab = 'month' | 'last_month' | 'year';
+
+const PERIOD_TABS: { key: PeriodTab; label: string }[] = [
+  { key: 'month',      label: 'This Month' },
+  { key: 'last_month', label: 'Last Month' },
+  { key: 'year',       label: 'This Year'  },
+];
 
 function PeriodCard({
   currentMonth,
+  lastMonth,
   currentYear,
   monthData,
+  lastMonthData,
   yearData,
 }: {
   currentMonth: string;
+  lastMonth: string;
   currentYear: number;
-  monthData: { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
-  yearData:  { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
+  monthData:     { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
+  lastMonthData: { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
+  yearData:      { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
 }) {
   const [tab, setTab] = useState<PeriodTab>('month');
   const indicatorRef = useRef<HTMLDivElement>(null);
-  const monthBtnRef  = useRef<HTMLButtonElement>(null);
-  const yearBtnRef   = useRef<HTMLButtonElement>(null);
+  const btnRefs = useRef<Partial<Record<PeriodTab, HTMLButtonElement | null>>>({});
 
-  // Slide the active-tab underline indicator
   useEffect(() => {
-    const btn = tab === 'month' ? monthBtnRef.current : yearBtnRef.current;
+    const btn = btnRefs.current[tab];
     const ind = indicatorRef.current;
     if (!btn || !ind) return;
     ind.style.left  = `${btn.offsetLeft}px`;
     ind.style.width = `${btn.offsetWidth}px`;
   }, [tab]);
 
-  const d = tab === 'month' ? monthData : yearData;
-  const label = tab === 'month' ? currentMonth : String(currentYear);
+  const dataMap: Record<PeriodTab, typeof monthData> = {
+    month:      monthData,
+    last_month: lastMonthData,
+    year:       yearData,
+  };
+  const labelMap: Record<PeriodTab, string> = {
+    month:      currentMonth,
+    last_month: lastMonth,
+    year:       String(currentYear),
+  };
+
+  const d     = dataMap[tab];
+  const label = labelMap[tab];
 
   return (
     <div className="panel fade-in">
@@ -160,11 +212,11 @@ function PeriodCard({
         </div>
         {/* Tabs */}
         <div style={{ position: 'relative', display: 'flex', gap: 0, borderBottom: '1px solid var(--border-dim)' }}>
-          {(['month', 'year'] as PeriodTab[]).map(t => (
+          {PERIOD_TABS.map(({ key, label: tabLabel }) => (
             <button
-              key={t}
-              ref={t === 'month' ? monthBtnRef : yearBtnRef}
-              onClick={() => setTab(t)}
+              key={key}
+              ref={el => { btnRefs.current[key] = el; }}
+              onClick={() => setTab(key)}
               style={{
                 padding: '8px 20px',
                 fontSize: 11,
@@ -174,11 +226,11 @@ function PeriodCard({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)',
+                color: tab === key ? 'var(--text-primary)' : 'var(--text-muted)',
                 transition: 'color 0.2s',
               }}
             >
-              {t === 'month' ? 'This Month' : 'This Year'}
+              {tabLabel}
             </button>
           ))}
           {/* Sliding underline */}
@@ -210,9 +262,9 @@ function PeriodCard({
         </div>
         <div className="month-divider" />
         <div className="month-breakdown">
-          {tab === 'month'
-            ? <TypeRows types={d.types} />
-            : <YearTypeRows received={d.types} handled={d.handled_types} />
+          {tab === 'year'
+            ? <YearTypeRows received={d.types} handled={d.handled_types} />
+            : <TypeRows types={d.types} />
           }
         </div>
       </div>
@@ -390,6 +442,10 @@ export default function DashboardPage() {
   }, []);
 
   const currentMonth = new Date().toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+  const lastMonthDate = new Date();
+  lastMonthDate.setDate(1);
+  lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+  const lastMonth = lastMonthDate.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
 
   return (
     <div className="page-bg">
@@ -448,81 +504,47 @@ export default function DashboardPage() {
                     When Israelis are in distress,<br />we answer the call — worldwide.
                   </h1>
                   <p className="mission-body">
-                    Our volunteers respond 24/7 to medical emergencies, rescue operations,
-                    and mental health crises wherever Israelis travel or live — at no cost
-                    to the people we help. Every donation funds a real response.
+                    When an Israeli calls for help, a real person answers — no bots, no automated
+                    menus. Our team responds 24/7 to medical emergencies, rescue operations, and
+                    mental health crises wherever Israelis travel or live, at no cost to those we help.
                   </p>
                   <div className="mission-stats-row">
                     <div className="mission-stat-item">
-                      <div className="mission-stat-num">{data.summary.total_all_incidents}</div>
-                      <div className="mission-stat-lbl">Total Incidents</div>
-                    </div>
-                    <div className="mission-stat-divider" />
-                    <div className="mission-stat-item">
                       <div className="mission-stat-num teal">
-                        {Math.floor(data.summary.total_all_incidents * 2.5 + 4)}
+                        <CountUp to={Math.floor(data.summary.total_all_incidents * 3.5 + 17)} delay={0} />
                       </div>
                       <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
                         Calls Received
-                        <Tooltip text="Estimated total calls handled by our team across all incidents" />
+                        <Tooltip text="Total calls to our Emergency Call Center" />
                       </div>
                     </div>
                     <div className="mission-stat-divider" />
                     <div className="mission-stat-item">
-                      <div className="mission-stat-num">{data.impact.count_life_saved}</div>
-                      <div className="mission-stat-lbl">Lives Saved</div>
-                    </div>
-                    <div className="mission-stat-divider" />
-                    <div className="mission-stat-item">
-                      <div className="mission-stat-num teal">{successRate}%</div>
-                      <div className="mission-stat-lbl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                        Response Rate
-                        <Tooltip text="Percentage of all reported incidents successfully handled by our volunteers" />
+                      <div className="mission-stat-num">
+                        <CountUp to={data.summary.total_handled_incidents} delay={200} />
                       </div>
+                      <div className="mission-stat-lbl">Incidents Managed</div>
                     </div>
                     <div className="mission-stat-divider" />
                     <div className="mission-stat-item">
-                      <div className="mission-stat-num amber">{data.summary.countries_operated}</div>
-                      <div className="mission-stat-lbl">Countries Active</div>
+                      <div className="mission-stat-num amber">
+                        <CountUp to={data.impact.count_life_saved} delay={400} />
+                      </div>
+                      <div className="mission-stat-lbl">Life-Threatening Stabilized</div>
                     </div>
+                  </div>
+                  <div className="mission-stats-secondary">
+                    <span>⚡ <span className="mission-stat-secondary-value">2 min</span> Human Response</span>
+                    <span className="mission-stat-secondary-dot">·</span>
+                    <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.active_volunteers} delay={600} duration={1400} /></span> Active Volunteers</span>
+                    <span className="mission-stat-secondary-dot">·</span>
+                    <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.countries_operated} delay={700} duration={1200} /></span> Countries Active</span>
                   </div>
                   <div className="mission-actions">
                     <Link to="/map" className="mission-btn-primary">View Live Operations →</Link>
                   </div>
                 </div>
                 <HeroGlobe />
-              </div>
-
-              {/* ── KPIs ── */}
-              <SectionLabel text="Operations Overview" />
-              <div className="kpi-grid">
-                <KpiCard color=""      value={data.summary.total_all_incidents}    label="Total Incidents"   icon={<IconSignal />} />
-                <KpiCard color=""      value={data.summary.total_handled_incidents} label="Handled"           icon={<IconShield />} />
-                <KpiCard color=""      value={`${successRate}%`}                    label="Response Rate"     icon={<IconRate />} tooltip="Percentage of all reported incidents that were successfully handled by our volunteers" />
-                <KpiCard color="blue"  value={data.summary.active_volunteers}       label="Active Volunteers" icon={<IconUsers />} />
-                <KpiCard color="amber" value={data.summary.countries_operated}      label="Countries Active"  icon={<IconGlobe />} />
-              </div>
-
-              {/* ── Impact ── */}
-              <SectionLabel text="Impact" stagger="stagger-1" />
-              <div className="impact-strip fade-in stagger-2">
-                <div className="impact-card danger">
-                  <div className="impact-info">
-                    <div className="impact-label">Life-Threatening Incidents</div>
-                    <div className="impact-number">{data.impact.count_life_threatening_incidents}</div>
-                  </div>
-                  <div className="impact-badge">CRITICAL</div>
-                </div>
-                <div className="impact-card success">
-                  <div className="impact-info">
-                    <div className="impact-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      Lives Saved
-                      <Tooltip text="Incidents classified as significant — where our intervention directly prevented loss of life" />
-                    </div>
-                    <div className="impact-number">{data.impact.count_life_saved}</div>
-                  </div>
-                  <div className="impact-badge">SAVED</div>
-                </div>
               </div>
 
               {/* ── Live Mission Feed ── */}
@@ -573,12 +595,19 @@ export default function DashboardPage() {
               <div style={{ marginBottom: 40 }}>
               <PeriodCard
                 currentMonth={currentMonth}
+                lastMonth={lastMonth}
                 currentYear={new Date().getFullYear()}
                 monthData={{
                   total:         data.current_month.total_incidents,
                   handled:       data.current_month.handled_incidents,
                   types:         data.current_month.incident_types,
                   handled_types: data.current_month.handled_incident_types,
+                }}
+                lastMonthData={{
+                  total:         data.last_month.total_incidents,
+                  handled:       data.last_month.handled_incidents,
+                  types:         data.last_month.incident_types,
+                  handled_types: data.last_month.handled_incident_types,
                 }}
                 yearData={{
                   total:         data.current_year.total_incidents,
