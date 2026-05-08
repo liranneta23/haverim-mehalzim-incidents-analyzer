@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const TEAL  = '#00e6a0';
@@ -318,6 +319,110 @@ function PresetCard({ amount, label, desc, highlight = false }: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Testimonials
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Testimonial { name: string; message: string; case_ref: string; timestamp: string; }
+
+function TestimonialCard({ t }: { t: Testimonial }) {
+  return (
+    <div style={{
+      background: BG2,
+      border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 4,
+      padding: '22px 20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0,
+      position: 'relative',
+    }}>
+      {/* Quote mark */}
+      <div style={{
+        fontFamily: 'Georgia, serif',
+        fontSize: 52,
+        lineHeight: 1,
+        color: `${TEAL}18`,
+        position: 'absolute',
+        top: 10,
+        left: 16,
+        userSelect: 'none',
+      }}>❝</div>
+
+      {/* Message */}
+      <p style={{
+        fontSize: 13,
+        lineHeight: 1.75,
+        color: '#9ab0c4',
+        margin: '24px 0 18px',
+        fontStyle: 'italic',
+        position: 'relative',
+        zIndex: 1,
+        flex: 1,
+      }}>
+        {t.message}
+      </p>
+
+      {/* Footer */}
+      <div style={{
+        paddingTop: 14,
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: '#c8d8e4' }}>
+            {t.name}
+          </div>
+          {t.case_ref && (
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: `${TEAL}55`, marginTop: 3 }}>
+              CASE ···{t.case_ref}
+            </div>
+          )}
+        </div>
+        {t.timestamp && (
+          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.08em' }}>
+            {t.timestamp}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TestimonialsSection() {
+  const [items,   setItems]   = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/testimonials')
+      .then(r => r.json())
+      .then(j => { if (j.success) setItems(j.data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+  if (items.length === 0) return null;
+
+  return (
+    <>
+      <SectionLabel text="What Families Say" />
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: '#6a8a9a', marginBottom: 24, marginTop: -16, maxWidth: 600 }}>
+        Real words from families we've served — shared with their permission.
+      </p>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: 16,
+      }}>
+        {items.map((t, i) => <TestimonialCard key={i} t={t} />)}
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -440,6 +545,9 @@ export default function FundOurTeamPage() {
             <PresetCard key={p.amount} {...p} />
           ))}
         </div>
+
+        {/* ── Testimonials ────────────────────────────────────────────────── */}
+        <TestimonialsSection />
 
         {/* ── Final CTA ───────────────────────────────────────────────────── */}
         <div style={{

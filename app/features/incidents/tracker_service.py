@@ -1,6 +1,6 @@
 import re
 import requests
-from app.config import MONDAY_URL, MONDAY_HEADERS
+from app.config import MONDAY_URL, MONDAY_HEADERS, FEEDBACK_BOARD_ID
 
 STEP_DEFINITIONS = [
     {'step': 1, 'title': 'Request Received',             'subtitle': 'We are with you.',                                                              'sensitive': False},
@@ -99,3 +99,63 @@ def fetch_case_status(item_id: str) -> dict | None:
     except Exception as e:
         print(f"[tracker_service] Error: {e}")
         return None
+
+
+def _monday_mutation(query: str) -> dict | None:
+    try:
+        resp = requests.post(MONDAY_URL, json={'query': query}, headers=MONDAY_HEADERS, timeout=10)
+        data = resp.json()
+        if 'errors' in data:
+            print(f"[tracker_service] Monday error: {data['errors']}")
+            return None
+        return data
+    except Exception as e:
+        print(f"[tracker_service] Monday request failed: {e}")
+        return None
+
+
+def _escape(text: str) -> str:
+    return text.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+
+
+def post_feedback_to_monday(name: str, message: str, case_id: str, timestamp: str) -> None:
+    """
+    1. Attaches feedback as a comment on the original case item.
+    2. Creates a new item in the dedicated feedback board (if FEEDBACK_BOARD_ID is set).
+    """
+    date = timestamp[:10]
+
+    # ── 1. Comment on the original case ──────────────────────────────────────
+    if case_id and case_id.isdigit():
+        body = _escape(f"💬 Feedback from {name} — {date}\n\n{message}")
+        _monday_mutation(f'''
+          mutation {{
+            create_update(item_id: {case_id}, body: "{body}") {{ id }}
+          }}
+        ''')
+        print(f"[tracker_service] Feedback comment posted to case {case_id}")
+    else:
+        print("[tracker_service] Invalid case_id — skipping case comment")
+
+    # ── 2. New item in feedback board ─────────────────────────────────────────
+    if not FEEDBACK_BOARD_ID:
+        print("[tracker_service] FEEDBACK_BOARD_ID not set — skipping feedback board post")
+        return
+
+    item_name = _escape(f"💬 {name} — Case ···{case_id[-4:]} — {date}")
+    data = _monday_mutation(f'''
+      mutation {{
+        create_item(board_id: {FEEDBACK_BOARD_ID}, item_name: "{item_name}") {{ id }}
+      }}
+    ''')
+    if not data:
+        return
+
+    item_id = data['data']['create_item']['id']
+    body    = _escape(f"**Message:**\n{message}\n\n**Full Case ID:** {case_id}\n**Submitted:** {timestamp}")
+    _monday_mutation(f'''
+      mutation {{
+        create_update(item_id: {item_id}, body: "{body}") {{ id }}
+      }}
+    ''')
+    print(f"[tracker_service] Feedback item created in board {FEEDBACK_BOARD_ID}")

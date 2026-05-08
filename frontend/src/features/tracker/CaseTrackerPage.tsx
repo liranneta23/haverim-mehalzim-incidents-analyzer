@@ -7,21 +7,23 @@ import './tracker.css';
 interface StepDef { step: number; title: string; subtitle: string; icon: string; }
 
 const NORMAL_STEPS: StepDef[] = [
-  { step: 1, title: 'Request Received',              subtitle: 'We are with you.',                                                                    icon: '◉' },
-  { step: 2, title: 'Situation Assessment',           subtitle: 'We are reviewing what happened and how urgent it is.',                                icon: '◈' },
-  { step: 3, title: 'Critical Information Verified',  subtitle: 'Identity, location, status, and contact details are being confirmed.',                icon: '✦' },
-  { step: 4, title: 'Case Officer Assigned',          subtitle: 'A dedicated person is managing the case.',                                            icon: '◎' },
-  { step: 5, title: 'Response Network Activated',     subtitle: 'The right people are being connected.',                                               icon: '⊕' },
-  { step: 6, title: 'Action Plan in Motion',          subtitle: 'The required steps are underway.',                                                    icon: '▸' },
-  { step: 7, title: "Person's Status Verified",       subtitle: 'The family receives a clear and personal update.',                                    icon: '◇' },
-  { step: 8, title: 'Support & Next Steps',           subtitle: 'We continue supporting the family through the next steps.',                           icon: '♡' },
+  { step: 1, title: 'Request Received',              subtitle: 'We are with you.',                                                             icon: '◉' },
+  { step: 2, title: 'Situation Assessment',           subtitle: 'We are reviewing what happened and how urgent it is.',                         icon: '◈' },
+  { step: 3, title: 'Critical Information Verified',  subtitle: 'Identity, location, status, and contact details are being confirmed.',         icon: '✦' },
+  { step: 4, title: 'Case Officer Assigned',          subtitle: 'A dedicated person is managing the case.',                                     icon: '◎' },
+  { step: 5, title: 'Response Network Activated',     subtitle: 'The right people are being connected.',                                        icon: '⊕' },
+  { step: 6, title: 'Action Plan in Motion',          subtitle: 'The required steps are underway.',                                             icon: '▸' },
+  { step: 7, title: "Person's Status Verified",       subtitle: 'The family receives a clear and personal update.',                             icon: '◇' },
+  { step: 8, title: 'Support & Next Steps',           subtitle: 'We continue supporting the family through the next steps.',                    icon: '♡' },
 ];
 
 const SENSITIVE_STEPS: StepDef[] = [
   ...NORMAL_STEPS.slice(0, 6),
-  { step: 7, title: 'Family Notified with Care',      subtitle: 'The family has been updated personally and with care.',                               icon: '◇' },
-  { step: 8, title: 'Family Support & Next Steps',    subtitle: 'We continue supporting the family through the next steps.',                           icon: '♡' },
+  { step: 7, title: 'Family Notified with Care',    subtitle: 'The family has been updated personally and with care.',                          icon: '◇' },
+  { step: 8, title: 'Family Support & Next Steps',  subtitle: 'We continue supporting the family through the next steps.',                      icon: '♡' },
 ];
+
+const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,8 +35,9 @@ interface CaseData {
   total_steps:  number;
 }
 
-type LoadState = 'loading' | 'not_found' | 'error' | 'ready';
+type LoadState  = 'loading' | 'not_found' | 'error' | 'ready';
 type StepState  = 'complete' | 'active' | 'upcoming';
+type FeedbackState = 'idle' | 'sending' | 'sent' | 'error';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -45,7 +48,7 @@ const CIRC       = 2 * Math.PI * RADIUS;
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function stepState(def: StepDef, current: number): StepState {
-  if (def.step < current)  return 'complete';
+  if (def.step < current)   return 'complete';
   if (def.step === current) return 'active';
   return 'upcoming';
 }
@@ -68,7 +71,7 @@ function timeAgoLabel(d: Date): string {
   return `Updated ${mins} min ago`;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Ring progress ────────────────────────────────────────────────────────────
 
 function RingProgress({ step, total, sensitive }: { step: number; total: number; sensitive: boolean }) {
   const offset = CIRC * (1 - step / total);
@@ -92,6 +95,8 @@ function RingProgress({ step, total, sensitive }: { step: number; total: number;
   );
 }
 
+// ─── Timeline step ────────────────────────────────────────────────────────────
+
 function TimelineStep({ def, current }: { def: StepDef; current: number }) {
   const state = stepState(def, current);
   return (
@@ -109,6 +114,139 @@ function TimelineStep({ def, current }: { def: StepDef; current: number }) {
   );
 }
 
+// ─── Feedback card ────────────────────────────────────────────────────────────
+
+function FeedbackCard({ caseId }: { caseId: string }) {
+  const [name,    setName]    = useState('');
+  const [message, setMessage] = useState('');
+  const [status,  setStatus]  = useState<FeedbackState>('idle');
+
+  const submit = useCallback(async () => {
+    if (!message.trim()) return;
+    setStatus('sending');
+    try {
+      const res = await fetch('/api/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ case_id: caseId, name: name.trim(), message: message.trim() }),
+      });
+      setStatus(res.ok ? 'sent' : 'error');
+    } catch {
+      setStatus('error');
+    }
+  }, [caseId, name, message]);
+
+  return (
+    <div className="tracker-engage-card tracker-feedback-card">
+      <div className="tracker-engage-eyebrow">Your Voice Matters</div>
+      <div className="tracker-engage-title">Leave us a message</div>
+      <div className="tracker-engage-body">
+        Your words mean everything to our volunteers.
+        It takes 30 seconds and stays private — just between you and our team.
+      </div>
+
+      {status === 'sent' ? (
+        <div className="tracker-feedback-success">
+          <div className="tracker-feedback-success-icon">♡</div>
+          <div className="tracker-feedback-success-text">
+            Thank you — your message has been received by our team.<br />
+            It will be shared with the volunteers who worked your case.
+          </div>
+        </div>
+      ) : (
+        <>
+          <input
+            className="tracker-feedback-field"
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            maxLength={120}
+            disabled={status === 'sending'}
+          />
+          <textarea
+            className="tracker-feedback-field"
+            placeholder="How did we do? What would you like our team to know?"
+            rows={4}
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            maxLength={2000}
+            disabled={status === 'sending'}
+          />
+          {status === 'error' && (
+            <p style={{ fontSize: '0.75rem', color: '#f87171', marginBottom: '0.6rem', fontFamily: 'sans-serif' }}>
+              Something went wrong — please try again.
+            </p>
+          )}
+          <button
+            className="tracker-feedback-btn"
+            onClick={submit}
+            disabled={status === 'sending' || !message.trim() || !name.trim()}
+          >
+            {status === 'sending' ? 'Sending…' : 'Send your message →'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Donation card ────────────────────────────────────────────────────────────
+
+function DonateCard() {
+  return (
+    <div className="tracker-engage-card tracker-donate-card">
+      <div className="tracker-engage-eyebrow">Support the Next Family</div>
+      <div className="tracker-engage-title">Help us answer the next call</div>
+      <div className="tracker-engage-body">
+        Every case like yours is run entirely by volunteers and funded by
+        people who care. No government funding. No corporate backing.
+        Just people helping people.
+      </div>
+      <div className="tracker-donate-stat">
+        <span className="tracker-donate-stat-num">~$350</span>
+        <span className="tracker-donate-stat-label">average cost per case</span>
+      </div>
+      <a
+        href={DONATE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="tracker-donate-btn"
+      >
+        Support our mission →
+      </a>
+      <span className="tracker-donate-secondary">
+        Secure · Takes 2 minutes · Every dollar reaches the field
+      </span>
+    </div>
+  );
+}
+
+// ─── Completion screen ────────────────────────────────────────────────────────
+
+function CompletionScreen({ data }: { data: CaseData }) {
+  return (
+    <>
+      <div className="tracker-done-banner">
+        <div className="tracker-done-mark">✦</div>
+        <div className="tracker-done-title">Case Complete</div>
+        <p className="tracker-done-subtitle">
+          Our team was with you every step of the way.<br />
+          We hope your family is safe and at peace.
+        </p>
+        <p className="tracker-done-powered">
+          Handled by volunteers · Funded by donors like you
+        </p>
+      </div>
+
+      <div className="tracker-engagement">
+        <FeedbackCard caseId={data.item_id} />
+        <DonateCard />
+      </div>
+    </>
+  );
+}
+
 // ─── State screens ────────────────────────────────────────────────────────────
 
 function LoadingScreen() {
@@ -120,7 +258,7 @@ function LoadingScreen() {
         <div className="tr-skel" style={{ height: '0.9rem', width: '80%', margin: '0 auto' }} />
         <div className="tr-skel" style={{ height: '0.9rem', width: '65%', margin: '0 auto' }} />
         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {[1,2,3].map(i => (
+          {[1, 2, 3].map(i => (
             <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <div className="tr-skel" style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
@@ -193,22 +331,20 @@ export default function CaseTrackerPage() {
     }
   }, [caseId]);
 
-  // Initial fetch + auto-refresh
   useEffect(() => {
     fetchData();
     const iv = setInterval(fetchData, REFRESH_MS);
     return () => clearInterval(iv);
   }, [fetchData]);
 
-  // Tick every 30s to refresh "X min ago" label
   useEffect(() => {
     const iv = setInterval(() => setTick(t => t + 1), 30_000);
     return () => clearInterval(iv);
   }, []);
-  void tick; // consumed only for re-render
+  void tick;
 
-  if (loadState === 'loading')   return <LoadingScreen />;
-  if (loadState === 'not_found') return <NotFoundScreen caseId={caseId} />;
+  if (loadState === 'loading')        return <LoadingScreen />;
+  if (loadState === 'not_found')      return <NotFoundScreen caseId={caseId} />;
   if (loadState === 'error' || !data) return <ErrorScreen />;
 
   const steps      = data.is_sensitive ? SENSITIVE_STEPS : NORMAL_STEPS;
@@ -237,19 +373,10 @@ export default function CaseTrackerPage() {
 
       <main className="tracker-content">
 
-        {/* ── Completion banner ── */}
-        {isComplete && (
-          <div className="tracker-done-banner">
-            <div className="tracker-done-mark">✦</div>
-            <div className="tracker-done-title">Case Complete</div>
-            <p className="tracker-done-subtitle">
-              Your case has been fully managed by our team.<br />
-              We remain here if you need any further support.
-            </p>
-          </div>
-        )}
+        {/* ── Complete: banner + engagement ── */}
+        {isComplete && <CompletionScreen data={data} />}
 
-        {/* ── Hero ── */}
+        {/* ── In progress: ring hero ── */}
         {!isComplete && (
           <section className="tracker-hero">
             <RingProgress step={current} total={data.total_steps} sensitive={data.is_sensitive} />
@@ -276,9 +403,7 @@ export default function CaseTrackerPage() {
         {/* ── Footer ── */}
         <footer className="tracker-footer">
           {data.opened_date && (
-            <span className="tracker-footer-meta">
-              Case opened: {fmtDate(data.opened_date)}
-            </span>
+            <span className="tracker-footer-meta">Case opened: {fmtDate(data.opened_date)}</span>
           )}
           <span className="tracker-footer-meta">
             {lastUpdated ? timeAgoLabel(lastUpdated) : 'Loading…'}

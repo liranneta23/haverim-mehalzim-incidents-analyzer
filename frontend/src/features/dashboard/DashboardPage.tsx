@@ -711,6 +711,74 @@ const IconRate = () => (
   </svg>
 );
 
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+
+interface Testimonial { name: string; message: string; case_ref: string; timestamp: string; }
+
+function TestimonialsSection() {
+  const [items, setItems] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    fetch('/api/testimonials')
+      .then(r => r.json())
+      .then(j => { if (j.success && j.data?.length) setItems(j.data); })
+      .catch(() => {});
+  }, []);
+
+  if (!items.length) return null;
+
+  return (
+    <>
+      <SectionLabel text="From Families We Helped" stagger="stagger-4" />
+      <div className="fade-in stagger-5" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '1rem',
+        marginBottom: 40,
+      }}>
+        {items.map((t, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-panel)',
+            border: '1px solid var(--border-dim)',
+            borderRadius: 12,
+            padding: '1.25rem 1.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            position: 'relative',
+          }}>
+            <div style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: 36,
+              lineHeight: 1,
+              color: 'var(--accent-teal)',
+              opacity: 0.25,
+              userSelect: 'none',
+              marginBottom: -8,
+            }}>❝</div>
+            <p style={{
+              margin: 0,
+              fontSize: 13,
+              lineHeight: 1.7,
+              color: 'var(--text-secondary)',
+              fontStyle: 'italic',
+              fontFamily: 'system-ui, sans-serif',
+            }}>{t.message}</p>
+            <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border-dim)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>
+                {t.name}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--accent-teal)', opacity: 0.6, marginTop: 2, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                {t.case_ref ? `Case ···${t.case_ref}` : ''}{t.case_ref && t.timestamp ? ' · ' : ''}{t.timestamp}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -945,6 +1013,9 @@ export default function DashboardPage() {
               <div style={{ marginBottom: 40 }}>
                 <DonorROI data={data} />
               </div>
+
+              {/* ── Testimonials ── */}
+              <TestimonialsSection />
 
               {/* ── Support CTA ── */}
               <div className="support-section fade-in">

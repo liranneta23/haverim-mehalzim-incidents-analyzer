@@ -2,6 +2,13 @@ from datetime import datetime
 from flask import Blueprint, jsonify
 from app.features.incidents.service import fetch_monday_data
 from app.features.incidents.tracker_service import fetch_case_status
+from app.features.incidents.feedback_service import (
+    post_feedback_to_monday,
+    fetch_all_feedback,
+    fetch_approved_testimonials,
+    set_approval,
+    delete_item as delete_feedback_item,
+)
 from app.features.incidents.analysis import (
     count_incidents_per_type,
     get_incidents_current_year,
@@ -22,6 +29,45 @@ from app.features.incidents.constants import (
 incidents_bp = Blueprint('incidents', __name__)
 
 HANDLED_STATUSES = {GROUP_OPENED, INCIDENT_HANDLED_BY_RON, SIGNIFICANT_INCIDENT}
+
+# ── Admin auth ────────────────────────────────────────────────────────────────
+import hmac, hashlib, time as _time
+from collections import defaultdict
+
+_rate_limit: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
+_RATE_LIMIT_MAX    = 5     # max failed attempts
+_RATE_LIMIT_WINDOW = 60    # seconds
+
+
+def _check_admin_token(request, stored_token: str | None) -> bool:
+    if not stored_token:
+        return False
+
+    ip = request.remote_addr or 'unknown'
+    now = _time.time()
+    bucket = _rate_limit[ip]
+
+    # Reset window if expired
+    if now - bucket['window_start'] > _RATE_LIMIT_WINDOW:
+        bucket['count'] = 0
+        bucket['window_start'] = now
+
+    if bucket['count'] >= _RATE_LIMIT_MAX:
+        return False
+
+    # Read token from Authorization header: "Bearer <token>"
+    auth_header = request.headers.get('Authorization', '')
+    submitted = auth_header.removeprefix('Bearer ').strip()
+
+    def _hash(s: str) -> bytes:
+        return hashlib.sha256(s.encode()).digest()
+
+    ok = hmac.compare_digest(_hash(submitted), _hash(stored_token))
+    if not ok:
+        bucket['count'] += 1
+    else:
+        bucket['count'] = 0  # reset on success
+    return ok
 
 
 @incidents_bp.route('/api/dashboard')
@@ -170,6 +216,64 @@ def get_case_tracking(item_id):
         return jsonify({'success': False, 'message': 'Case not found'}), 404
 
     return jsonify({'success': True, 'data': case_data}), 200
+
+
+@incidents_bp.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    from flask import request
+    body    = request.get_json(silent=True) or {}
+    case_id = str(body.get('case_id', '')).strip()
+    name    = str(body.get('name',    '')).strip()[:120]
+    message = str(body.get('message', '')).strip()[:2000]
+
+    if not message or not name:
+        return jsonify({'success': False, 'message': 'Name and message are required'}), 400
+
+    timestamp = datetime.now().isoformat()
+    post_feedback_to_monday(name, message, case_id, timestamp)
+    return jsonify({'success': True}), 200
+
+
+@incidents_bp.route('/api/testimonials')
+def get_testimonials():
+    try:
+        return jsonify({'success': True, 'data': fetch_approved_testimonials()}), 200
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)}), 500
+
+
+@incidents_bp.route('/api/admin/feedback')
+def admin_feedback():
+    from flask import request
+    from app.config import ADMIN_TOKEN
+    if not _check_admin_token(request, ADMIN_TOKEN):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    try:
+        return jsonify({'success': True, 'data': fetch_all_feedback()}), 200
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)}), 500
+
+
+@incidents_bp.route('/api/admin/feedback/<item_id>', methods=['DELETE'])
+def delete_feedback(item_id):
+    from flask import request
+    from app.config import ADMIN_TOKEN
+    if not _check_admin_token(request, ADMIN_TOKEN):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    ok = delete_feedback_item(item_id)
+    return jsonify({'success': ok}), (200 if ok else 500)
+
+
+@incidents_bp.route('/api/admin/feedback/<item_id>/approve', methods=['PATCH'])
+def approve_feedback(item_id):
+    from flask import request
+    from app.config import ADMIN_TOKEN
+    if not _check_admin_token(request, ADMIN_TOKEN):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    body     = request.get_json(silent=True) or {}
+    approved = bool(body.get('approved', True))
+    ok       = set_approval(item_id, approved)
+    return jsonify({'success': ok, 'approved': approved}), (200 if ok else 500)
 
 
 @incidents_bp.route('/api/health')
