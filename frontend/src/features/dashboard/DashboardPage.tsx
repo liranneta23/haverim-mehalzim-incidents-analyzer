@@ -724,12 +724,13 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function TestimonialsSection() {
-  const [items, setItems]       = useState<Testimonial[]>([]);
+  const [items, setItems]         = useState<Testimonial[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [visible, setVisible]   = useState(true);
-  const [progress, setProgress] = useState(0);
-  const rafRef = useRef<number>(0);
-  const startRef    = useRef<number>(0);
+  const [animClass, setAnimClass] = useState('t-enter-right');
+  const [animKey, setAnimKey]     = useState(0);
+  const [progress, setProgress]   = useState(0);
+  const rafRef   = useRef<number>(0);
+  const startRef = useRef<number>(0);
 
   useEffect(() => {
     fetch('/api/testimonials')
@@ -738,31 +739,34 @@ function TestimonialsSection() {
       .catch(() => {});
   }, []);
 
-  const goTo = (idx: number) => {
-    setVisible(false);
+  const goTo = (idx: number, dir: 'fwd' | 'bwd') => {
+    cancelAnimationFrame(rafRef.current);
+    setAnimClass(dir === 'fwd' ? 't-exit-left' : 't-exit-right');
     setTimeout(() => {
       setActiveIdx(idx);
-      setVisible(true);
+      setAnimClass(dir === 'fwd' ? 't-enter-right' : 't-enter-left');
+      setAnimKey(k => k + 1);
       setProgress(0);
       startRef.current = performance.now();
-    }, 350);
+    }, 260);
   };
 
-  // Animate progress bar + auto-advance
   useEffect(() => {
     if (items.length <= 1) return;
+    cancelAnimationFrame(rafRef.current);
     startRef.current = performance.now();
     const tick = (now: number) => {
-      const elapsed = now - startRef.current;
-      const pct = Math.min(elapsed / CYCLE_MS, 1);
+      const pct = Math.min((now - startRef.current) / CYCLE_MS, 1);
       setProgress(pct);
       if (pct >= 1) {
-        setActiveIdx(i => {
-          const next = (i + 1) % items.length;
-          setVisible(false);
-          setTimeout(() => { setVisible(true); setProgress(0); startRef.current = performance.now(); }, 350);
-          return next;
-        });
+        const next = (activeIdx + 1) % items.length;
+        setAnimClass('t-exit-left');
+        setTimeout(() => {
+          setActiveIdx(next);
+          setAnimClass('t-enter-right');
+          setAnimKey(k => k + 1);
+          setProgress(0);
+        }, 260);
       } else {
         rafRef.current = requestAnimationFrame(tick);
       }
@@ -778,32 +782,20 @@ function TestimonialsSection() {
   return (
     <div className="testimonials-wrap fade-in stagger-3">
 
-      {/* Section eyebrow */}
       <div className="testimonials-eyebrow">
         <span className="testimonials-eyebrow-tag">❝ Real Stories</span>
         <span className="testimonials-eyebrow-line" />
         <span className="testimonials-eyebrow-sub">Families we've helped — in their own words</span>
       </div>
 
-      {/* Full-width spotlight card */}
-      <div
-        className="testimonial-spotlight"
-        style={{
-          opacity:   visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(10px)',
-          transition: 'opacity 0.4s ease, transform 0.4s ease',
-        }}
-      >
-        {/* Giant decorative background quote mark */}
+      {/* key forces remount on each slide so the animation always fires fresh */}
+      <div key={animKey} className={`testimonial-spotlight ${animClass}`}>
         <div className="testimonial-bg-glyph" aria-hidden>"</div>
 
-        {/* Stars */}
         {active.rating != null && <StarRating rating={active.rating} />}
 
-        {/* The quote — the hero element */}
         <blockquote className="testimonial-spotlight-body">{active.message}</blockquote>
 
-        {/* Author row */}
         <div className="testimonial-spotlight-author">
           <div className="testimonial-avatar">
             {active.name.trim().charAt(0).toUpperCase()}
@@ -818,7 +810,6 @@ function TestimonialsSection() {
           </div>
         </div>
 
-        {/* Integrated donate CTA */}
         <div className="testimonial-spotlight-cta">
           <span className="testimonial-spotlight-cta-text">
             Every outcome like this is funded by people who care.
@@ -828,7 +819,6 @@ function TestimonialsSection() {
           </a>
         </div>
 
-        {/* Progress bar */}
         {items.length > 1 && (
           <div className="testimonial-progress-track">
             <div className="testimonial-progress-bar" style={{ width: `${progress * 100}%` }} />
@@ -836,14 +826,13 @@ function TestimonialsSection() {
         )}
       </div>
 
-      {/* Dot navigation */}
       {items.length > 1 && (
         <div className="testimonial-dots">
           {items.map((_, i) => (
             <button
               key={i}
               className={`testimonial-dot${i === activeIdx ? ' active' : ''}`}
-              onClick={() => goTo(i)}
+              onClick={() => goTo(i, i > activeIdx ? 'fwd' : 'bwd')}
               aria-label={`Story ${i + 1}`}
             />
           ))}

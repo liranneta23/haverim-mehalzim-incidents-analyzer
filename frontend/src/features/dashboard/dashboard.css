@@ -1393,8 +1393,8 @@ header {
     color: var(--text-primary);
     font-weight: 400;
     max-width: 820px;
-    min-height: 160px;
 }
+
 
 /* Author row */
 .testimonial-spotlight-author {
@@ -1517,6 +1517,17 @@ header {
     .testimonial-spotlight-cta-btn { width: 100%; justify-content: center; }
     .testimonial-bg-glyph { font-size: 160px; }
 }
+
+/* ── Horizontal slide keyframes ── */
+@keyframes tSlideExitLeft   { from { opacity:1; transform:translateX(0);     } to { opacity:0; transform:translateX(-40px);  } }
+@keyframes tSlideExitRight  { from { opacity:1; transform:translateX(0);     } to { opacity:0; transform:translateX(40px);   } }
+@keyframes tSlideEnterRight { from { opacity:0; transform:translateX(40px);  } to { opacity:1; transform:translateX(0);      } }
+@keyframes tSlideEnterLeft  { from { opacity:0; transform:translateX(-40px); } to { opacity:1; transform:translateX(0);      } }
+
+.t-exit-left    { animation: tSlideExitLeft   0.26s ease forwards; }
+.t-exit-right   { animation: tSlideExitRight  0.26s ease forwards; }
+.t-enter-right  { animation: tSlideEnterRight 0.26s ease forwards; }
+.t-enter-left   { animation: tSlideEnterLeft  0.26s ease forwards; }
 
 /* ─── PAGE NAV CARDS ─── */
 .page-nav-section {
