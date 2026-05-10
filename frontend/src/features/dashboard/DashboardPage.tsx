@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
 import { Tooltip } from '../../components/Tooltip';
@@ -859,6 +859,47 @@ function TestimonialsSection() {
   );
 }
 
+// ─── Donor Impact Teaser ──────────────────────────────────────────────────────
+
+function DonorImpactTeaser() {
+  const [token, setToken] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let t = token.trim();
+    // Accept a full URL (paste from email) or just the raw token
+    if (t.includes('/')) t = t.split('/').pop() || t;
+    t = t.toLowerCase().replace(/[^0-9a-f]/g, '');
+    if (t) navigate(`/my-impact/${t}`);
+  };
+
+  return (
+    <div className="donor-teaser fade-in stagger-4">
+      <div className="donor-teaser-left">
+        <div className="donor-teaser-eyebrow">◈ Already donated?</div>
+        <div className="donor-teaser-sub">
+          Enter your personal code to see your direct impact on our operations
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="donor-teaser-form">
+        <input
+          className="donor-teaser-input"
+          type="text"
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          placeholder="Your personal code"
+          spellCheck={false}
+          autoComplete="off"
+        />
+        <button type="submit" className="donor-teaser-btn" disabled={!token.trim()}>
+          See My Impact →
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -996,6 +1037,9 @@ export default function DashboardPage() {
 
               {/* ── Testimonials — social proof while user is emotionally engaged ── */}
               <TestimonialsSection />
+
+              {/* ── Donor Impact Teaser — invite existing donors to their personal page ── */}
+              <DonorImpactTeaser />
 
               {/* ── Donor ROI — ask right after social proof ── */}
               <SectionLabel text="Your Donation in Action" stagger="stagger-4" />

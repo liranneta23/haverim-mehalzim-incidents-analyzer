@@ -5,6 +5,7 @@ import TacticalGlobe from './features/map/TacticalGlobe';
 import FundOurTeamPage from './features/fund/FundOurTeamPage';
 import CaseTrackerPage from './features/tracker/CaseTrackerPage';
 import AdminFeedbackPage from './features/admin/AdminFeedbackPage';
+import DonorImpactPage from './features/donor/DonorImpactPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/fund-our-team" element={<FundOurTeamPage />} />
         <Route path="/track/:caseId"   element={<CaseTrackerPage />} />
         <Route path="/admin/feedback"  element={<AdminFeedbackPage />} />
+        <Route path="/my-impact/:token" element={<DonorImpactPage />} />
       </Routes>
     </BrowserRouter>
   );

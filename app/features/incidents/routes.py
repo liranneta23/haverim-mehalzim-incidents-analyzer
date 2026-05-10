@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify
 from app.features.incidents.service import fetch_monday_data
 from app.features.incidents.tracker_service import fetch_case_status
+from app.features.incidents.donor_service import fetch_donor_by_token, is_valid_token_format
 from app.features.incidents.feedback_service import (
     post_feedback_to_monday,
     fetch_all_feedback,
@@ -37,6 +38,10 @@ from collections import defaultdict
 _rate_limit: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
 _RATE_LIMIT_MAX    = 5     # max failed attempts
 _RATE_LIMIT_WINDOW = 60    # seconds
+
+_donor_rate: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
+_DONOR_RATE_MAX    = 20    # donor pages are shared links — generous limit
+_DONOR_RATE_WINDOW = 60
 
 
 def _check_admin_token(request, stored_token: str | None) -> bool:
@@ -280,6 +285,36 @@ def approve_feedback(item_id):
     approved = bool(body.get('approved', True))
     ok       = set_approval(item_id, approved)
     return jsonify({'success': ok, 'approved': approved}), (200 if ok else 500)
+
+
+@incidents_bp.route('/api/donor/<token>')
+def get_donor_impact(token):
+    from flask import request
+    ip  = request.remote_addr or 'unknown'
+    now = _time.time()
+    bucket = _donor_rate[ip]
+    if now - bucket['window_start'] > _DONOR_RATE_WINDOW:
+        bucket['count'] = 0
+        bucket['window_start'] = now
+    if bucket['count'] >= _DONOR_RATE_MAX:
+        return jsonify({'success': False, 'message': 'Too many requests'}), 429
+    bucket['count'] += 1
+
+    if not is_valid_token_format(token):
+        return jsonify({'success': False, 'message': 'Not found'}), 404
+
+    try:
+        data = fetch_donor_by_token(token)
+    except Exception as ex:
+        print(f'[donor] error: {ex}')
+        return jsonify({'success': False, 'message': 'Internal error'}), 500
+
+    if data is None:
+        return jsonify({'success': False, 'message': 'Not found'}), 404
+
+    resp = jsonify({'success': True, 'data': data})
+    resp.headers['Cache-Control'] = 'private, no-store'
+    return resp, 200
 
 
 @incidents_bp.route('/api/health')
