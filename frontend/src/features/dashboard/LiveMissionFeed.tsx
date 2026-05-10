@@ -317,11 +317,9 @@ export default function LiveMissionFeed() {
 
   const handleTypingDone = useCallback(() => setPhase('reading'), []);
 
-  // Reset skip flag when a new card starts
-  useEffect(() => { setSkipTyping(false); }, [broadcastIdx]);
-
   const advance = () => {
     if (readTimerRef.current) { clearTimeout(readTimerRef.current); readTimerRef.current = null; }
+    setSkipTyping(false);
     setCompletedIdxs(prev => [...prev, broadcastIdx]);
     if (broadcastIdx >= live.length - 1) {
       setPhase('done');
