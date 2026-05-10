@@ -6,7 +6,7 @@ from app.config import MONDAY_URL, MONDAY_HEADERS, FEEDBACK_BOARD_ID
 APPROVED_LABEL = 'Approved'
 PENDING_LABEL  = 'Pending'
 
-_COLS = ['color_mm355cem', 'text_mm348vqa', 'date_mm34ma4f', 'text_mm354dp8', 'text_mm35j3m0']
+_COLS = ['color_mm355cem', 'text_mm348vqa', 'date_mm34ma4f', 'text_mm354dp8', 'text_mm35j3m0', 'numeric_mm3624w7']
 _COL_IDS = ', '.join(f'"{c}"' for c in _COLS)
 
 # ── Simple in-memory cache (5 min TTL) ───────────────────────────────────────
@@ -38,6 +38,11 @@ def _escape(s: str) -> str:
 
 def _parse_item(item: dict) -> dict:
     cols = {cv['id']: cv['text'] for cv in item['column_values']}
+    raw_rating = cols.get('numeric_mm3624w7', '')
+    try:
+        rating = int(float(raw_rating)) if raw_rating else None
+    except (ValueError, TypeError):
+        rating = None
     return {
         'id':        item['id'],
         'name':      item['name'],
@@ -46,12 +51,13 @@ def _parse_item(item: dict) -> dict:
         'date':      cols.get('date_mm34ma4f', ''),
         'case_id':   cols.get('text_mm354dp8', ''),
         'message':   cols.get('text_mm35j3m0', ''),
+        'rating':    rating,
     }
 
 
 # ── Write ─────────────────────────────────────────────────────────────────────
 
-def post_feedback_to_monday(name: str, message: str, case_id: str, timestamp: str) -> str | None:
+def post_feedback_to_monday(name: str, message: str, case_id: str, timestamp: str, rating: int | None = None) -> str | None:
     """
     Creates an item in the feedback board with all columns populated.
     Returns the new Monday item ID, or None on failure.
@@ -64,13 +70,17 @@ def post_feedback_to_monday(name: str, message: str, case_id: str, timestamp: st
     last4     = case_id[-4:] if case_id else '????'
     item_name = _escape(f"{name} — Case ···{last4}")
 
-    col_values = _escape(_json.dumps({
+    values: dict = {
         'text_mm348vqa': name,
         'date_mm34ma4f': {'date': date},
         'text_mm354dp8': case_id,
         'text_mm35j3m0': message,
         'color_mm355cem': {'label': PENDING_LABEL},
-    }))
+    }
+    if rating is not None:
+        values['numeric_mm3624w7'] = rating
+
+    col_values = _escape(_json.dumps(values))
 
     data = _post(f'''
       mutation {{
@@ -133,6 +143,7 @@ def fetch_approved_testimonials() -> list[dict]:
         'message':   i['message'],
         'case_ref':  i['case_id'][-4:] if i['case_id'] else '',
         'timestamp': i['date'][:10] if i['date'] else '',
+        'rating':    i.get('rating'),
     } for i in approved]
 
     _cache['data']    = public

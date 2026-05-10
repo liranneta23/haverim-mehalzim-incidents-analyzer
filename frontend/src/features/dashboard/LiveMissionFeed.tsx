@@ -279,6 +279,15 @@ export default function LiveMissionFeed() {
   const [phase,         setPhase]         = useState<'typing' | 'reading' | 'done'>('typing');
   const [loading,       setLoading]       = useState(true);
   const [blink,         setBlink]         = useState(false);
+  const [collapsed,     setCollapsed]     = useState(true);
+  const [isMobile,      setIsMobile]      = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     fetchGlobeIncidents()
@@ -407,91 +416,138 @@ export default function LiveMissionFeed() {
         </div>
       </div>
 
-      {/* ── Incoming card ───────────────────────────────────────────────────── */}
-      {!allBroadcast && (
-        <div style={{ padding: '14px 14px 0' }}>
-          <IncomingCard
-            key={broadcastIdx}
-            incident={live[broadcastIdx]}
-            position={broadcastIdx}
-            total={live.length}
-            onTypingDone={handleTypingDone}
-            isReading={phase === 'reading'}
-          />
-        </div>
-      )}
-
-      {/* ── All broadcast banner ────────────────────────────────────────────── */}
-      {allBroadcast && (
-        <div style={{
-          margin: '14px 14px 0',
-          padding: '18px 22px',
-          background: `rgba(0,230,160,0.04)`,
-          border: `1px solid ${TEAL}22`,
-          borderRadius: 8,
-          display: 'flex', alignItems: 'center', gap: 14,
-        }}>
-          <span style={{ fontSize: 18, color: TEAL, flexShrink: 0 }}>✓</span>
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: TEAL, marginBottom: 3 }}>
-              All {live.length} Active Missions Broadcast
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: '#3d5a72', letterSpacing: '0.08em' }}>
-              Full mission details logged below — your support keeps these operations running.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Completed mission log ────────────────────────────────────────────── */}
-      {completedIncidents.length > 0 && (
-        <>
-          <div style={{
-            padding: '14px 20px 6px',
-            fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#1d2a30',
-          }}>
-            {allBroadcast ? 'All Missions' : 'Prior Transmissions'}
-          </div>
-          <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {completedIncidents.map((inc, i) => (
-              <CompletedCard key={inc.id} incident={inc} seq={completedIdxs.length - i} />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* ── Upcoming queue ───────────────────────────────────────────────────── */}
-      {upcomingIncidents.length > 0 && (
-        <>
-          <div style={{
-            padding: '12px 20px 6px',
-            borderTop: '1px solid rgba(255,255,255,0.03)',
-            fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#1d2a30',
-          }}>
-            Up Next
-          </div>
-          {upcomingIncidents.map((inc, i) => (
-            <UpcomingRow key={inc.id} incident={inc} index={i} />
-          ))}
-        </>
-      )}
-
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      {/* ── Collapsible body ────────────────────────────────────────────────── */}
       <div style={{
-        padding: '14px 20px', marginTop: 14,
-        borderTop: `1px solid ${GOLD}15`,
-        background: `${GOLD}06`,
-        fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: `${GOLD}aa`,
+        position: 'relative',
+        maxHeight: isMobile && collapsed ? 170 : undefined,
+        overflow: isMobile && collapsed ? 'hidden' : undefined,
       }}>
-        Every active mission above relies on donor funding —{' '}
-        <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-          style={{ color: GOLD, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          your contribution keeps our team operational 24/7 ›
-        </a>
+
+        {/* ── Incoming card ─────────────────────────────────────────────────── */}
+        {!allBroadcast && (
+          <div style={{ padding: '14px 14px 0' }}>
+            <IncomingCard
+              key={broadcastIdx}
+              incident={live[broadcastIdx]}
+              position={broadcastIdx}
+              total={live.length}
+              onTypingDone={handleTypingDone}
+              isReading={phase === 'reading'}
+            />
+          </div>
+        )}
+
+        {/* ── All broadcast banner ──────────────────────────────────────────── */}
+        {allBroadcast && (
+          <div style={{
+            margin: '14px 14px 0',
+            padding: '18px 22px',
+            background: `rgba(0,230,160,0.04)`,
+            border: `1px solid ${TEAL}22`,
+            borderRadius: 8,
+            display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <span style={{ fontSize: 18, color: TEAL, flexShrink: 0 }}>✓</span>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: TEAL, marginBottom: 3 }}>
+                All {live.length} Active Missions Broadcast
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: '#3d5a72', letterSpacing: '0.08em' }}>
+                Full mission details logged below — your support keeps these operations running.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Completed mission log ──────────────────────────────────────────── */}
+        {completedIncidents.length > 0 && (
+          <>
+            <div style={{
+              padding: '14px 20px 6px',
+              fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#1d2a30',
+            }}>
+              {allBroadcast ? 'All Missions' : 'Prior Transmissions'}
+            </div>
+            <div style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {completedIncidents.map((inc, i) => (
+                <CompletedCard key={inc.id} incident={inc} seq={completedIdxs.length - i} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* ── Upcoming queue ────────────────────────────────────────────────── */}
+        {upcomingIncidents.length > 0 && (
+          <>
+            <div style={{
+              padding: '12px 20px 6px',
+              borderTop: '1px solid rgba(255,255,255,0.03)',
+              fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#1d2a30',
+            }}>
+              Up Next
+            </div>
+            {upcomingIncidents.map((inc, i) => (
+              <UpcomingRow key={inc.id} incident={inc} index={i} />
+            ))}
+          </>
+        )}
+
+        {/* ── Footer ────────────────────────────────────────────────────────── */}
+        <div style={{
+          padding: '14px 20px', marginTop: 14,
+          borderTop: `1px solid ${GOLD}15`,
+          background: `${GOLD}06`,
+          fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: `${GOLD}aa`,
+        }}>
+          Every active mission above relies on donor funding —{' '}
+          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+            style={{ color: GOLD, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            your contribution keeps our team operational 24/7 ›
+          </a>
+        </div>
+
+        {/* ── Gradient fade + Read more (mobile collapsed) ──────────────────── */}
+        {isMobile && collapsed && (
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
+            background: 'linear-gradient(to bottom, transparent, #07090e)',
+            pointerEvents: 'none',
+          }} />
+        )}
       </div>
+
+      {/* ── Read more / Show less toggle (mobile only) ──────────────────────── */}
+      {isMobile && (
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            background: collapsed ? `rgba(0,230,160,0.04)` : 'transparent',
+            border: 'none',
+            borderTop: `1px solid ${TEAL}18`,
+            fontFamily: MONO,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: TEAL,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = `rgba(0,230,160,0.08)`)}
+          onMouseLeave={e => (e.currentTarget.style.background = collapsed ? `rgba(0,230,160,0.04)` : 'transparent')}
+        >
+          {collapsed ? <>Read more <span style={{ fontSize: 14 }}>↓</span></> : <>Show less <span style={{ fontSize: 14 }}>↑</span></>}
+        </button>
+      )}
 
     </div>
   );

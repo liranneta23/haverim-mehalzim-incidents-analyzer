@@ -238,7 +238,7 @@ header {
 .month-hero {
     background: var(--bg-card); border: 1px solid var(--border-dim);
     border-radius: 16px; padding: 30px 32px; margin-bottom: 40px;
-    display: grid; grid-template-columns: auto 1fr; gap: 40px; align-items: center;
+    display: grid; grid-template-columns: auto auto 1fr; gap: 40px; align-items: center;
 }
 .month-stats  { display: flex; flex-direction: column; gap: 20px; }
 .month-stat   { display: flex; flex-direction: column; gap: 4px; }
@@ -514,6 +514,7 @@ header {
   display: flex;
   align-items: center;
   gap: 22px;
+  flex: 1;
   min-width: 0;
 }
 .transparency-strip-icon {
@@ -547,9 +548,6 @@ header {
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .transparency-strip-btn {
   font-family: var(--font-mono);
@@ -1186,4 +1184,200 @@ header {
     .growth-metric-curr { font-size: 36px; }
     .donor-roi-impact-badge { width: 100%; }
     .donor-roi-impact-num { font-size: 40px; }
+}
+
+/* ─── TESTIMONIALS ─────────────────────────────────────────────────────────── */
+
+.testimonials-wrap {
+    margin-bottom: 56px;
+}
+
+.testimonials-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+.testimonials-eyebrow-tag {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent-teal);
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+}
+.testimonials-eyebrow-line {
+    flex: 0 0 40px;
+    height: 1px;
+    background: var(--border-dim);
+}
+.testimonials-eyebrow-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* ── Full-width spotlight card ── */
+.testimonial-spotlight {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid rgba(0,230,160,0.15);
+    background:
+        radial-gradient(ellipse at 0% 0%,   rgba(0,230,160,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 100% 100%, rgba(212,175,55,0.04) 0%, transparent 50%),
+        #080e0b;
+    padding: 52px 56px 0;
+    box-shadow: 0 0 0 1px rgba(0,230,160,0.04), 0 24px 80px rgba(0,0,0,0.45);
+}
+
+/* Giant decorative background quote mark */
+.testimonial-bg-glyph {
+    position: absolute;
+    top: -20px;
+    left: 28px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 280px;
+    line-height: 1;
+    color: var(--accent-teal);
+    opacity: 0.05;
+    user-select: none;
+    pointer-events: none;
+    letter-spacing: -8px;
+}
+
+/* The quote itself — the hero element */
+.testimonial-spotlight-body {
+    position: relative;
+    margin: 0 0 36px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(18px, 2.2vw, 24px);
+    font-style: italic;
+    line-height: 1.8;
+    color: var(--text-primary);
+    font-weight: 400;
+    max-width: 820px;
+}
+
+/* Author row */
+.testimonial-spotlight-author {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+.testimonial-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(0,230,160,0.1);
+    border: 1px solid rgba(0,230,160,0.28);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700;
+    color: var(--accent-teal);
+    flex-shrink: 0;
+}
+.testimonial-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+}
+.testimonial-case {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-teal);
+    opacity: 0.5;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+/* Integrated donate CTA bar */
+.testimonial-spotlight-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 0;
+    border-top: 1px solid rgba(212,175,55,0.15);
+    margin-bottom: 0;
+}
+.testimonial-spotlight-cta-text {
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(212,175,55,0.65);
+    flex: 1;
+}
+.testimonial-spotlight-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: rgba(212,175,55,0.14);
+    border: 1px solid rgba(212,175,55,0.45);
+    border-radius: 8px;
+    color: #D4AF37;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.testimonial-spotlight-cta-btn:hover {
+    background: rgba(212,175,55,0.24);
+    border-color: rgba(212,175,55,0.65);
+    transform: translateY(-1px);
+}
+
+/* Progress bar — sits flush at the very bottom */
+.testimonial-progress-track {
+    height: 3px;
+    background: rgba(0,230,160,0.08);
+    overflow: hidden;
+}
+.testimonial-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,230,160,0.5), var(--accent-teal));
+    transition: width 0.1s linear;
+}
+
+/* Dot navigation */
+.testimonial-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 18px;
+}
+.testimonial-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border-mid);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, transform 0.2s;
+}
+.testimonial-dot.active {
+    background: var(--accent-teal);
+    transform: scale(1.5);
+}
+.testimonial-dot:hover:not(.active) {
+    background: rgba(0,230,160,0.4);
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+    .testimonial-spotlight { padding: 32px 24px 0; }
+    .testimonial-spotlight-cta { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .testimonial-spotlight-cta-btn { width: 100%; justify-content: center; }
+    .testimonial-bg-glyph { font-size: 160px; }
 }

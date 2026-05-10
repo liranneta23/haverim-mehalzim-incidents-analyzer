@@ -116,9 +116,68 @@ function TimelineStep({ def, current }: { def: StepDef; current: number }) {
 
 // ─── Feedback card ────────────────────────────────────────────────────────────
 
+const RATING_LABELS: Record<number, string> = {
+  1: 'Poor',
+  2: 'Fair',
+  3: 'Good',
+  4: 'Very Good',
+  5: 'Excellent',
+};
+
+function RatingSlider({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled: boolean }) {
+  return (
+    <div style={{ marginBottom: '1.1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ fontFamily: 'var(--tr-mono)', fontSize: 11, color: 'var(--tr-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          Rate our service
+        </span>
+        <span style={{ fontFamily: 'var(--tr-mono)', fontSize: 12, fontWeight: 700, color: 'var(--tr-teal)', letterSpacing: '0.06em' }}>
+          {value} / 5 — {RATING_LABELS[value]}
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--tr-mono)', fontSize: 10, color: 'var(--tr-muted)' }}>1</span>
+        <input
+          type="range"
+          min={1} max={5} step={1}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          disabled={disabled}
+          style={{ flex: 1, accentColor: 'var(--tr-teal)', cursor: disabled ? 'not-allowed' : 'pointer' }}
+        />
+        <span style={{ fontFamily: 'var(--tr-mono)', fontSize: 10, color: 'var(--tr-muted)' }}>5</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button
+            key={n}
+            onClick={() => !disabled && onChange(n)}
+            disabled={disabled}
+            style={{
+              width: 32, height: 32,
+              borderRadius: '50%',
+              border: `1px solid ${n === value ? 'var(--tr-teal)' : 'rgba(255,255,255,0.08)'}`,
+              background: n === value ? 'rgba(0,201,177,0.15)' : 'transparent',
+              color: n === value ? 'var(--tr-teal)' : 'var(--tr-muted)',
+              fontFamily: 'var(--tr-mono)',
+              fontSize: 12,
+              fontWeight: n === value ? 700 : 400,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FeedbackCard({ caseId }: { caseId: string }) {
   const [name,    setName]    = useState('');
   const [message, setMessage] = useState('');
+  const [rating,  setRating]  = useState(5);
   const [status,  setStatus]  = useState<FeedbackState>('idle');
 
   const submit = useCallback(async () => {
@@ -128,13 +187,13 @@ function FeedbackCard({ caseId }: { caseId: string }) {
       const res = await fetch('/api/feedback', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ case_id: caseId, name: name.trim(), message: message.trim() }),
+        body:    JSON.stringify({ case_id: caseId, name: name.trim(), message: message.trim(), rating }),
       });
       setStatus(res.ok ? 'sent' : 'error');
     } catch {
       setStatus('error');
     }
-  }, [caseId, name, message]);
+  }, [caseId, name, message, rating]);
 
   return (
     <div className="tracker-engage-card tracker-feedback-card">
@@ -173,6 +232,7 @@ function FeedbackCard({ caseId }: { caseId: string }) {
             maxLength={2000}
             disabled={status === 'sending'}
           />
+          <RatingSlider value={rating} onChange={setRating} disabled={status === 'sending'} />
           {status === 'error' && (
             <p style={{ fontSize: '0.75rem', color: '#f87171', marginBottom: '0.6rem', fontFamily: 'sans-serif' }}>
               Something went wrong — please try again.

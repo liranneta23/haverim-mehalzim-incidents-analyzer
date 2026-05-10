@@ -225,12 +225,18 @@ def submit_feedback():
     case_id = str(body.get('case_id', '')).strip()
     name    = str(body.get('name',    '')).strip()[:120]
     message = str(body.get('message', '')).strip()[:2000]
+    rating  = body.get('rating')
+    if rating is not None:
+        try:
+            rating = max(1, min(5, int(rating)))
+        except (ValueError, TypeError):
+            rating = None
 
     if not message or not name:
         return jsonify({'success': False, 'message': 'Name and message are required'}), 400
 
     timestamp = datetime.now().isoformat()
-    post_feedback_to_monday(name, message, case_id, timestamp)
+    post_feedback_to_monday(name, message, case_id, timestamp, rating)
     return jsonify({'success': True}), 200
 
 

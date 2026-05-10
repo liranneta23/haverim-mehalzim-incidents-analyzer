@@ -234,9 +234,6 @@ function DonorROI({ data }: { data: DashboardData }) {
           <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-roi-btn-primary">
             ♥ Donate ${activeTier.amount} Now
           </a>
-          <Link to="/fund-our-team" className="donor-roi-btn-secondary">
-            See Full Cost Breakdown →
-          </Link>
         </div>
       </div>
 
@@ -713,10 +710,32 @@ const IconRate = () => (
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 
-interface Testimonial { name: string; message: string; case_ref: string; timestamp: string; }
+interface Testimonial { name: string; message: string; case_ref: string; timestamp: string; rating?: number | null; }
+
+const CYCLE_MS = 7000;
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 12 }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <svg key={n} width="14" height="14" viewBox="0 0 14 14" fill={n <= rating ? '#D4AF37' : 'none'} stroke={n <= rating ? '#D4AF37' : 'rgba(212,175,55,0.25)'} strokeWidth="1.2">
+          <polygon points="7,1 8.8,5.2 13.5,5.5 10,8.6 11.1,13.2 7,10.5 2.9,13.2 4,8.6 0.5,5.5 5.2,5.2" />
+        </svg>
+      ))}
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(212,175,55,0.7)', marginLeft: 4 }}>
+        {rating}/5
+      </span>
+    </div>
+  );
+}
 
 function TestimonialsSection() {
-  const [items, setItems] = useState<Testimonial[]>([]);
+  const [items, setItems]       = useState<Testimonial[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [visible, setVisible]   = useState(true);
+  const [progress, setProgress] = useState(0);
+  const rafRef = useRef<number>(0);
+  const startRef    = useRef<number>(0);
 
   useEffect(() => {
     fetch('/api/testimonials')
@@ -725,57 +744,118 @@ function TestimonialsSection() {
       .catch(() => {});
   }, []);
 
+  const goTo = (idx: number) => {
+    setVisible(false);
+    setTimeout(() => {
+      setActiveIdx(idx);
+      setVisible(true);
+      setProgress(0);
+      startRef.current = performance.now();
+    }, 350);
+  };
+
+  // Animate progress bar + auto-advance
+  useEffect(() => {
+    if (items.length <= 1) return;
+    startRef.current = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startRef.current;
+      const pct = Math.min(elapsed / CYCLE_MS, 1);
+      setProgress(pct);
+      if (pct >= 1) {
+        setActiveIdx(i => {
+          const next = (i + 1) % items.length;
+          setVisible(false);
+          setTimeout(() => { setVisible(true); setProgress(0); startRef.current = performance.now(); }, 350);
+          return next;
+        });
+      } else {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [items.length, activeIdx]);
+
   if (!items.length) return null;
 
+  const active = items[activeIdx];
+
   return (
-    <>
-      <SectionLabel text="From Families We Helped" stagger="stagger-4" />
-      <div className="fade-in stagger-5" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '1rem',
-        marginBottom: 40,
-      }}>
-        {items.map((t, i) => (
-          <div key={i} style={{
-            background: 'var(--bg-panel)',
-            border: '1px solid var(--border-dim)',
-            borderRadius: 12,
-            padding: '1.25rem 1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            position: 'relative',
-          }}>
-            <div style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: 36,
-              lineHeight: 1,
-              color: 'var(--accent-teal)',
-              opacity: 0.25,
-              userSelect: 'none',
-              marginBottom: -8,
-            }}>❝</div>
-            <p style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.7,
-              color: 'var(--text-secondary)',
-              fontStyle: 'italic',
-              fontFamily: 'system-ui, sans-serif',
-            }}>{t.message}</p>
-            <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border-dim)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>
-                {t.name}
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--accent-teal)', opacity: 0.6, marginTop: 2, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                {t.case_ref ? `Case ···${t.case_ref}` : ''}{t.case_ref && t.timestamp ? ' · ' : ''}{t.timestamp}
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="testimonials-wrap fade-in stagger-3">
+
+      {/* Section eyebrow */}
+      <div className="testimonials-eyebrow">
+        <span className="testimonials-eyebrow-tag">❝ Real Stories</span>
+        <span className="testimonials-eyebrow-line" />
+        <span className="testimonials-eyebrow-sub">Families we've helped — in their own words</span>
       </div>
-    </>
+
+      {/* Full-width spotlight card */}
+      <div
+        className="testimonial-spotlight"
+        style={{
+          opacity:   visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(10px)',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+        }}
+      >
+        {/* Giant decorative background quote mark */}
+        <div className="testimonial-bg-glyph" aria-hidden>"</div>
+
+        {/* Stars */}
+        {active.rating != null && <StarRating rating={active.rating} />}
+
+        {/* The quote — the hero element */}
+        <blockquote className="testimonial-spotlight-body">{active.message}</blockquote>
+
+        {/* Author row */}
+        <div className="testimonial-spotlight-author">
+          <div className="testimonial-avatar">
+            {active.name.trim().charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="testimonial-name">{active.name}</div>
+            {active.case_ref && (
+              <div className="testimonial-case">
+                Case ···{active.case_ref}{active.timestamp ? ` · ${active.timestamp}` : ''}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Integrated donate CTA */}
+        <div className="testimonial-spotlight-cta">
+          <span className="testimonial-spotlight-cta-text">
+            Every outcome like this is funded by people who care.
+          </span>
+          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="testimonial-spotlight-cta-btn">
+            ♥ Help the Next Family
+          </a>
+        </div>
+
+        {/* Progress bar */}
+        {items.length > 1 && (
+          <div className="testimonial-progress-track">
+            <div className="testimonial-progress-bar" style={{ width: `${progress * 100}%` }} />
+          </div>
+        )}
+      </div>
+
+      {/* Dot navigation */}
+      {items.length > 1 && (
+        <div className="testimonial-dots">
+          {items.map((_, i) => (
+            <button
+              key={i}
+              className={`testimonial-dot${i === activeIdx ? ' active' : ''}`}
+              onClick={() => goTo(i)}
+              aria-label={`Story ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -910,12 +990,33 @@ export default function DashboardPage() {
 
               {/* ── Live Mission Feed ── */}
               <SectionLabel text="Live Operations" stagger="stagger-2" />
-              <div className="stagger-2" style={{ marginBottom: 32 }}>
+              <div className="stagger-2" style={{ marginBottom: 48 }}>
                 <LiveMissionFeed />
               </div>
 
+              {/* ── Testimonials — social proof while user is emotionally engaged ── */}
+              <TestimonialsSection />
+
+              {/* ── Donor ROI — ask right after social proof ── */}
+              <SectionLabel text="Your Donation in Action" stagger="stagger-4" />
+              <div style={{ marginBottom: 48 }}>
+                <DonorROI data={data} />
+              </div>
+
+              {/* ── Live Operations Globe CTA ── */}
+              <Link to="/map" className="globe-cta-banner fade-in stagger-3" style={{ marginBottom: 16 }}>
+                <div className="globe-cta-text">
+                  <div className="globe-cta-label">◈ Live Operations</div>
+                  <div className="globe-cta-title">Watch Our Operations in Real Time</div>
+                  <div className="globe-cta-sub">
+                    See every active and resolved incident plotted on a live 3D world map
+                  </div>
+                </div>
+                <div className="globe-cta-arrow">Open Live Map →</div>
+              </Link>
+
               {/* ── Transparency strip ── */}
-              <Link to="/fund-our-team" className="transparency-strip fade-in stagger-3" style={{ marginBottom: 40 }}>
+              <Link to="/fund-our-team" className="transparency-strip fade-in stagger-3" style={{ marginBottom: 48 }}>
                 <div className="transparency-strip-left">
                   <div className="transparency-strip-icon">◈</div>
                   <div>
@@ -927,18 +1028,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="transparency-strip-btn">See How Funds Are Used →</div>
-              </Link>
-
-              {/* ── Live Operations Globe CTA ── */}
-              <Link to="/map" className="globe-cta-banner fade-in stagger-3">
-                <div className="globe-cta-text">
-                  <div className="globe-cta-label">◈ Live Operations</div>
-                  <div className="globe-cta-title">Watch Our Operations in Real Time</div>
-                  <div className="globe-cta-sub">
-                    See every active and resolved incident plotted on a live 3D world map
-                  </div>
-                </div>
-                <div className="globe-cta-arrow">Open Live Map →</div>
               </Link>
 
               {/* ── Incident Types ── */}
@@ -1004,18 +1093,15 @@ export default function DashboardPage() {
 
               {/* ── Countries This Month ── */}
               <div className="two-col fade-in stagger-5">
-                <CountryPanel title="Countries This Month — All" countries={data.current_month.countries} />
-                <CountryPanel title="Countries This Month — Cases" countries={data.current_month.handled_countries} />
+                <CountryPanel title={`Countries — ${currentMonth}`} countries={data.current_month.countries} />
+                <CountryPanel title={`Cases — ${currentMonth}`} countries={data.current_month.handled_countries} />
               </div>
 
-              {/* ── Donor ROI ── */}
-              <SectionLabel text="Your Donation in Action" stagger="stagger-4" />
-              <div style={{ marginBottom: 40 }}>
-                <DonorROI data={data} />
+              {/* ── Countries Last Month ── */}
+              <div className="two-col fade-in stagger-5">
+                <CountryPanel title={`Countries — ${lastMonth}`} countries={data.last_month.countries} />
+                <CountryPanel title={`Cases — ${lastMonth}`} countries={data.last_month.handled_countries} />
               </div>
-
-              {/* ── Testimonials ── */}
-              <TestimonialsSection />
 
               {/* ── Support CTA ── */}
               <div className="support-section fade-in">
