@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify
 from app.features.incidents.service import fetch_monday_data
 from app.features.incidents.tracker_service import fetch_case_status
-from app.features.incidents.donor_service import fetch_donor_by_token, is_valid_token_format
+from app.features.incidents.donor_service import fetch_donor_by_token, is_valid_token_format, fetch_leaderboard
 from app.features.incidents.feedback_service import (
     post_feedback_to_monday,
     fetch_all_feedback,
@@ -315,6 +315,18 @@ def get_donor_impact(token):
     resp = jsonify({'success': True, 'data': data})
     resp.headers['Cache-Control'] = 'private, no-store'
     return resp, 200
+
+
+@incidents_bp.route('/api/leaderboard')
+def get_leaderboard():
+    try:
+        board = fetch_leaderboard()
+        resp = jsonify({'success': True, 'data': board, 'total': len(board)})
+        resp.headers['Cache-Control'] = 'public, max-age=300'
+        return resp, 200
+    except Exception as ex:
+        print(f'[leaderboard] error: {ex}')
+        return jsonify({'success': False, 'message': str(ex)}), 500
 
 
 @incidents_bp.route('/api/health')

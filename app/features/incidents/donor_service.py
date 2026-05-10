@@ -35,8 +35,12 @@ _LAST_DATE_COL  = os.getenv('DONOR_LAST_DATE_COL',  '')
 _NOTE_COL       = os.getenv('DONOR_NOTE_COL',       '')
 
 AVG_MISSION_COST = 350  # USD — matches the constant used in the frontend
+COST_PER_LIFE    = 5000  # NIS per life saved — used for leaderboard ranking
 
 _HANDLED = {GROUP_OPENED, INCIDENT_HANDLED_BY_RON, SIGNIFICANT_INCIDENT}
+
+_leaderboard_cache: dict = {'data': None, 'ts': 0.0}
+_LEADERBOARD_TTL = 300  # seconds
 
 
 def _parse_amount(raw: str) -> float:
@@ -106,6 +110,53 @@ def _impact_since(first_date_str: str) -> dict:
         'handled_since':     handled,
         'lives_saved_since': lives,
     }
+
+
+def fetch_leaderboard() -> list:
+    """Returns all donors sorted by lives saved (amount // COST_PER_LIFE), descending."""
+    import time
+    now = time.time()
+    if _leaderboard_cache['data'] is not None and now - _leaderboard_cache['ts'] < _LEADERBOARD_TTL:
+        return _leaderboard_cache['data']
+
+    if not DONORS_BOARD_ID or not _AMOUNT_COL:
+        return []
+
+    data = _post(f'''
+      {{
+        boards(ids: [{DONORS_BOARD_ID}]) {{
+          items_page(limit: 500) {{
+            items {{
+              name
+              column_values(ids: ["{_AMOUNT_COL}"]) {{ id text }}
+            }}
+          }}
+        }}
+      }}
+    ''')
+    if not data:
+        return []
+
+    items = data['data']['boards'][0]['items_page']['items']
+    result = []
+    for item in items:
+        cols = {cv['id']: cv['text'] for cv in item['column_values']}
+        amount = _parse_amount(cols.get(_AMOUNT_COL) or '')
+        if amount <= 0:
+            continue
+        first_name = (item['name'] or 'Anonymous').split()[0]
+        result.append({
+            'name':        first_name,
+            'lives_saved': int(amount // COST_PER_LIFE),
+        })
+
+    result.sort(key=lambda x: x['lives_saved'], reverse=True)
+    for i, entry in enumerate(result):
+        entry['rank'] = i + 1
+
+    _leaderboard_cache['data'] = result
+    _leaderboard_cache['ts'] = now
+    return result
 
 
 def fetch_donor_by_token(token: str) -> dict | None:
