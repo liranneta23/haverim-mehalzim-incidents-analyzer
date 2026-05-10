@@ -11,8 +11,6 @@ const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214'
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 
 const AVG_MISSION_COST = 350;   // USD — avg cost per handled incident
-const FIELD_PERCENT    = 92;    // % of donations that reach field operations
-
 interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; }
 const DONATION_TIERS: DonationTier[] = [
   { amount: 80,  title: 'Standby Officer',      desc: 'Funds one volunteer on immediate standby for a full mission shift',           icon: '⚡' },
@@ -170,10 +168,6 @@ function DonorROI({ data }: { data: DashboardData }) {
             — <strong style={{ color: 'var(--accent-teal)' }}>${yearDeployed.toLocaleString()}</strong> deployed
             directly to field operations. Every dollar you give puts a trained volunteer on the ground.
           </p>
-        </div>
-        <div className="donor-roi-impact-badge">
-          <div className="donor-roi-impact-num">{FIELD_PERCENT}%</div>
-          <div className="donor-roi-impact-lbl">of every dollar reaches the field</div>
         </div>
       </div>
 
@@ -446,9 +440,9 @@ function CountryPanel({ title, countries }: { title: string; countries: Record<s
 type PeriodTab = 'month' | 'last_month' | 'year';
 
 const PERIOD_TABS: { key: PeriodTab; label: string }[] = [
-  { key: 'month',      label: 'This Month' },
-  { key: 'last_month', label: 'Last Month' },
   { key: 'year',       label: 'This Year'  },
+  { key: 'last_month', label: 'Last Month' },
+  { key: 'month',      label: 'This Month' },
 ];
 
 function PeriodCard({
@@ -466,7 +460,7 @@ function PeriodCard({
   lastMonthData: { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
   yearData:      { total: number; handled: number; types: Record<string, number>; handled_types: Record<string, number> };
 }) {
-  const [tab, setTab] = useState<PeriodTab>('month');
+  const [tab, setTab] = useState<PeriodTab>('year');
   const indicatorRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Partial<Record<PeriodTab, HTMLButtonElement | null>>>({});
 
@@ -900,12 +894,136 @@ function DonorImpactTeaser() {
   );
 }
 
+// ─── Page navigation cards ────────────────────────────────────────────────────
+
+function PageNavCards() {
+  return (
+    <div className="page-nav-section fade-in stagger-3">
+      <SectionLabel text="Explore" />
+      <div className="page-nav-grid">
+        <Link to="/map" className="page-nav-card">
+          <div className="page-nav-card-eyebrow">◉ Operations</div>
+          <div className="page-nav-card-title">Live Operations Map</div>
+          <div className="page-nav-card-desc">Every active and resolved incident plotted on a live 3D world map</div>
+          <div className="page-nav-card-cta">Open Map →</div>
+        </Link>
+        <Link to="/fund-our-team" className="page-nav-card">
+          <div className="page-nav-card-eyebrow">◈ Transparency</div>
+          <div className="page-nav-card-title">Fund Our Team</div>
+          <div className="page-nav-card-desc">Exactly who responds, what each role costs, and the real impact per dollar</div>
+          <div className="page-nav-card-cta">See Breakdown →</div>
+        </Link>
+        <Link to="/leaderboard" className="page-nav-card page-nav-card--gold">
+          <div className="page-nav-card-eyebrow">★ Donors</div>
+          <div className="page-nav-card-title">Donor Leaderboard</div>
+          <div className="page-nav-card-desc">Top donors ranked by lives saved — see where your name stands</div>
+          <div className="page-nav-card-cta">View Rankings →</div>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+// ─── Geo period modal ────────────────────────────────────────────────────────
+
+function GeoPeriodModal({ currentMonth, lastMonth, data, onClose }: {
+  currentMonth: string; lastMonth: string; data: DashboardData; onClose: () => void;
+}) {
+  type GeoTab = 'this' | 'last';
+  const [tab, setTab] = useState<GeoTab>('this');
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', onKey); };
+  }, [onClose]);
+
+  const countries = tab === 'this' ? data.current_month.countries   : data.last_month.countries;
+  const handled   = tab === 'this' ? data.current_month.handled_countries : data.last_month.handled_countries;
+  const label     = tab === 'this' ? currentMonth : lastMonth;
+
+  const tabBtn = (t: GeoTab, lbl: string) => (
+    <button
+      key={t}
+      onClick={() => setTab(t)}
+      style={{
+        background:    tab === t ? 'rgba(0,230,160,0.1)' : 'none',
+        border:        tab === t ? '1px solid rgba(0,230,160,0.3)' : '1px solid transparent',
+        borderRadius:  6, padding: '5px 14px', cursor: 'pointer',
+        fontFamily:    'var(--font-mono)', fontSize: 10,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        color:         tab === t ? 'var(--accent-teal)' : 'var(--text-muted)',
+        transition: 'all 0.15s',
+      }}
+    >{lbl}</button>
+  );
+
+  return createPortal(
+    <div
+      style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center',
+        background:'rgba(4,8,12,0.88)', backdropFilter:'blur(6px)', padding:24, animation:'fadeIn 0.15s ease' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background:'#0d1117', border:'1px solid rgba(0,230,160,0.2)', borderRadius:16,
+          width:'100%', maxWidth:660, maxHeight:'82vh', overflow:'hidden', display:'flex',
+          flexDirection:'column', boxShadow:'0 0 0 1px rgba(0,230,160,0.06), 0 32px 80px rgba(0,0,0,0.7)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12,
+          padding:'16px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)',
+          flexShrink:0, background:'rgba(0,230,160,0.03)', flexWrap:'wrap' }}>
+          <div style={{ fontFamily:'var(--font-display)', fontSize:15, fontWeight:700, color:'var(--text-primary)' }}>
+            Geographic Distribution — {label}
+          </div>
+          <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+            {tabBtn('this', currentMonth)}
+            {tabBtn('last', lastMonth)}
+            <button onClick={onClose} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+              borderRadius:8, cursor:'pointer', color:'var(--text-muted)', fontSize:18, lineHeight:1,
+              width:34, height:34, display:'flex', alignItems:'center', justifyContent:'center', marginLeft:4,
+              transition:'background 0.15s, color 0.15s' }}
+              onMouseEnter={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='#fff'}}
+              onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.color='var(--text-muted)'}}>×</button>
+          </div>
+        </div>
+        {/* Two-column body */}
+        <div className="geo-modal-grid">
+          <div>
+            <div style={{ padding:'10px 16px 8px', fontFamily:'var(--font-mono)', fontSize:9,
+              color:'var(--text-muted)', letterSpacing:'0.15em', textTransform:'uppercase',
+              borderBottom:'1px solid rgba(255,255,255,0.05)' }}>Countries Reached</div>
+            <CountryRows countries={countries} />
+          </div>
+          <div style={{ borderLeft:'1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ padding:'10px 16px 8px', fontFamily:'var(--font-mono)', fontSize:9,
+              color:'var(--accent-teal)', letterSpacing:'0.15em', textTransform:'uppercase',
+              borderBottom:'1px solid rgba(255,255,255,0.05)' }}>Cases Managed</div>
+            <CountryRows countries={handled} />
+          </div>
+        </div>
+        <div style={{ padding:'9px 20px', borderTop:'1px solid rgba(255,255,255,0.05)',
+          fontFamily:'var(--font-mono)', fontSize:9, color:'rgba(255,255,255,0.18)',
+          letterSpacing:'0.1em', textAlign:'center', flexShrink:0 }}>
+          Press ESC or click outside to close
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [data, setData]             = useState<DashboardData | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('—');
+  const [geoModalOpen, setGeoModalOpen] = useState(false);
 
   const load = () => {
     fetchDashboard()
@@ -951,6 +1069,12 @@ export default function DashboardPage() {
               <div className="brand-sub">Incident Command Dashboard</div>
             </div>
           </div>
+          <nav className="header-nav">
+            <Link to="/map" className="header-nav-link">Live Map</Link>
+            <Link to="/fund-our-team" className="header-nav-link">Fund Our Team</Link>
+            <Link to="/leaderboard" className="header-nav-link">Leaderboard</Link>
+            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="header-nav-donate">♥ Donate</a>
+          </nav>
           <div className="header-meta">
             <div className="status-pill">
               <div className="status-dot" />
@@ -1023,7 +1147,8 @@ export default function DashboardPage() {
                     <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.countries_operated} delay={700} duration={1200} /></span> Countries Active</span>
                   </div>
                   <div className="mission-actions">
-                    <Link to="/map" className="mission-btn-primary">View Live Operations →</Link>
+                    <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-donate">♥ Donate Now</a>
+                    <Link to="/map" className="mission-btn-secondary">View Live Operations →</Link>
                   </div>
                 </div>
                 <HeroGlobe />
@@ -1038,41 +1163,16 @@ export default function DashboardPage() {
               {/* ── Testimonials — social proof while user is emotionally engaged ── */}
               <TestimonialsSection />
 
-              {/* ── Donor Impact Teaser — invite existing donors to their personal page ── */}
-              <DonorImpactTeaser />
-
-              {/* ── Donor ROI — ask right after social proof ── */}
-              <SectionLabel text="Your Donation in Action" stagger="stagger-4" />
+              {/* ── Donor ROI — ask right after emotional peak ── */}
               <div style={{ marginBottom: 48 }}>
                 <DonorROI data={data} />
               </div>
 
-              {/* ── Live Operations Globe CTA ── */}
-              <Link to="/map" className="globe-cta-banner fade-in stagger-3" style={{ marginBottom: 16 }}>
-                <div className="globe-cta-text">
-                  <div className="globe-cta-label">◈ Live Operations</div>
-                  <div className="globe-cta-title">Watch Our Operations in Real Time</div>
-                  <div className="globe-cta-sub">
-                    See every active and resolved incident plotted on a live 3D world map
-                  </div>
-                </div>
-                <div className="globe-cta-arrow">Open Live Map →</div>
-              </Link>
+              {/* ── Donor Impact Teaser — invite existing donors to their personal page ── */}
+              <DonorImpactTeaser />
 
-              {/* ── Transparency strip ── */}
-              <Link to="/fund-our-team" className="transparency-strip fade-in stagger-3" style={{ marginBottom: 48 }}>
-                <div className="transparency-strip-left">
-                  <div className="transparency-strip-icon">◈</div>
-                  <div>
-                    <div className="transparency-strip-eyebrow">Full Cost Transparency</div>
-                    <div className="transparency-strip-headline">See exactly where your donation goes.</div>
-                    <div className="transparency-strip-text">
-                      Who responds, what each role costs, and the real impact behind every dollar.
-                    </div>
-                  </div>
-                </div>
-                <div className="transparency-strip-btn">See How Funds Are Used →</div>
-              </Link>
+              {/* ── Explore the site ── */}
+              <PageNavCards />
 
               {/* ── Incident Types ── */}
               <SectionLabel text="Incident Types — All Time" stagger="stagger-3" />
@@ -1134,18 +1234,19 @@ export default function DashboardPage() {
                 <CountryPanel title="All Countries" countries={data.all_time.countries} />
                 <CountryPanel title="Cases Managed" countries={data.all_time.handled_countries} />
               </div>
-
-              {/* ── Countries This Month ── */}
-              <div className="two-col fade-in stagger-5">
-                <CountryPanel title={`Countries — ${currentMonth}`} countries={data.current_month.countries} />
-                <CountryPanel title={`Cases — ${currentMonth}`} countries={data.current_month.handled_countries} />
+              <div style={{ marginBottom: 40 }}>
+                <button className="geo-period-trigger" onClick={() => setGeoModalOpen(true)}>
+                  View breakdown by month →
+                </button>
               </div>
-
-              {/* ── Countries Last Month ── */}
-              <div className="two-col fade-in stagger-5">
-                <CountryPanel title={`Countries — ${lastMonth}`} countries={data.last_month.countries} />
-                <CountryPanel title={`Cases — ${lastMonth}`} countries={data.last_month.handled_countries} />
-              </div>
+              {geoModalOpen && (
+                <GeoPeriodModal
+                  currentMonth={currentMonth}
+                  lastMonth={lastMonth}
+                  data={data}
+                  onClose={() => setGeoModalOpen(false)}
+                />
+              )}
 
               {/* ── Support CTA ── */}
               <div className="support-section fade-in">
