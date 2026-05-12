@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import './donor.css';
 
 const DONATE_URL     = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
-const AVG_MISSION_COST = 350;
+const AVG_MISSION_COST = 150;
 
 interface DonorData {
   name:                string;

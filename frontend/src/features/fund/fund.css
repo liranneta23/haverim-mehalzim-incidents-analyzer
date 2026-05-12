@@ -1,0 +1,478 @@
+/* ── Fund Our Team Page ───────────────────────────────────────────────────── */
+
+.fund-page {
+  background: var(--bg-void);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Teal grid — matches every other page */
+.fund-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,230,160,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,230,160,0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.fund-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 80px;
+}
+
+/* ── Nav ────────────────────────────────────────────────────────────────── */
+
+.fund-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0 32px;
+  border-bottom: 1px solid var(--border-dim);
+  margin-bottom: 52px;
+}
+
+.fund-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.fund-back {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.fund-back:hover { color: var(--accent-teal); }
+
+.fund-nav-sep {
+  color: var(--border-dim);
+  font-size: 14px;
+  user-select: none;
+}
+
+.fund-nav-donate {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bg-void);
+  background: var(--accent-teal);
+  padding: 8px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.fund-nav-donate:hover { opacity: 0.85; }
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+
+.fund-hero {
+  padding-bottom: 12px;
+  max-width: 660px;
+}
+
+.fund-hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+  margin-bottom: 18px;
+}
+
+.fund-hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 46px);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  margin: 0 0 18px;
+}
+
+.fund-hero-body {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin: 0 0 32px;
+}
+
+.fund-hero-stats {
+  display: flex;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.fund-stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.fund-stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+/* ── Section label ──────────────────────────────────────────────────────── */
+
+.fund-section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  margin-top: 56px;
+}
+
+.fund-section-label-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+  white-space: nowrap;
+}
+
+.fund-section-label-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-accent);
+  opacity: 0.3;
+}
+
+.fund-section-sub {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  max-width: 580px;
+}
+
+/* ── Tier grid ──────────────────────────────────────────────────────────── */
+
+.fund-tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* ── Tier card ──────────────────────────────────────────────────────────── */
+
+.fund-tier-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s, transform 0.18s;
+}
+
+.fund-tier-card:hover {
+  border-color: rgba(0,230,160,0.22);
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+}
+
+.fund-tier-card--highlight {
+  background: var(--accent-teal-dim);
+  border-color: var(--border-accent);
+}
+
+.fund-tier-card--highlight:hover {
+  background: rgba(0,230,160,0.1);
+  border-color: rgba(0,230,160,0.5);
+  transform: translateY(-3px);
+}
+
+.fund-tier-badge {
+  position: absolute;
+  top: -1px;
+  right: 16px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bg-void);
+  background: var(--accent-teal);
+  padding: 3px 10px;
+  border-radius: 0 0 6px 6px;
+}
+
+.fund-tier-duration {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.fund-tier-amount {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.fund-tier-card--highlight .fund-tier-amount {
+  color: var(--accent-teal);
+}
+
+.fund-tier-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.fund-tier-card--highlight .fund-tier-title {
+  color: var(--accent-teal);
+}
+
+.fund-tier-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin: 0 0 18px;
+  flex: 1;
+}
+
+.fund-tier-divider {
+  height: 1px;
+  background: var(--border-dim);
+  margin-bottom: 16px;
+}
+
+.fund-tier-includes-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.fund-tier-includes {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 22px;
+}
+
+.fund-tier-include-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.fund-tier-check {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-teal);
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.fund-tier-include-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.fund-tier-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--bg-void);
+  background: var(--accent-teal);
+  border-radius: 7px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  margin-top: auto;
+}
+.fund-tier-cta:hover { opacity: 0.85; }
+
+/* ── Testimonials ───────────────────────────────────────────────────────── */
+
+.fund-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.fund-testimonial-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.fund-testimonial-quote {
+  font-family: Georgia, serif;
+  font-size: 52px;
+  line-height: 1;
+  color: rgba(0,230,160,0.07);
+  position: absolute;
+  top: 10px;
+  left: 16px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.fund-testimonial-body {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  margin: 24px 0 18px;
+  font-style: italic;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.fund-testimonial-footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fund-testimonial-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fund-testimonial-case {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(0,230,160,0.4);
+  margin-top: 3px;
+}
+
+.fund-testimonial-ts {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+/* ── Final CTA ──────────────────────────────────────────────────────────── */
+
+.fund-cta {
+  margin-top: 64px;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid rgba(0,230,160,0.18);
+  border-radius: 14px;
+  padding: clamp(36px, 5vw, 60px) clamp(28px, 5vw, 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.fund-cta-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(212,175,55,0.55);
+  margin-bottom: 16px;
+}
+
+.fund-cta-headline {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 4vw, 34px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.fund-cta-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 0 32px;
+}
+
+.fund-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 44px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--bg-void);
+  background: var(--accent-teal);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.fund-cta-btn:hover { opacity: 0.85; }
+
+.fund-cta-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.fund-cta-corner--tl { top: 16px; left: 16px; border-top: 1.5px solid rgba(0,230,160,0.35); border-left: 1.5px solid rgba(0,230,160,0.35); }
+.fund-cta-corner--tr { top: 16px; right: 16px; border-top: 1.5px solid rgba(0,230,160,0.35); border-right: 1.5px solid rgba(0,230,160,0.35); }
+.fund-cta-corner--bl { bottom: 16px; left: 16px; border-bottom: 1.5px solid rgba(0,230,160,0.35); border-left: 1.5px solid rgba(0,230,160,0.35); }
+.fund-cta-corner--br { bottom: 16px; right: 16px; border-bottom: 1.5px solid rgba(0,230,160,0.35); border-right: 1.5px solid rgba(0,230,160,0.35); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .fund-wrapper { padding: 0 20px 60px; }
+  .fund-hero-stats { gap: 22px; }
+  .fund-tiers-grid { grid-template-columns: 1fr; }
+  .fund-nav-links a:not(.fund-back) { display: none; }
+}

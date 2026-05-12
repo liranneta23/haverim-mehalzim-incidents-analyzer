@@ -10,13 +10,13 @@ import './dashboard.css';
 const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 
-const AVG_MISSION_COST = 350;   // USD — avg cost per handled incident
+const AVG_MISSION_COST = 150;   // USD — base Golden Hour Response cost
 interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; }
 const DONATION_TIERS: DonationTier[] = [
-  { amount: 80,  title: 'Standby Officer',      desc: 'Funds one volunteer on immediate standby for a full mission shift',           icon: '⚡' },
-  { amount: 150, title: 'Case Manager',         desc: 'Covers full case coordination — from first call through to closure',          icon: '◈' },
-  { amount: 350, title: 'Full Mission',         desc: 'Deploys a complete, coordinated response team for one incident end-to-end',   icon: '♥', highlight: true },
-  { amount: 530, title: 'Life-Saving Response', desc: 'Funds the full specialist team for a critical life-threatening emergency',    icon: '★' },
+  { amount: 150,   title: 'Golden Hour Response',         desc: 'Funds one hour of emergency case management — the critical first window',                                              icon: '⚡' },
+  { amount: 900,   title: 'Six-Hour Rapid Response',      desc: 'Covers six hours of coordinated response work for a complex emergency',                                              icon: '◈' },
+  { amount: 3000,  title: '24-Hour SOS Shift',            desc: 'Funds one full day of emergency response coverage — keeping our team fully operational for 24 hours straight',      icon: '♥', highlight: true },
+  { amount: 14000, title: 'Scoop & Run',                  desc: 'Full operation: 24h coordination, up to 3h helicopter, ambulance transfer, and initial hospital care',               icon: '★' },
 ];
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
@@ -148,12 +148,6 @@ function DonorROI({ data }: { data: DashboardData }) {
   const [activeTierIdx, setActiveTierIdx] = useState(2);
   const activeTier = DONATION_TIERS[activeTierIdx];
 
-  const yearHandled   = data.current_year.handled_incidents;
-  const yearDeployed  = yearHandled * AVG_MISSION_COST;
-  const livesSaved    = data.impact.count_life_saved;
-  const costPerLife   = livesSaved > 0 ? Math.round(yearDeployed / livesSaved) : null;
-  const currentYear   = new Date().getFullYear();
-
   return (
     <div className="donor-roi-section fade-in stagger-4">
 
@@ -162,39 +156,6 @@ function DonorROI({ data }: { data: DashboardData }) {
         <div className="donor-roi-header-left">
           <div className="donor-roi-eyebrow">◈ Your Donation in Action</div>
           <h2 className="donor-roi-headline">See what your money actually does.</h2>
-          <p className="donor-roi-sub">
-            In {currentYear}, donors have funded{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>{yearHandled} missions</strong>{' '}
-            — <strong style={{ color: 'var(--accent-teal)' }}>${yearDeployed.toLocaleString()}</strong> deployed
-            directly to field operations. Every dollar you give puts a trained volunteer on the ground.
-          </p>
-        </div>
-      </div>
-
-      {/* ROI stats row */}
-      <div className="donor-roi-stats">
-        <div className="donor-roi-stat">
-          <div className="donor-roi-stat-num">${AVG_MISSION_COST}</div>
-          <div className="donor-roi-stat-lbl">Average cost per mission</div>
-        </div>
-        <div className="donor-roi-stat-div" />
-        {costPerLife && (
-          <>
-            <div className="donor-roi-stat">
-              <div className="donor-roi-stat-num roi-amber">${costPerLife.toLocaleString()}</div>
-              <div className="donor-roi-stat-lbl">Cost per life stabilized</div>
-            </div>
-            <div className="donor-roi-stat-div" />
-          </>
-        )}
-        <div className="donor-roi-stat">
-          <div className="donor-roi-stat-num roi-teal">{yearHandled}</div>
-          <div className="donor-roi-stat-lbl">Missions funded this year</div>
-        </div>
-        <div className="donor-roi-stat-div" />
-        <div className="donor-roi-stat">
-          <div className="donor-roi-stat-num roi-teal">{livesSaved}</div>
-          <div className="donor-roi-stat-lbl">Lives stabilized, all time</div>
         </div>
       </div>
 
@@ -226,7 +187,7 @@ function DonorROI({ data }: { data: DashboardData }) {
         </div>
         <div className="donor-roi-cta">
           <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-roi-btn-primary">
-            ♥ Donate ${activeTier.amount} Now
+            ♥ Donate Now
           </a>
         </div>
       </div>
@@ -890,16 +851,16 @@ function PageNavCards() {
     <div className="page-nav-section fade-in stagger-3">
       <SectionLabel text="Explore" />
       <div className="page-nav-grid">
-        <Link to="/map" className="page-nav-card">
+        <Link to="/map" className="page-nav-card page-nav-card--teal">
           <div className="page-nav-card-eyebrow">◉ Operations</div>
           <div className="page-nav-card-title">Live Operations Map</div>
           <div className="page-nav-card-desc">Every active and resolved incident plotted on a live 3D world map</div>
           <div className="page-nav-card-cta">Open Map →</div>
         </Link>
-        <Link to="/fund-our-team" className="page-nav-card">
+        <Link to="/fund-our-team" className="page-nav-card page-nav-card--blue">
           <div className="page-nav-card-eyebrow">◈ Transparency</div>
           <div className="page-nav-card-title">Fund Our Team</div>
-          <div className="page-nav-card-desc">Exactly who responds, what each role costs, and the real impact per dollar</div>
+          <div className="page-nav-card-desc">Every response tier explained — what it costs, what it covers, and how to fund it</div>
           <div className="page-nav-card-cta">See Breakdown →</div>
         </Link>
         <Link to="/leaderboard" className="page-nav-card page-nav-card--gold">

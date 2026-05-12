@@ -480,7 +480,7 @@ export default function LiveMissionFeed() {
         )}
 
         {/* ── Immediate queue — all other incidents visible from the start ──── */}
-        {live.length > 1 && (
+        {(live.length > 1 || allBroadcast) && (
           <>
             <div style={{
               padding: '12px 20px 4px',

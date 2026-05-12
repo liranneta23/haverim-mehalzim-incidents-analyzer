@@ -1565,6 +1565,26 @@ header {
     background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, var(--bg-card-hover) 100%);
     transform: translateY(-3px);
 }
+.page-nav-card--teal {
+    border-color: rgba(0,230,160,0.18);
+    background: linear-gradient(135deg, rgba(0,230,160,0.05) 0%, var(--bg-card) 100%);
+}
+.page-nav-card--teal:hover {
+    border-color: rgba(0,230,160,0.35);
+    background: linear-gradient(135deg, rgba(0,230,160,0.09) 0%, var(--bg-card-hover) 100%);
+    transform: translateY(-3px);
+}
+.page-nav-card--blue {
+    border-color: rgba(77,166,255,0.18);
+    background: linear-gradient(135deg, rgba(77,166,255,0.05) 0%, var(--bg-card) 100%);
+}
+.page-nav-card--blue:hover {
+    border-color: rgba(77,166,255,0.35);
+    background: linear-gradient(135deg, rgba(77,166,255,0.09) 0%, var(--bg-card-hover) 100%);
+    transform: translateY(-3px);
+}
+.page-nav-card--blue .page-nav-card-eyebrow { color: #4da6ff; }
+.page-nav-card--blue .page-nav-card-cta     { color: #4da6ff; }
 .page-nav-card-eyebrow {
     font-family: var(--font-mono);
     font-size: 9px;

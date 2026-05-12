@@ -17,42 +17,11 @@ const SUCCESS_METRICS: Record<string, string> = {
   'Other':            'Mission Completed',
 };
 
-interface RoleItem { name: string; cost: number; description: string; }
-
-const INCIDENT_ROLES: Record<string, RoleItem[]> = {
-  'Medical': [
-    { name: 'Case Manager',          cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Medical Coordinator',   cost: 180, description: 'Manages medical logistics & care pathway' },
-    { name: 'Standby Officer',       cost:  80, description: 'Rapid deployment & on-call support' },
-  ],
-  'Rescue': [
-    { name: 'Case Manager',          cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Supervisor',            cost: 200, description: 'Senior oversight & critical decisions' },
-    { name: 'Logistics Coordinator', cost: 100, description: 'Transport, accommodation & resources' },
-  ],
-  'Mental Health': [
-    { name: 'Case Manager',            cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Mental Health Specialist',cost: 160, description: 'Trained crisis counselor on call' },
-    { name: 'Standby Officer',         cost:  80, description: 'Rapid deployment & on-call support' },
-  ],
-  'Search & Locate': [
-    { name: 'Case Manager',      cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Intelligence Expert', cost: 120, description: 'Gathers intel & liaisons with local authorities' },
-    { name: 'Standby Officer',   cost:  80, description: 'Rapid deployment & on-call support' },
-  ],
-  'Antisemitism': [
-    { name: 'Case Manager',      cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Intelligence Expert', cost: 120, description: 'Gathers intel & liaisons with local authorities' },
-    { name: 'Legal Advisor',     cost: 140, description: 'Documentation & legal coordination' },
-  ],
-  'Haverot Mehalzot': [
-    { name: 'Case Manager', cost: 150, description: 'Coordinates response & family communication' },
-    { name: 'Supervisor',   cost: 200, description: 'Senior oversight & critical decisions' },
-  ],
-};
-const DEFAULT_ROLES: RoleItem[] = [
-  { name: 'Case Manager',    cost: 150, description: 'Coordinates response & family communication' },
-  { name: 'Standby Officer', cost:  80, description: 'Rapid deployment & on-call support' },
+const RESPONSE_TIERS_BRIEF = [
+  { amount: 150,   label: 'Golden Hour Response',    desc: '1 hour of emergency case management' },
+  { amount: 900,   label: 'Six-Hour Rapid Response', desc: '6 hours of coordinated response work' },
+  { amount: 3000,  label: '24-Hour SOS Shift',       desc: 'Full-day emergency coverage' },
+  { amount: 14000, label: 'Scoop & Run',             desc: '24h coordination, helicopter, ambulance & hospital' },
 ];
 
 const GEO_URL =
@@ -180,35 +149,26 @@ function StorySection({
   );
 }
 
-function RoleCostBreakdown({ type, accent, isResolved }: { type: string; accent: string; isResolved: boolean }) {
-  const roles = INCIDENT_ROLES[type] ?? DEFAULT_ROLES;
-  const total = roles.reduce((sum, r) => sum + r.cost, 0);
+function ResponseImpactInfo({ accent, isResolved }: { accent: string; isResolved: boolean }) {
   return (
     <div className="mb-5 rounded overflow-hidden"
       style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
       <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
         <span className="text-[9px] tracking-[0.25em] uppercase font-bold" style={{ color: `${accent}99` }}>
-          {isResolved ? 'What made this mission possible' : 'What your donation funds'}
+          {isResolved ? 'What funded this mission' : 'Every Minute Counts'}
         </span>
       </div>
       <div className="px-4 divide-y divide-white/[0.05]">
-        {roles.map(role => (
-          <div key={role.name} className="flex items-center justify-between py-2.5">
+        {RESPONSE_TIERS_BRIEF.map(tier => (
+          <div key={tier.amount} className="flex items-center justify-between py-2.5">
             <div>
-              <div className="text-[12px] font-bold text-white">{role.name}</div>
-              <div className="text-[10px] text-[#5a7a90] mt-0.5">{role.description}</div>
+              <div className="text-[11px] font-bold text-white">{tier.label}</div>
+              <div className="text-[10px] text-[#5a7a90] mt-0.5">{tier.desc}</div>
             </div>
             <span className="text-[13px] font-bold tabular-nums ml-4 flex-shrink-0"
-              style={{ color: accent }}>${role.cost}</span>
+              style={{ color: accent }}>${tier.amount.toLocaleString()}</span>
           </div>
         ))}
-      </div>
-      <div className="px-4 py-2.5 flex justify-between items-center"
-        style={{ borderTop: `1px solid ${accent}25`, background: `${accent}0a` }}>
-        <span className="text-[9px] tracking-[0.2em] uppercase" style={{ color: `${accent}77` }}>
-          Total per incident
-        </span>
-        <span className="text-[16px] font-bold tabular-nums" style={{ color: accent }}>${total}</span>
       </div>
     </div>
   );
@@ -331,8 +291,8 @@ function IncidentDetail({
         </p>
       )}
 
-      {/* Role cost breakdown */}
-      <RoleCostBreakdown type={incident.type} accent={accentColor} isResolved={isResolved} />
+      {/* Response impact info */}
+      <ResponseImpactInfo accent={accentColor} isResolved={isResolved} />
 
       {/* CTA */}
       <a
