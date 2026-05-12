@@ -11,12 +11,12 @@ const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214'
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 
 const AVG_MISSION_COST = 150;   // USD — base Golden Hour Response cost
-interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; }
+interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; impactNote?: string; }
 const DONATION_TIERS: DonationTier[] = [
   { amount: 150,   title: 'Golden Hour Response',         desc: 'Funds one hour of emergency case management — the critical first window',                                              icon: '⚡' },
   { amount: 900,   title: 'Six-Hour Rapid Response',      desc: 'Covers six hours of coordinated response work for a complex emergency',                                              icon: '◈' },
   { amount: 3000,  title: '24-Hour SOS Shift',            desc: 'Funds one full day of emergency response coverage — keeping our team fully operational for 24 hours straight',      icon: '♥', highlight: true },
-  { amount: 14000, title: 'Scoop & Run',                  desc: 'Full operation: 24h coordination, up to 3h helicopter, ambulance transfer, and initial hospital care',               icon: '★' },
+  { amount: 14000, title: 'Scoop & Run',                  desc: 'Full operation: 24h coordination, up to 3h helicopter, ambulance transfer, and initial hospital care',               icon: '★', impactNote: 'Donors at this level receive a private link to see the real-world impact of their contribution.' },
 ];
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ function GrowthSnapshot({
 }
 
 function DonorROI({ data }: { data: DashboardData }) {
-  const [activeTierIdx, setActiveTierIdx] = useState(2);
+  const [activeTierIdx, setActiveTierIdx] = useState(3);
   const activeTier = DONATION_TIERS[activeTierIdx];
 
   return (
@@ -168,7 +168,6 @@ function DonorROI({ data }: { data: DashboardData }) {
             className={`donor-tier-card${tier.highlight ? ' highlight' : ''}${activeTierIdx === i ? ' active' : ''}`}
             onClick={() => setActiveTierIdx(i)}
           >
-            {tier.highlight && <div className="donor-tier-badge">Most Impactful</div>}
             <div className="donor-tier-icon">{tier.icon}</div>
             <div className="donor-tier-amount">${tier.amount}</div>
             <div className="donor-tier-title">{tier.title}</div>
@@ -177,14 +176,14 @@ function DonorROI({ data }: { data: DashboardData }) {
         ))}
       </div>
 
-      {/* Detail + CTA */}
+      {/* CTA */}
       <div className="donor-roi-footer">
-        <div className="donor-tier-detail">
-          <span className="donor-tier-detail-icon">{activeTier.icon}</span>
-          <span className="donor-tier-detail-text">
-            <strong>${activeTier.amount}</strong> {activeTier.desc.charAt(0).toLowerCase() + activeTier.desc.slice(1)}
-          </span>
-        </div>
+        {activeTier.impactNote && (
+          <div className="donor-tier-impact-note">
+            <span className="donor-tier-impact-icon">★</span>
+            <span>{activeTier.impactNote}</span>
+          </div>
+        )}
         <div className="donor-roi-cta">
           <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-roi-btn-primary">
             ♥ Donate Now

@@ -80,7 +80,6 @@
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 
 .fund-hero {
-  padding-bottom: 12px;
   max-width: 660px;
 }
 
@@ -103,34 +102,59 @@
   margin: 0 0 18px;
 }
 
+.fund-hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-teal);
+  margin-bottom: 22px;
+  padding: 6px 14px 6px 10px;
+  border: 1px solid rgba(0,230,160,0.2);
+  border-radius: 100px;
+  background: rgba(0,230,160,0.05);
+}
+
+.fund-hero-status-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.fund-hero-status-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-teal);
+  opacity: 0.6;
+  animation: fund-ping 1.6s ease-out infinite;
+}
+
+.fund-hero-status-core {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-teal);
+}
+
+@keyframes fund-ping {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+
 .fund-hero-body {
   font-size: 15px;
   line-height: 1.8;
   color: var(--text-secondary);
-  margin: 0 0 32px;
+  margin: 0;
 }
 
-.fund-hero-stats {
-  display: flex;
-  gap: 36px;
-  flex-wrap: wrap;
-}
-
-.fund-stat-value {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent-teal);
-}
-
-.fund-stat-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-top: 5px;
-}
 
 /* ── Section label ──────────────────────────────────────────────────────── */
 
@@ -139,7 +163,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
-  margin-top: 56px;
+  margin-top: 32px;
 }
 
 .fund-section-label-text {
@@ -303,6 +327,26 @@
   font-size: 10px;
   color: var(--text-secondary);
   line-height: 1.55;
+}
+
+.fund-tier-impact-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 13px;
+  margin-bottom: 14px;
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.6;
+  color: rgba(212,175,55,0.8);
+}
+
+.fund-tier-impact-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .fund-tier-cta {

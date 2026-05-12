@@ -1237,6 +1237,25 @@ header {
     border-top: 1px solid var(--border-dim);
     flex-wrap: wrap;
 }
+.donor-tier-impact-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 15px;
+    background: rgba(212,175,55,0.06);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: rgba(212,175,55,0.8);
+    flex: 1;
+    min-width: 0;
+}
+.donor-tier-impact-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
 .donor-tier-detail {
     display: flex;
     align-items: flex-start;

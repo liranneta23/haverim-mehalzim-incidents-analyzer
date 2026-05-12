@@ -15,6 +15,7 @@ interface ResponseTier {
   description: string;
   includes: string[];
   highlight?: boolean;
+  impactNote?: string;
 }
 
 const RESPONSE_TIERS: ResponseTier[] = [
@@ -53,7 +54,6 @@ const RESPONSE_TIERS: ResponseTier[] = [
       '24/7 family support and updates',
       'Full case documentation and status updates',
     ],
-    highlight: true,
   },
   {
     amount: 14000,
@@ -66,6 +66,8 @@ const RESPONSE_TIERS: ResponseTier[] = [
       '1 hour of ambulance transfer',
       '1 day of initial hospital care',
     ],
+    impactNote: 'Donors at this level receive a private link to see the real-world impact of their contribution.',
+    highlight: true,
   },
 ];
 
@@ -85,8 +87,6 @@ function SectionLabel({ text }: { text: string }) {
 function TierCard({ tier }: { tier: ResponseTier }) {
   return (
     <div className={`fund-tier-card${tier.highlight ? ' fund-tier-card--highlight' : ''}`}>
-      {tier.highlight && <div className="fund-tier-badge">Most Impactful</div>}
-
       <div className="fund-tier-duration">{tier.duration}</div>
       <div className="fund-tier-amount">${tier.amount.toLocaleString()}</div>
       <div className="fund-tier-title">{tier.title}</div>
@@ -102,6 +102,13 @@ function TierCard({ tier }: { tier: ResponseTier }) {
           </div>
         ))}
       </div>
+
+      {tier.impactNote && (
+        <div className="fund-tier-impact-note">
+          <span className="fund-tier-impact-icon">★</span>
+          <span>{tier.impactNote}</span>
+        </div>
+      )}
 
       <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="fund-tier-cta">
         ♥ Donate Now →
@@ -183,26 +190,21 @@ export default function FundOurTeamPage() {
         {/* ── Hero ────────────────────────────────────────────────────────── */}
         <div className="fund-hero">
           <div className="fund-hero-eyebrow">◈ Haverim Mehalzim · Transparency</div>
+          <div className="fund-hero-status">
+            <span className="fund-hero-status-dot">
+              <span className="fund-hero-status-ping" />
+              <span className="fund-hero-status-core" />
+            </span>
+            Response active — 24 hours a day, 7 days a week
+          </div>
           <h1 className="fund-hero-headline">
             Every Minute Counts.<br />Here's What It Costs.
           </h1>
           <p className="fund-hero-body">
             Every donation goes directly into funding the people who respond.
             In an emergency, time is the resource we can't afford to lose —
-            your support keeps our team on the clock, 24/7, at no cost to those we help.
+            your support keeps our team on the clock, at no cost to those we help.
           </p>
-          <div className="fund-hero-stats">
-            {[
-              { value: '$150',  label: 'Starting response' },
-              { value: '4',     label: 'Response tiers'    },
-              { value: '24/7',  label: 'Coverage, always'  },
-            ].map(({ value, label }) => (
-              <div key={label}>
-                <div className="fund-stat-value">{value}</div>
-                <div className="fund-stat-label">{label}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* ── Response Value Model ────────────────────────────────────────── */}
