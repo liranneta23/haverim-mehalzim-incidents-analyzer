@@ -13,12 +13,12 @@ const SUCCESS_METRICS: Record<string, string> = {
   'Mental Health':    'Crisis Support Delivered',
   'Search & Locate':  'Person Located Successfully',
   'Antisemitism':     'Incident Documented & Reported',
-  'Haverot Mehalzot': 'Response Coordinated',
+  'Sexual Assault': 'Response Coordinated',
   'Other':            'Mission Completed',
 };
 
 const RESPONSE_TIERS_BRIEF = [
-  { amount: 150,   label: 'Golden Hour Response',    desc: '1 hour of emergency case management' },
+  { amount: 150,   label: 'Golden Hour',              desc: '1 hour of emergency case management' },
   { amount: 900,   label: 'Six-Hour Rapid Response', desc: '6 hours of coordinated response work' },
   { amount: 3000,  label: '24-Hour SOS Shift',       desc: 'Full-day emergency coverage' },
   { amount: 14000, label: 'Scoop & Run',             desc: '24h coordination, helicopter, ambulance & hospital' },

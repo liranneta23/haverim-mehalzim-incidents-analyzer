@@ -21,7 +21,7 @@ interface ResponseTier {
 const RESPONSE_TIERS: ResponseTier[] = [
   {
     amount: 150,
-    title: 'Golden Hour Response',
+    title: 'Golden Hour',
     duration: '1 Hour',
     description: 'One hour of emergency case management — the critical first window that shapes every outcome.',
     includes: [

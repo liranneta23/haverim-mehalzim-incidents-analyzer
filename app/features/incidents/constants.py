@@ -13,7 +13,7 @@ INCIDENT_TYPE_TRANSLATIONS = {
     'חילוץ':            'Rescue',
     'איתור':            'Search & Locate',
     'אנטישמיות':        'Antisemitism',
-    'חברות מחלצות':     'Haverot Mehalzot',
+    'חברות מחלצות':     'Sexual Assault',
     'אחר':              'Other',
 }
 

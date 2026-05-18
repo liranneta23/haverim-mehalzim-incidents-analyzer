@@ -265,7 +265,7 @@ function DonateCard() {
       </div>
       <div className="tracker-donate-stat">
         <span className="tracker-donate-stat-num">~$150</span>
-        <span className="tracker-donate-stat-label">per Golden Hour Response</span>
+        <span className="tracker-donate-stat-label">per Golden Hour</span>
       </div>
       <a
         href={DONATE_URL}

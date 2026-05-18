@@ -45,7 +45,7 @@ const INCIDENT_TYPE_TRANSLATIONS: Record<string, string> = {
   'חילוץ':          'Rescue',
   'איתור':          'Search & Locate',
   'אנטישמיות':      'Antisemitism',
-  'חברות מחלצות':   'Haverot Mehalzot',
+  'חברות מחלצות':   'Sexual Assault',
   'אחר':            'Other',
 };
 

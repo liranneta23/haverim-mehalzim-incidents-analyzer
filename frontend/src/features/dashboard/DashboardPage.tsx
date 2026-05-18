@@ -4,16 +4,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
 import { Tooltip } from '../../components/Tooltip';
+import logoImg from '../../assets/logo.png';
 import './dashboard.css';
 
 // ── Replace with your real donation page URL ──────────────────────────────────
 const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 
-const AVG_MISSION_COST = 150;   // USD — base Golden Hour Response cost
+const AVG_MISSION_COST = 150;   // USD — base Golden Hour cost
 interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; impactNote?: string; }
 const DONATION_TIERS: DonationTier[] = [
-  { amount: 150,   title: 'Golden Hour Response',         desc: 'Funds one hour of emergency case management — the critical first window',                                              icon: '⚡' },
+  { amount: 150,   title: 'Golden Hour',                  desc: 'Funds one hour of emergency case management — the critical first window',                                              icon: '⚡' },
   { amount: 900,   title: 'Six-Hour Rapid Response',      desc: 'Covers six hours of coordinated response work for a complex emergency',                                              icon: '◈' },
   { amount: 3000,  title: '24-Hour SOS Shift',            desc: 'Funds one full day of emergency response coverage — keeping our team fully operational for 24 hours straight',      icon: '♥', highlight: true },
   { amount: 14000, title: 'Scoop & Run',                  desc: 'Full operation: 24h coordination, up to 3h helicopter, ambulance transfer, and initial hospital care',               icon: '★', impactNote: 'Donors at this level receive a private link to see the real-world impact of their contribution.' },
@@ -1004,14 +1005,7 @@ export default function DashboardPage() {
         <header>
           <div className="header-brand">
             <div className="brand-icon">
-              <svg viewBox="0 0 22 22" fill="none">
-                <circle cx="11" cy="11" r="8" stroke="#00e6a0" strokeWidth="1.5" />
-                <circle cx="11" cy="11" r="3" fill="#00e6a0" />
-                <line x1="11" y1="3" x2="11" y2="1" stroke="#00e6a0" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="11" y1="21" x2="11" y2="19" stroke="#00e6a0" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="3" y1="11" x2="1" y2="11" stroke="#00e6a0" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="21" y1="11" x2="19" y2="11" stroke="#00e6a0" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <img src={logoImg} alt="Haverim Mehalzim" className="brand-logo-img" />
             </div>
             <div>
               <div className="brand-title">Haverim Mehalzim</div>
