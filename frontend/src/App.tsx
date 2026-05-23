@@ -6,7 +6,7 @@ import FundOurTeamPage from './features/fund/FundOurTeamPage';
 import CaseTrackerPage from './features/tracker/CaseTrackerPage';
 import AdminFeedbackPage from './features/admin/AdminFeedbackPage';
 import DonorImpactPage from './features/donor/DonorImpactPage';
-import LeaderboardPage from './features/leaderboard/LeaderboardPage';
+// import LeaderboardPage from './features/leaderboard/LeaderboardPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -25,7 +25,7 @@ export default function App() {
         <Route path="/track/:caseId"   element={<CaseTrackerPage />} />
         <Route path="/admin/feedback"  element={<AdminFeedbackPage />} />
         <Route path="/my-impact/:token" element={<DonorImpactPage />} />
-        <Route path="/leaderboard"      element={<LeaderboardPage />} />
+        {/* <Route path="/leaderboard"      element={<LeaderboardPage />} /> */}
       </Routes>
     </BrowserRouter>
   );

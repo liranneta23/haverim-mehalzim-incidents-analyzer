@@ -266,12 +266,12 @@ export default function DonorImpactPage() {
             <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-cta-donate">
               ♥ Donate Again
             </a>
-            <Link
+            {/* <Link
               to={`/leaderboard?you=${encodeURIComponent(firstName)}`}
               className="donor-cta-share"
             >
               ◈ See Leaderboard
-            </Link>
+            </Link> */}
             <button
               className={`donor-cta-share${copied ? ' copied' : ''}`}
               onClick={handleShare}

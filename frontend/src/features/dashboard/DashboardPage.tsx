@@ -863,12 +863,12 @@ function PageNavCards() {
           <div className="page-nav-card-desc">Every response tier explained — what it costs, what it covers, and how to fund it</div>
           <div className="page-nav-card-cta">See Breakdown →</div>
         </Link>
-        <Link to="/leaderboard" className="page-nav-card page-nav-card--gold">
+        {/* <Link to="/leaderboard" className="page-nav-card page-nav-card--gold">
           <div className="page-nav-card-eyebrow">★ Donors</div>
           <div className="page-nav-card-title">Donor Leaderboard</div>
           <div className="page-nav-card-desc">Top donors ranked by lives saved — see where your name stands</div>
           <div className="page-nav-card-cta">View Rankings →</div>
-        </Link>
+        </Link> */}
       </div>
     </div>
   );
@@ -1015,7 +1015,7 @@ export default function DashboardPage() {
           <nav className="header-nav">
             <Link to="/map" className="header-nav-link">Live Map</Link>
             <Link to="/fund-our-team" className="header-nav-link">Fund Our Team</Link>
-            <Link to="/leaderboard" className="header-nav-link">Leaderboard</Link>
+            {/* <Link to="/leaderboard" className="header-nav-link">Leaderboard</Link> */}
             <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="header-nav-donate">♥ Donate</a>
           </nav>
           <div className="header-meta">
