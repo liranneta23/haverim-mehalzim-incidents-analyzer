@@ -1,11 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export interface DonateParams {
-  // Reserved for future use once JGive webhook/param support is confirmed
-}
-
 interface DonateContextValue {
-  openDonate: (params?: DonateParams) => void;
+  openDonate: () => void;
 }
 
 const DonateContext = createContext<DonateContextValue>({ openDonate: () => {} });
