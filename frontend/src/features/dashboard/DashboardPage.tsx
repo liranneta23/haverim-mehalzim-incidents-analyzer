@@ -1207,7 +1207,7 @@ export default function DashboardPage() {
                   in crisis anywhere in the world.
                 </p>
                 <div className="support-actions">
-                  <a href={DONATE_URL} className="support-donate-btn" target="_blank" rel="noopener noreferrer">
+                  <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="support-donate-btn">
                     Donate Now
                   </a>
                   <Link to="/fund-our-team" className="support-contact-btn">
