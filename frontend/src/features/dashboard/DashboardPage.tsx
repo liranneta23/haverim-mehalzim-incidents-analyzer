@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { DashboardData } from './types';
 import LiveMissionFeed from './LiveMissionFeed';
 import { Tooltip } from '../../components/Tooltip';
+import { useDonate } from '../../context/DonateContext';
 import logoImg from '../../assets/logo.png';
 import './dashboard.css';
 
@@ -148,6 +149,7 @@ function GrowthSnapshot({
 function DonorROI({ data }: { data: DashboardData }) {
   const [activeTierIdx, setActiveTierIdx] = useState(3);
   const activeTier = DONATION_TIERS[activeTierIdx];
+  const { openDonate } = useDonate();
 
   return (
     <div className="donor-roi-section fade-in stagger-4">
@@ -186,7 +188,7 @@ function DonorROI({ data }: { data: DashboardData }) {
           </div>
         )}
         <div className="donor-roi-cta">
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-roi-btn-primary">
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="donor-roi-btn-primary">
             ♥ Donate Now
           </a>
         </div>
@@ -685,6 +687,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function TestimonialsSection() {
+  const { openDonate } = useDonate();
   const [items, setItems]         = useState<Testimonial[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [animClass, setAnimClass] = useState('t-enter-right');
@@ -775,7 +778,7 @@ function TestimonialsSection() {
           <span className="testimonial-spotlight-cta-text">
             Every outcome like this is funded by people who care.
           </span>
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="testimonial-spotlight-cta-btn">
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="testimonial-spotlight-cta-btn">
             ♥ Help the Next Family
           </a>
         </div>
@@ -970,6 +973,7 @@ function GeoPeriodModal({ currentMonth, lastMonth, data, onClose }: {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { openDonate } = useDonate();
   const [data, setData]             = useState<DashboardData | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('—');
@@ -1017,14 +1021,15 @@ export default function DashboardPage() {
             <Link to="/map" className="header-nav-link">Live Map</Link>
             <Link to="/fund-our-team" className="header-nav-link">Fund Our Team</Link>
             {/* <Link to="/leaderboard" className="header-nav-link">Leaderboard</Link> */}
-            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="header-nav-donate">♥ Donate</a>
+            <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="header-nav-donate">♥ Donate</a>
           </nav>
           <div className="header-meta">
-            <div className="status-pill">
+            <Link to="/map" className="status-pill status-pill--link">
               <div className="status-dot" />
               LIVE
-            </div>
+            </Link>
             <div className="last-update">Updated: {lastUpdate}</div>
+            <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="header-meta-donate">♥ Donate</a>
           </div>
         </header>
 
@@ -1091,7 +1096,7 @@ export default function DashboardPage() {
                     <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.countries_operated} delay={700} duration={1200} /></span> Countries Active</span>
                   </div>
                   <div className="mission-actions">
-                    <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-donate">♥ Donate Now</a>
+                    <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="mission-btn-donate">♥ Donate Now</a>
                     <Link to="/map" className="mission-btn-secondary">View Live Operations →</Link>
                   </div>
                 </div>

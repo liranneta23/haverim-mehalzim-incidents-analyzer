@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useDonate } from '../../context/DonateContext';
 import './fund.css';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
@@ -85,6 +86,7 @@ function SectionLabel({ text }: { text: string }) {
 }
 
 function TierCard({ tier }: { tier: ResponseTier }) {
+  const { openDonate } = useDonate();
   return (
     <div className={`fund-tier-card${tier.highlight ? ' fund-tier-card--highlight' : ''}`}>
       <div className="fund-tier-duration">{tier.duration}</div>
@@ -110,7 +112,7 @@ function TierCard({ tier }: { tier: ResponseTier }) {
         </div>
       )}
 
-      <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="fund-tier-cta">
+      <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="fund-tier-cta">
         ♥ Donate Now →
       </a>
     </div>
@@ -171,6 +173,7 @@ function TestimonialsSection() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function FundOurTeamPage() {
+  const { openDonate } = useDonate();
   return (
     <div className="fund-page">
       <div className="fund-wrapper">
@@ -182,7 +185,7 @@ export default function FundOurTeamPage() {
             <span className="fund-nav-sep">|</span>
             <Link to="/map" className="fund-back">Live Map</Link>
           </div>
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="fund-nav-donate">
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="fund-nav-donate">
             ♥ Donate Now
           </a>
         </nav>
@@ -234,7 +237,7 @@ export default function FundOurTeamPage() {
             everything it takes to make that possible — every hour of coordination, every
             call answered, every family kept informed.
           </p>
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="fund-cta-btn">
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="fund-cta-btn">
             <span style={{ fontSize: 14 }}>♥</span>
             Donate Now
           </a>

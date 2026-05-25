@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useDonate } from '../../context/DonateContext';
 import './donor.css';
 
 const DONATE_URL     = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
@@ -57,6 +58,7 @@ function monthsAgo(dateStr: string): number {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DonorImpactPage() {
+  const { openDonate } = useDonate();
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<LoadState>('loading');
   const [data,  setData]  = useState<DonorData | null>(null);
@@ -263,7 +265,7 @@ export default function DonorImpactPage() {
             The work continues — and so can your impact.
           </div>
           <div className="donor-cta-actions">
-            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer" className="donor-cta-donate">
+            <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="donor-cta-donate">
               ♥ Donate Again
             </a>
             {/* <Link

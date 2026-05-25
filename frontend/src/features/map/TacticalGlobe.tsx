@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Globe from 'react-globe.gl';
 import { fetchGlobeIncidents, type GlobeIncident } from './GlobeService';
 import { Tooltip } from '../../components/Tooltip';
+import { useDonate } from '../../context/DonateContext';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const GOLD = '#D4AF37';
@@ -183,6 +184,7 @@ function IncidentDetail({
   onClose: () => void;
   onBack?: () => void;
 }) {
+  const { openDonate } = useDonate();
   const isResolved  = incident.isResolved;
   const accentColor = isResolved ? GOLD : '#00e6a0';
   const metric      = SUCCESS_METRICS[incident.type] ?? 'Mission Completed';
@@ -297,8 +299,7 @@ function IncidentDetail({
       {/* CTA */}
       <a
         href={DONATE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={e => { e.preventDefault(); openDonate(); }}
         className="flex items-center justify-center gap-2 w-full text-sm tracking-[0.18em] uppercase font-bold px-4 py-3 rounded transition-opacity hover:opacity-90 mb-3"
         style={isResolved
           ? { background: GOLD, color: '#0B0E11' }
@@ -484,6 +485,7 @@ function FilterList({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function TacticalGlobe() {
+  const { openDonate } = useDonate();
   const globeRef     = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -823,7 +825,7 @@ export default function TacticalGlobe() {
 
       {/* ── Desktop: donate CTA (bottom-right) ──────────────────────────────── */}
       <div className="hidden md:flex absolute bottom-10 right-6 flex-col items-end gap-1.5">
-        <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+        <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
           className="flex items-center gap-2 px-4 py-2
                      border border-[#00e6a0]/40 bg-[#0B0E11]/90
                      text-[9px] tracking-[0.18em] uppercase text-[#00e6a0]
@@ -883,7 +885,7 @@ export default function TacticalGlobe() {
                        hover:text-[#00e6a0] active:opacity-70 transition-colors">
             ◈ How we use funds
           </Link>
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
             className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase
                        text-[#00e6a0] bg-[#00e6a0]/10 border border-[#00e6a0]/30
                        px-3 py-1.5 active:opacity-70 transition-opacity">

@@ -111,7 +111,10 @@ header {
     transition: opacity 0.2s;
 }
 .header-nav-donate:hover { opacity: 0.85; }
-@media (max-width: 900px) { .header-nav { display: none; } }
+@media (max-width: 900px) {
+    .header-nav          { display: none; }
+    .header-meta-donate  { display: flex; }
+}
 
 .map-link {
     font-family: var(--font-mono);
@@ -132,7 +135,20 @@ header {
     border: 1px solid var(--border-accent); border-radius: 100px;
     font-family: var(--font-mono); font-size: 11px; color: var(--accent-teal);
     background: var(--accent-teal-dim);
+    text-decoration: none;
 }
+.status-pill--link { cursor: pointer; transition: opacity 0.2s; }
+.status-pill--link:hover { opacity: 0.8; }
+
+.header-meta-donate {
+    display: none;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--bg-void); background: var(--accent-teal);
+    padding: 6px 14px; border-radius: 100px;
+    text-decoration: none; transition: opacity 0.2s;
+}
+.header-meta-donate:hover { opacity: 0.85; }
 
 .status-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -878,8 +894,10 @@ header {
 }
 @media (max-width: 700px) {
     .page-wrapper       { padding: 0 16px 40px; }
-    header              { flex-direction: column; align-items: flex-start; gap: 14px; padding: 20px 0 24px; }
-    .header-meta        { gap: 12px; }
+    header              { flex-direction: column; align-items: flex-start; gap: 12px; padding: 20px 0 24px; }
+    .header-meta        { gap: 10px; }
+    .brand-logo-img     { width: 48px; height: 48px; }
+    .brand-title        { font-size: 20px; }
     .kpi-grid           { grid-template-columns: 1fr 1fr; }
     .two-col, .impact-strip, .three-col { grid-template-columns: 1fr; }
     .month-hero         { grid-template-columns: 1fr; }
@@ -909,7 +927,9 @@ header {
     .impact-number      { font-size: 40px; }
     .impact-card        { padding: 20px; }
     .support-headline   { font-size: 22px; }
-    .brand-title        { font-size: 20px; }
+    .brand-sub          { display: none; }
+    .brand-powered      { font-size: 9px; }
+    .brand-logo-img     { width: 40px; height: 40px; }
     .last-update        { display: none; }
     .support-actions    { flex-direction: column; }
     .support-donate-btn,

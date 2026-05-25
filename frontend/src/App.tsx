@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { DonateProvider } from './context/DonateContext';
 import DashboardPage from './features/dashboard/DashboardPage';
 import TacticalGlobe from './features/map/TacticalGlobe';
 import FundOurTeamPage from './features/fund/FundOurTeamPage';
@@ -16,6 +17,7 @@ function ScrollToTop() {
 
 export default function App() {
   return (
+    <DonateProvider>
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
@@ -28,5 +30,6 @@ export default function App() {
         {/* <Route path="/leaderboard"      element={<LeaderboardPage />} /> */}
       </Routes>
     </BrowserRouter>
+    </DonateProvider>
   );
 }

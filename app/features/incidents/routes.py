@@ -43,6 +43,10 @@ _donor_rate: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
 _DONOR_RATE_MAX    = 20    # donor pages are shared links — generous limit
 _DONOR_RATE_WINDOW = 60
 
+_track_rate: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
+_TRACK_RATE_MAX    = 30
+_TRACK_RATE_WINDOW = 60
+
 
 def _check_admin_token(request, stored_token: str | None) -> bool:
     if not stored_token:
@@ -213,6 +217,17 @@ def debug_locations():
 
 @incidents_bp.route('/api/track/<item_id>')
 def get_case_tracking(item_id):
+    from flask import request as _req
+    ip  = _req.remote_addr or 'unknown'
+    now = _time.time()
+    bucket = _track_rate[ip]
+    if now - bucket['window_start'] > _TRACK_RATE_WINDOW:
+        bucket['count'] = 0
+        bucket['window_start'] = now
+    bucket['count'] += 1
+    if bucket['count'] > _TRACK_RATE_MAX:
+        return jsonify({'success': False, 'message': 'Too many requests'}), 429
+
     if not item_id.isdigit():
         return jsonify({'success': False, 'message': 'Invalid case ID'}), 400
 

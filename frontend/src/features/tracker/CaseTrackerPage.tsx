@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { useDonate } from '../../context/DonateContext';
 import './tracker.css';
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -254,6 +255,7 @@ function FeedbackCard({ caseId }: { caseId: string }) {
 // ─── Donation card ────────────────────────────────────────────────────────────
 
 function DonateCard() {
+  const { openDonate } = useDonate();
   return (
     <div className="tracker-engage-card tracker-donate-card">
       <div className="tracker-engage-eyebrow">Support the Next Family</div>
@@ -269,8 +271,7 @@ function DonateCard() {
       </div>
       <a
         href={DONATE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={e => { e.preventDefault(); openDonate(); }}
         className="tracker-donate-btn"
       >
         Support our mission →

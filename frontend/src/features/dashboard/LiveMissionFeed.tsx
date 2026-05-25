@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchGlobeIncidents, type GlobeIncident } from '../map/GlobeService';
+import { useDonate } from '../../context/DonateContext';
 
 const DONATE_URL = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const GOLD  = '#D4AF37';
@@ -69,6 +70,7 @@ function IncomingCard({
   incident: GlobeIncident; position: number; total: number;
   onTypingDone: () => void; isReading: boolean; forceComplete: boolean; onSkip: () => void;
 }) {
+  const { openDonate } = useDonate();
   const story = incident.description
     || `${incident.type} case — volunteers are being coordinated to support ${incident.locationName}.`;
   const speed = Math.min(40, Math.max(10, Math.round(5000 / story.length)));
@@ -169,7 +171,7 @@ function IncomingCard({
 
       {/* CTA row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: isReading ? 14 : 0 }}>
-        <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+        <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
           style={{
             fontFamily: MONO, fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700,
             color: '#0B0E11', background: TEAL,
@@ -197,6 +199,7 @@ function IncomingCard({
 // ─── Queue row (all non-active incidents, shown immediately) ─────────────────
 
 function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: number; isDone: boolean }) {
+  const { openDonate } = useDonate();
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered]   = useState(false);
   const story = incident.description
@@ -232,8 +235,7 @@ function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: num
             {expanded ? '▲ close' : '▼ read'}
           </span>
         ) : (
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); e.stopPropagation(); openDonate(); }}
             style={{
               fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700,
               color: `${GOLD}55`, border: `1px solid ${GOLD}1a`, background: `${GOLD}06`,
@@ -266,7 +268,7 @@ function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: num
           <p style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.85, color: 'rgba(100,135,160,0.85)', margin: '0 0 16px' }}>
             {story}
           </p>
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
             style={{
               fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700,
               color: `${GOLD}88`, border: `1px solid ${GOLD}22`, background: `${GOLD}08`,
@@ -284,6 +286,7 @@ function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: num
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function LiveMissionFeed() {
+  const { openDonate } = useDonate();
   const [incidents,     setIncidents]     = useState<GlobeIncident[]>([]);
   const [broadcastIdx,  setBroadcastIdx]  = useState(0);
   const [completedIdxs, setCompletedIdxs] = useState<number[]>([]);
@@ -512,7 +515,7 @@ export default function LiveMissionFeed() {
           fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: `${GOLD}aa`,
         }}>
           Every active mission above relies on donor funding —{' '}
-          <a href={DONATE_URL} target="_blank" rel="noopener noreferrer"
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
             style={{ color: GOLD, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}
             onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
             onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
