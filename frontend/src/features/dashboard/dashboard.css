@@ -41,14 +41,22 @@ header {
 .header-brand { display: flex; align-items: center; gap: 16px; }
 
 .brand-icon {
-    width: 52px; height: 52px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center;
     flex-shrink: 0;
-    overflow: hidden;
+    gap: 4px;
 }
 
-.brand-logo-img { width: 52px; height: 52px; object-fit: contain; }
+.brand-logo-img { width: 64px; height: 64px; object-fit: contain; border-radius: 10px; }
+
+.brand-powered {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0.75;
+}
 
 .brand-title {
     font-family: var(--font-display);

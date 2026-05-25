@@ -1006,6 +1006,7 @@ export default function DashboardPage() {
           <div className="header-brand">
             <div className="brand-icon">
               <img src={logoImg} alt="Haverim Mehalzim" className="brand-logo-img" />
+              <div className="brand-powered">Powered by Gvanim</div>
             </div>
             <div>
               <div className="brand-title">Haverim Mehalzim</div>
