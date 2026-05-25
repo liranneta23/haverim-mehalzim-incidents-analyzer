@@ -1,10 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface DonateParams {
-  incidentId?: string;
-  fullName?: string;
-  email?: string;   // pre-populated when known (e.g. returning donor)
-  // Internal access tokens are intentionally excluded — never pass them to third-party URLs
+  // Reserved for future use once JGive webhook/param support is confirmed
 }
 
 interface DonateContextValue {
@@ -13,24 +10,10 @@ interface DonateContextValue {
 
 const DonateContext = createContext<DonateContextValue>({ openDonate: () => {} });
 
-const EMBED_BASE   = 'https://www.jgive.com/new/en/ils/embeds/9810c15b-6b6f-4255-9e48-df2aaa659f38';
+const EMBED_SRC    = 'https://www.jgive.com/new/en/ils/embeds/9810c15b-6b6f-4255-9e48-df2aaa659f38';
 const EMBED_SCRIPT = 'https://www.jgive.com/embed/embedding-utm.js';
-const EMAIL_RE     = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function buildSrc(email: string, params: DonateParams): string {
-  const q = new URLSearchParams();
-  q.set('email', email.trim());
-  if (params.incidentId) q.set('incident_id', params.incidentId);
-  if (params.fullName)   q.set('name',        params.fullName);
-  return `${EMBED_BASE}?${q.toString()}`;
-}
-
-function DonateModal({ params, onClose }: { params: DonateParams; onClose: () => void }) {
-  const prefilled = (params.email ?? '').trim();
-  const [step,       setStep]       = useState<'email' | 'iframe'>(prefilled ? 'iframe' : 'email');
-  const [email,      setEmail]      = useState(prefilled);
-  const [emailError, setEmailError] = useState('');
-
+function DonateModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!document.querySelector(`script[src="${EMBED_SCRIPT}"]`)) {
       const s = document.createElement('script');
@@ -47,16 +30,6 @@ function DonateModal({ params, onClose }: { params: DonateParams; onClose: () =>
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const handleContinue = () => {
-    const trimmed = email.trim();
-    if (!EMAIL_RE.test(trimmed)) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-    setEmailError('');
-    setStep('iframe');
-  };
-
   return (
     <div className="donate-overlay" onClick={onClose}>
       <div className="donate-modal" onClick={e => e.stopPropagation()}>
@@ -64,65 +37,34 @@ function DonateModal({ params, onClose }: { params: DonateParams; onClose: () =>
           <span className="donate-modal-title">♥ Donate</span>
           <button className="donate-modal-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
-
-        {step === 'email' ? (
-          <div className="donate-email-step">
-            <p className="donate-email-desc">
-              Enter your email to receive a personal impact dashboard after your donation — so you can always see what your contribution made possible.
-            </p>
-            <input
-              className={`donate-email-input${emailError ? ' donate-email-input--error' : ''}`}
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setEmailError(''); }}
-              onKeyDown={e => { if (e.key === 'Enter') handleContinue(); }}
-              autoFocus
-              autoComplete="email"
-              maxLength={254}
-            />
-            {emailError && <p className="donate-email-error">{emailError}</p>}
-            <button className="donate-email-cta" onClick={handleContinue}>
-              Continue to Donation →
-            </button>
-            <button className="donate-email-skip" onClick={() => { setEmail(''); setStep('iframe'); }}>
-              Skip
-            </button>
-          </div>
-        ) : (
-          <div className="donate-modal-body">
-            <iframe
-              id="jgive-iframe"
-              width="100%"
-              height="557"
-              src={buildSrc(email, params)}
-              name="Jgive iframe"
-              title='חברים מחלצים - סיוע לישראלים, יהודים ומשפחותיהם בסכנת חיים בחו"ל.'
-              frameBorder="0"
-              scrolling="auto"
-              allow="allow-forms; payment; clipboard-write;"
-              style={{ display: 'block', border: 'none' }}
-            />
-          </div>
-        )}
+        <div className="donate-modal-body">
+          <iframe
+            id="jgive-iframe"
+            width="100%"
+            height="557"
+            src={EMBED_SRC}
+            name="Jgive iframe"
+            title='חברים מחלצים - סיוע לישראלים, יהודים ומשפחותיהם בסכנת חיים בחו"ל.'
+            frameBorder="0"
+            scrolling="auto"
+            allow="allow-forms; payment; clipboard-write;"
+            style={{ display: 'block', border: 'none' }}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
 export function DonateProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen]     = useState(false);
-  const [params, setParams] = useState<DonateParams>({});
+  const [open, setOpen] = useState(false);
 
-  const openDonate = (p?: DonateParams) => {
-    setParams(p ?? {});
-    setOpen(true);
-  };
+  const openDonate = () => setOpen(true);
 
   return (
     <DonateContext.Provider value={{ openDonate }}>
       {children}
-      {open && <DonateModal params={params} onClose={() => setOpen(false)} />}
+      {open && <DonateModal onClose={() => setOpen(false)} />}
     </DonateContext.Provider>
   );
 }
