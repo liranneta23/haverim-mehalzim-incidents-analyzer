@@ -497,8 +497,13 @@ export default function TacticalGlobe() {
   const [selectedIncident,  setSelectedIncident]  = useState<GlobeIncident | null>(null);
   const [selectedCluster,   setSelectedCluster]   = useState<GlobeCluster | null>(null);
   const [mobileFilterOpen,  setMobileFilterOpen]  = useState(false);
+  const [mobileSearchOpen,  setMobileSearchOpen]  = useState(false);
+  const [searchQuery,       setSearchQuery]       = useState('');
   const [filterLive,        setFilterLive]        = useState(false);
   const [filterResolved,    setFilterResolved]    = useState(false);
+
+  const searchInputRef     = useRef<HTMLInputElement>(null);
+  const mobileSearchRef    = useRef<HTMLInputElement>(null);
 
   const selectedClusterRef = useRef<GlobeCluster | null>(null);
   useEffect(() => { selectedClusterRef.current = selectedCluster; }, [selectedCluster]);
@@ -521,7 +526,16 @@ export default function TacticalGlobe() {
     return result;
   }, [incidents, selectedTypes, filterLive, filterResolved]);
 
-  const clusters = useMemo(() => clusterByLocation(displayedIncidents), [displayedIncidents]);
+  const clusters    = useMemo(() => clusterByLocation(displayedIncidents), [displayedIncidents]);
+  const allClusters = useMemo(() => clusterByLocation(incidents), [incidents]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return allClusters
+      .filter(c => c.locationName.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [allClusters, searchQuery]);
 
   const liveIncidents     = useMemo(() => displayedIncidents.filter(i => i.isLive),     [displayedIncidents]);
   const resolvedIncidents = useMemo(() => displayedIncidents.filter(i => i.isResolved), [displayedIncidents]);
@@ -584,6 +598,29 @@ export default function TacticalGlobe() {
   const toggleLiveFilter     = useCallback(() => setFilterLive(v => !v),     []);
   const toggleResolvedFilter = useCallback(() => setFilterResolved(v => !v), []);
   const resetStatusFilter    = useCallback(() => { setFilterLive(false); setFilterResolved(false); }, []);
+
+  const handleSearchSelect = useCallback((cluster: GlobeCluster) => {
+    setSearchQuery('');
+    setMobileSearchOpen(false);
+    setMobileFilterOpen(false);
+    pauseRotation();
+    globeRef.current?.pointOfView({ lat: cluster.lat, lng: cluster.lng, altitude: 1.2 }, 1500);
+    setTimeout(() => {
+      if (cluster.count === 1) {
+        setSelectedIncident(cluster.incidents[0]);
+        setSelectedCluster(null);
+      } else {
+        setSelectedCluster(cluster);
+        setSelectedIncident(null);
+      }
+    }, 900);
+  }, [pauseRotation]);
+
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      setTimeout(() => mobileSearchRef.current?.focus(), 120);
+    }
+  }, [mobileSearchOpen]);
 
   // ── Cluster / incident selection ──────────────────────────────────────────────
 
@@ -750,7 +787,7 @@ export default function TacticalGlobe() {
       </div>
 
       {/* ── Desktop: left sidebar ────────────────────────────────────────────── */}
-      <div className="hidden md:flex absolute top-10 bottom-10 left-6 flex-col gap-3 pointer-events-none" style={{ width: 190 }}>
+      <div className="hidden md:flex absolute top-10 bottom-10 left-6 flex-col gap-3 pointer-events-none overflow-y-auto" style={{ width: 190, scrollbarWidth: 'none' }}>
 
         <div className="pointer-events-auto">
           <Link to="/"
@@ -773,6 +810,71 @@ export default function TacticalGlobe() {
             />
           </div>
         )}
+
+        {/* Search */}
+        <div className="border border-[#00e6a0]/40 bg-[#0B0E11]/90 px-3 py-2.5 pointer-events-auto flex-shrink-0"
+          style={{ boxShadow: '0 0 12px rgba(0,230,160,0.06)' }}>
+          <div className="text-[9px] text-[#00e6a0] tracking-[0.2em] uppercase mb-2">
+            Fly to Location
+          </div>
+          <div className="flex items-center gap-2 px-2 py-1.5 rounded"
+            style={{ background: 'rgba(0,230,160,0.07)', border: '1px solid rgba(0,230,160,0.25)' }}>
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none" className="flex-shrink-0"
+              style={{ color: searchQuery ? '#00e6a0' : '#7a9ab5' }}>
+              <circle cx="4.5" cy="4.5" r="3.2" stroke="currentColor" strokeWidth="1.2"/>
+              <line x1="7" y1="7" x2="10" y2="10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') setSearchQuery('');
+                if (e.key === 'Enter' && searchResults.length > 0) handleSearchSelect(searchResults[0]);
+              }}
+              placeholder="Search country…"
+              className="flex-1 bg-transparent text-[11px] text-white tracking-wider outline-none min-w-0"
+              style={{ caretColor: '#00e6a0' }}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')}
+                className="text-[#7a9ab5] hover:text-white text-[11px] transition-colors flex-shrink-0">✕</button>
+            )}
+          </div>
+          {searchResults.length > 0 && (
+            <div className="mt-2 flex flex-col gap-0.5 max-h-44 overflow-y-auto"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#1e3040 transparent' }}>
+              {searchResults.map(cluster => (
+                <button
+                  key={cluster.id}
+                  onClick={() => handleSearchSelect(cluster)}
+                  className="flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors hover:bg-white/5 group"
+                  style={{ border: `1px solid ${cluster.hasLive ? 'rgba(255,80,80,0.18)' : 'rgba(255,185,48,0.14)'}` }}
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: cluster.hasLive ? '#ff5050' : '#ffb930',
+                               boxShadow: cluster.hasLive ? '0 0 4px #ff5050' : 'none' }} />
+                    <span className="text-[10px] text-[#c0d0e0] truncate">{cluster.locationName}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
+                    {cluster.liveCount > 0 && (
+                      <span className="text-[8px] text-red-400 font-bold tabular-nums">{cluster.liveCount} live</span>
+                    )}
+                    <span className="text-[9px] font-bold tabular-nums" style={{ color: '#00e6a0' }}>{cluster.count}</span>
+                    <span className="text-[#3d5a72] text-[10px] group-hover:text-[#00e6a0] transition-colors">›</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {searchQuery && searchResults.length === 0 && (
+            <div className="mt-2 text-[9px] text-[#7a9ab5] tracking-wider">
+              No incidents found
+            </div>
+          )}
+        </div>
 
         {incidentTypeCounts.length > 0 && (
           <div className="border border-[#00e6a0]/20 bg-[#0B0E11]/85 px-3 py-3 pointer-events-auto">
@@ -856,9 +958,101 @@ export default function TacticalGlobe() {
           <span className="text-[9px] text-[#00e6a0] tracking-[0.25em] uppercase opacity-60">Live Ops</span>
           <span className="text-[13px] font-bold text-white tabular-nums">{filteredTotal} ops</span>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[12px] font-bold text-red-400 tabular-nums">{liveIncidents.length} live</span>
-          <span className="text-[11px] font-bold text-amber-400 tabular-nums">{resolvedIncidents.length} resolved</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setMobileSearchOpen(o => !o); setSearchQuery(''); }}
+            className="transition-colors"
+            style={{ color: mobileSearchOpen ? '#00e6a0' : '#7a9ab5' }}
+            aria-label="Search location"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[12px] font-bold text-red-400 tabular-nums">{liveIncidents.length} live</span>
+            <span className="text-[11px] font-bold text-amber-400 tabular-nums">{resolvedIncidents.length} resolved</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile: search overlay ───────────────────────────────────────────── */}
+      <div
+        className="md:hidden absolute left-0 right-0 z-[55] transition-all duration-250 ease-out"
+        style={{
+          top: 52,
+          opacity:       mobileSearchOpen ? 1 : 0,
+          transform:     mobileSearchOpen ? 'translateY(0)' : 'translateY(-8px)',
+          pointerEvents: mobileSearchOpen ? 'auto' : 'none',
+        }}
+      >
+        <div style={{ background: '#0d1117', borderBottom: '1px solid rgba(0,230,160,0.35)', backdropFilter: 'blur(12px)' }}
+          className="px-4 py-3">
+          {/* Input row */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded"
+            style={{ background: 'rgba(0,230,160,0.08)', border: '1px solid rgba(0,230,160,0.35)' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#00e6a0', flexShrink: 0 }}>
+              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input
+              ref={mobileSearchRef}
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { setSearchQuery(''); setMobileSearchOpen(false); }
+                if (e.key === 'Enter' && searchResults.length > 0) handleSearchSelect(searchResults[0]);
+              }}
+              placeholder="Search country or city…"
+              className="flex-1 bg-transparent text-[15px] text-white tracking-wide outline-none"
+              style={{ caretColor: '#00e6a0' }}
+            />
+            <button
+              onClick={() => { setSearchQuery(''); setMobileSearchOpen(false); }}
+              className="text-[#7a9ab5] hover:text-white text-sm transition-colors flex-shrink-0 px-1"
+            >✕</button>
+          </div>
+
+          {/* Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1 max-h-60 overflow-y-auto"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#1e3040 transparent' }}>
+              {searchResults.map(cluster => (
+                <button
+                  key={cluster.id}
+                  onClick={() => handleSearchSelect(cluster)}
+                  className="flex items-center justify-between px-3 py-3 rounded text-left active:opacity-60 transition-opacity"
+                  style={{
+                    background: cluster.hasLive ? 'rgba(255,80,80,0.06)' : 'rgba(255,185,48,0.05)',
+                    border:     `1px solid ${cluster.hasLive ? 'rgba(255,80,80,0.25)' : 'rgba(255,185,48,0.18)'}`,
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ background: cluster.hasLive ? '#ff5050' : '#ffb930',
+                               boxShadow: cluster.hasLive ? '0 0 6px #ff5050' : 'none' }} />
+                    <div>
+                      <div className="text-[14px] text-white font-semibold truncate leading-tight">{cluster.locationName}</div>
+                      {cluster.liveCount > 0 && (
+                        <div className="text-[10px] text-red-400 font-bold tracking-wider mt-0.5">{cluster.liveCount} LIVE</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                    <span className="text-[13px] font-bold tabular-nums" style={{ color: '#00e6a0' }}>{cluster.count}</span>
+                    <span className="text-[#3d5a72] text-base">›</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {searchQuery.trim() && searchResults.length === 0 && (
+            <div className="mt-3 py-2 text-[12px] text-[#7a9ab5] tracking-wider text-center">
+              No incidents found for "{searchQuery}"
+            </div>
+          )}
         </div>
       </div>
 
