@@ -958,22 +958,9 @@ export default function TacticalGlobe() {
           <span className="text-[9px] text-[#00e6a0] tracking-[0.25em] uppercase opacity-60">Live Ops</span>
           <span className="text-[13px] font-bold text-white tabular-nums">{filteredTotal} ops</span>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { setMobileSearchOpen(o => !o); setSearchQuery(''); }}
-            className="transition-colors"
-            style={{ color: mobileSearchOpen ? '#00e6a0' : '#7a9ab5' }}
-            aria-label="Search location"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-          <div className="flex flex-col items-end gap-1">
-            <span className="text-[12px] font-bold text-red-400 tabular-nums">{liveIncidents.length} live</span>
-            <span className="text-[11px] font-bold text-amber-400 tabular-nums">{resolvedIncidents.length} resolved</span>
-          </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[12px] font-bold text-red-400 tabular-nums">{liveIncidents.length} live</span>
+          <span className="text-[11px] font-bold text-amber-400 tabular-nums">{resolvedIncidents.length} resolved</span>
         </div>
       </div>
 
@@ -1073,18 +1060,37 @@ export default function TacticalGlobe() {
           Filter{selectedTypes.size > 0 ? ` (${selectedTypes.size})` : ''}
         </button>
 
-        <div className="flex items-center gap-2">
-          <Link to="/fund-our-team"
-            className="text-[9px] tracking-[0.14em] uppercase text-[#3d5a72]
-                       hover:text-[#00e6a0] active:opacity-70 transition-colors">
-            ◈ How we use funds
-          </Link>
+        <button
+          onClick={() => { setMobileSearchOpen(o => !o); setMobileFilterOpen(false); setSearchQuery(''); }}
+          className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase transition-colors"
+          style={{ color: mobileSearchOpen ? '#00e6a0' : '#7a9ab5' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5"/>
+            <line x1="9" y1="9" x2="13" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Search
+        </button>
+
+        <div className="flex items-center gap-1">
           <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
             className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase
                        text-[#00e6a0] bg-[#00e6a0]/10 border border-[#00e6a0]/30
                        px-3 py-1.5 active:opacity-70 transition-opacity">
             ♥ Donate
           </a>
+          <Link
+            to="/fund-our-team"
+            className="flex items-center justify-center w-7 h-7 rounded-full transition-colors active:opacity-70"
+            style={{ color: '#3d5a72' }}
+            title="How we use funds"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+              <line x1="7" y1="6.5" x2="7" y2="10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -1149,6 +1155,7 @@ export default function TacticalGlobe() {
               <Tooltip text="Incident successfully handled — outcome confirmed by our team" />
             </button>
           </div>
+
         </div>
       </div>
 
