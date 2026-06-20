@@ -10,6 +10,7 @@ from app.features.incidents.feedback_service import (
     set_approval,
     delete_item as delete_feedback_item,
 )
+from app.features.incidents.newsletter_service import post_subscriber_to_monday
 from app.features.incidents.analysis import (
     count_incidents_per_type,
     get_incidents_current_year,
@@ -257,6 +258,32 @@ def submit_feedback():
 
     timestamp = datetime.now().isoformat()
     post_feedback_to_monday(name, message, case_id, timestamp, rating)
+    return jsonify({'success': True}), 200
+
+
+@incidents_bp.route('/api/newsletter', methods=['POST'])
+def subscribe_newsletter():
+    import re
+    from flask import request
+
+    body      = request.get_json(silent=True) or {}
+    name      = str(body.get('name',  '')).strip()[:120]
+    email     = str(body.get('email', '')).strip()[:200]
+    interests = body.get('interests') or []
+    if not isinstance(interests, list):
+        interests = []
+    interests = [str(i).strip()[:40] for i in interests if str(i).strip()][:10]
+
+    if not name:
+        return jsonify({'success': False, 'message': 'Name is required'}), 400
+    if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+        return jsonify({'success': False, 'message': 'A valid email is required'}), 400
+
+    timestamp = datetime.now().isoformat()
+    item_id = post_subscriber_to_monday(name, email, interests, timestamp)
+    if item_id is None:
+        return jsonify({'success': False, 'message': 'Could not save your sign-up. Please try again later.'}), 500
+
     return jsonify({'success': True}), 200
 
 

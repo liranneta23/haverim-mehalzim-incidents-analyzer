@@ -12,6 +12,15 @@ import './dashboard.css';
 const DONATE_URL    = 'https://www.jgive.com/new/en/usd/donation-targets/110214';
 const CONTACT_EMAIL = 'info@haverimmehalzim.org';
 
+// ── Funnel config: Emergency → Community → Money ──────────────────────────────
+// 1) EMERGENCY — primary "Help Me" SOS button links straight to the emergency
+//    WhatsApp chat. Number is in full international format, digits only.
+const EMERGENCY_WHATSAPP   = '972506899026';
+const EMERGENCY_WA_MESSAGE = 'Hi, I need emergency help.';
+const WHATSAPP_URL = `https://wa.me/${EMERGENCY_WHATSAPP}?text=${encodeURIComponent(EMERGENCY_WA_MESSAGE)}`;
+// 2) COMMUNITY — "Volunteer" is the primary community ask (volunteer sign-up form).
+const VOLUNTEER_URL = 'https://forms.monday.com/forms/2c04f95ad95a484c607ef71912af4e23?r=euc1';
+
 const AVG_MISSION_COST = 150;   // USD — base Golden Hour cost
 interface DonationTier { amount: number; title: string; desc: string; icon: string; highlight?: boolean; impactNote?: string; }
 const DONATION_TIERS: DonationTier[] = [
@@ -877,6 +886,101 @@ function PageNavCards() {
   );
 }
 
+// ─── Newsletter sign-up ──────────────────────────────────────────────────────────
+
+const INTEREST_OPTIONS = ['Volunteering', 'Donating', 'Updates'] as const;
+type Interest = typeof INTEREST_OPTIONS[number];
+
+function NewsletterSignup() {
+  const [name, setName]           = useState('');
+  const [email, setEmail]         = useState('');
+  const [interests, setInterests] = useState<Interest[]>(['Updates']);
+  const [status, setStatus]       = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg]   = useState('');
+
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+  const canSubmit  = name.trim().length > 0 && emailValid && status !== 'submitting';
+
+  const toggleInterest = (i: Interest) =>
+    setInterests(prev => (prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim())   { setErrorMsg('Please enter your name.');           setStatus('error'); return; }
+    if (!emailValid)    { setErrorMsg('Please enter a valid email address.'); setStatus('error'); return; }
+
+    setStatus('submitting');
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: name.trim(), email: email.trim(), interests }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) throw new Error(json.message || 'Something went wrong.');
+      setStatus('success');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Could not sign you up. Please try again.');
+      setStatus('error');
+    }
+  };
+
+  if (status === 'success') {
+    return (
+      <div className="newsletter-section fade-in" id="newsletter">
+        <div className="newsletter-success" role="status">
+          <div className="newsletter-success-icon">✓</div>
+          <div className="newsletter-success-title">You’re on the list.</div>
+          <div className="newsletter-success-sub">Thank you for joining our community — we’ll be in touch.</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="newsletter-section fade-in" id="newsletter">
+      <div className="newsletter-intro">
+        <div className="newsletter-eyebrow">◈ Join the Community</div>
+        <h2 className="newsletter-headline">Stay close to the mission.</h2>
+        <p className="newsletter-body">
+          Get field updates and ways to help — whether you want to volunteer, donate, or simply follow along.
+        </p>
+      </div>
+      <form className="newsletter-form" onSubmit={handleSubmit} noValidate>
+        <div className="newsletter-field">
+          <label htmlFor="nl-name" className="newsletter-label">Name</label>
+          <input
+            id="nl-name" className="newsletter-input" type="text" value={name}
+            onChange={e => setName(e.target.value)} autoComplete="name" required
+          />
+        </div>
+        <div className="newsletter-field">
+          <label htmlFor="nl-email" className="newsletter-label">Email</label>
+          <input
+            id="nl-email" className="newsletter-input" type="email" value={email}
+            onChange={e => setEmail(e.target.value)} autoComplete="email" required
+            aria-invalid={status === 'error' && !emailValid}
+          />
+        </div>
+        <fieldset className="newsletter-interests">
+          <legend className="newsletter-label">I’m interested in</legend>
+          {INTEREST_OPTIONS.map(opt => (
+            <label key={opt} className="newsletter-checkbox">
+              <input type="checkbox" checked={interests.includes(opt)} onChange={() => toggleInterest(opt)} />
+              <span>{opt}</span>
+            </label>
+          ))}
+        </fieldset>
+        {status === 'error' && <div className="newsletter-error" role="alert">{errorMsg}</div>}
+        <button type="submit" className="newsletter-submit" disabled={!canSubmit}>
+          {status === 'submitting' ? 'Signing up…' : 'Sign Up'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 // ─── Geo period modal ────────────────────────────────────────────────────────
@@ -1096,7 +1200,18 @@ export default function DashboardPage() {
                     <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.countries_operated} delay={700} duration={1200} /></span> Countries Active</span>
                   </div>
                   <div className="mission-actions">
-                    <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="mission-btn-donate">♥ Donate Now</a>
+                    {/* EMERGENCY — most prominent action on the page */}
+                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-sos">
+                      🆘 Help Me
+                    </a>
+                    {/* COMMUNITY — volunteering is the primary community ask */}
+                    <a href={VOLUNTEER_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-volunteer">
+                      Volunteer
+                    </a>
+                    {/* MONEY — donating reads as the fallback to volunteering */}
+                    <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="mission-btn-donate-fallback">
+                      Can’t volunteer? Donate
+                    </a>
                     <Link to="/map" className="mission-btn-secondary">View Live Operations →</Link>
                   </div>
                 </div>
@@ -1122,6 +1237,9 @@ export default function DashboardPage() {
 
               {/* ── Explore the site ── */}
               <PageNavCards />
+
+              {/* ── Newsletter sign-up — build the community / mailing list ── */}
+              <NewsletterSignup />
 
               {/* ── Incident Types ── */}
               <SectionLabel text="Incident Types — All Time" stagger="stagger-3" />
