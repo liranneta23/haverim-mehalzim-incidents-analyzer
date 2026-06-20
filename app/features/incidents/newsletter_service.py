@@ -3,13 +3,17 @@ import json as _json
 import requests
 from app.config import MONDAY_URL, MONDAY_HEADERS, NEWSLETTER_BOARD_ID
 
-# ── Column IDs on the newsletter Monday board ────────────────────────────────
-# The subscriber's name is stored as the Monday item name. Email, interests and
-# the sign-up date go into their own columns. Monday column IDs are board-specific,
-# so override these via env vars to match the columns on your newsletter board.
-EMAIL_COL     = os.getenv("NEWSLETTER_EMAIL_COL",     "email")
-INTERESTS_COL = os.getenv("NEWSLETTER_INTERESTS_COL", "text")
-DATE_COL      = os.getenv("NEWSLETTER_DATE_COL",      "date")
+# ── Column IDs on the "Newsletter Users Management" Monday board ──────────────
+# The subscriber's name is stored as the Monday item name. The defaults below
+# match the live board (id 5098907924); override via env vars if the board changes.
+#   Email Address  -> text column     (plain string value)
+#   Interest Matters -> dropdown column ({"labels": [...]})
+#   Date           -> date column     ({"date": "YYYY-MM-DD"})
+#   Subscribed     -> checkbox column ({"checked": "true"})
+EMAIL_COL      = os.getenv("NEWSLETTER_EMAIL_COL",      "text_mm4g9zz")
+INTERESTS_COL  = os.getenv("NEWSLETTER_INTERESTS_COL",  "dropdown_mm4g86bn")
+DATE_COL       = os.getenv("NEWSLETTER_DATE_COL",       "date_mm4gzky2")
+SUBSCRIBED_COL = os.getenv("NEWSLETTER_SUBSCRIBED_COL", "boolean_mm4g24k")
 
 
 def _post(query: str) -> dict | None:
@@ -42,9 +46,10 @@ def post_subscriber_to_monday(name: str, email: str, interests: list[str], times
     item_name = _escape(name)
 
     values: dict = {
-        EMAIL_COL:     {'email': email, 'text': email},
-        INTERESTS_COL: ', '.join(interests),
-        DATE_COL:      {'date': date},
+        EMAIL_COL:      email,                    # text column → plain string
+        INTERESTS_COL:  {'labels': interests},    # dropdown column
+        DATE_COL:       {'date': date},           # date column
+        SUBSCRIBED_COL: {'checked': 'true'},      # checkbox column
     }
     col_values = _escape(_json.dumps(values))
 
@@ -53,7 +58,8 @@ def post_subscriber_to_monday(name: str, email: str, interests: list[str], times
         create_item(
           board_id: {NEWSLETTER_BOARD_ID},
           item_name: "{item_name}",
-          column_values: "{col_values}"
+          column_values: "{col_values}",
+          create_labels_if_missing: true
         ) {{ id }}
       }}
     ''')
