@@ -433,6 +433,7 @@ header {
 
 .mission-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -1765,7 +1766,6 @@ header {
   border-radius: 6px;
   text-decoration: none;
   transition: border-color 0.2s, color 0.2s;
-  align-self: center;
 }
 .mission-btn-donate-fallback:hover { border-color: var(--border-accent); color: var(--accent-teal); }
 
