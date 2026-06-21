@@ -1,8 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /my-impact/
-Disallow: /track/
-Disallow: /api/
 
 Sitemap: https://live.haverimmehalzim.org/sitemap.xml

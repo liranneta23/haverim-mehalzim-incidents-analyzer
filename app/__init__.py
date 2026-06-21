@@ -1,8 +1,13 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 
 _DIST = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+
+# Path prefixes that must never be indexed by search engines. Kept out of
+# robots.txt on purpose — that file is public, so listing sensitive paths
+# there would advertise them. A noindex header protects without disclosing.
+_NOINDEX_PREFIXES = ('/admin/', '/my-impact/', '/track/', '/api/')
 
 
 def create_app():
@@ -24,6 +29,8 @@ def create_app():
 
     @app.after_request
     def add_security_headers(response):
+        if request.path.startswith(_NOINDEX_PREFIXES):
+            response.headers['X-Robots-Tag'] = 'noindex, nofollow'
         response.headers['X-Content-Type-Options']  = 'nosniff'
         response.headers['X-XSS-Protection']        = '1; mode=block'
         response.headers['Referrer-Policy']         = 'strict-origin-when-cross-origin'
