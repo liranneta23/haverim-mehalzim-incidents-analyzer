@@ -14,6 +14,7 @@ interface RawIncident {
   status_mkmb1zc6?: string;   // incident type
   location_mkmbv7be?: string; // primary coordinate source
   country_mkmb91h3?: string;  // fallback coordinate source
+  country_code?: string;      // ISO-2 code from Monday's Country column (final fallback)
   check_mkn3c7v8?: string;    // life-threatening flag
   text_mm42945p?: string;     // incident description (what happened)
   text_mm2rbp1q?: string;     // incident assistance (how we helped)
@@ -84,7 +85,7 @@ function processIncidents(raw: RawIncident[]): GlobeIncident[] {
   let coordMisses = 0;
 
   raw.forEach((inc, i) => {
-    const coords = getCoordinates(inc.location_mkmbv7be, inc.country_mkmb91h3);
+    const coords = getCoordinates(inc.location_mkmbv7be, inc.country_mkmb91h3, inc.country_code);
 
     if (!coords) {
       coordMisses++;

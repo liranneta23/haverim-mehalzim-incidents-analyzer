@@ -404,6 +404,142 @@ export const COUNTRY_MAP: Record<string, Coords> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ISO-3166-1 ALPHA-2 → geographic centroid.
+// Final, language-independent fallback: Monday's Country column always supplies a
+// countryCode (e.g. "MN", "RS"), so any country — including ones never seen
+// before — resolves here even if its name is missing from the maps above.
+// Covers every assignable ISO-2 code; keys are uppercase.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const COUNTRY_CODE_MAP: Record<string, Coords> = {
+  AD: { lat: 42.546, lng: 1.602 },     AE: { lat: 23.424, lng: 53.848 },
+  AF: { lat: 33.939, lng: 67.710 },    AG: { lat: 17.061, lng: -61.796 },
+  AI: { lat: 18.221, lng: -63.069 },   AL: { lat: 41.153, lng: 20.168 },
+  AM: { lat: 40.069, lng: 45.038 },    AO: { lat: -11.203, lng: 17.874 },
+  AQ: { lat: -75.251, lng: -0.071 },   AR: { lat: -38.416, lng: -63.617 },
+  AS: { lat: -14.271, lng: -170.132 }, AT: { lat: 47.516, lng: 14.550 },
+  AU: { lat: -25.274, lng: 133.775 },  AW: { lat: 12.521, lng: -69.968 },
+  AX: { lat: 60.179, lng: 19.913 },    AZ: { lat: 40.143, lng: 47.577 },
+  BA: { lat: 43.915, lng: 17.679 },    BB: { lat: 13.194, lng: -59.543 },
+  BD: { lat: 23.685, lng: 90.356 },    BE: { lat: 50.504, lng: 4.470 },
+  BF: { lat: 12.238, lng: -1.562 },    BG: { lat: 42.734, lng: 25.486 },
+  BH: { lat: 26.067, lng: 50.555 },    BI: { lat: -3.373, lng: 29.919 },
+  BJ: { lat: 9.308, lng: 2.316 },      BL: { lat: 17.900, lng: -62.834 },
+  BM: { lat: 32.321, lng: -64.757 },   BN: { lat: 4.535, lng: 114.728 },
+  BO: { lat: -16.290, lng: -63.589 },  BQ: { lat: 12.178, lng: -68.239 },
+  BR: { lat: -14.235, lng: -51.925 },  BS: { lat: 25.034, lng: -77.396 },
+  BT: { lat: 27.514, lng: 90.434 },    BV: { lat: -54.423, lng: 3.413 },
+  BW: { lat: -22.328, lng: 24.685 },   BY: { lat: 53.710, lng: 27.954 },
+  BZ: { lat: 17.190, lng: -88.498 },   CA: { lat: 56.130, lng: -106.347 },
+  CC: { lat: -12.164, lng: 96.871 },   CD: { lat: -4.038, lng: 21.759 },
+  CF: { lat: 6.611, lng: 20.939 },     CG: { lat: -0.228, lng: 15.828 },
+  CH: { lat: 46.818, lng: 8.228 },     CI: { lat: 7.540, lng: -5.547 },
+  CK: { lat: -21.237, lng: -159.778 }, CL: { lat: -35.675, lng: -71.543 },
+  CM: { lat: 7.370, lng: 12.355 },     CN: { lat: 35.862, lng: 104.195 },
+  CO: { lat: 4.571, lng: -74.297 },    CR: { lat: 9.749, lng: -83.754 },
+  CU: { lat: 21.522, lng: -77.781 },   CV: { lat: 16.003, lng: -24.014 },
+  CW: { lat: 12.169, lng: -68.990 },   CX: { lat: -10.448, lng: 105.690 },
+  CY: { lat: 35.126, lng: 33.430 },    CZ: { lat: 49.818, lng: 15.473 },
+  DE: { lat: 51.166, lng: 10.452 },    DJ: { lat: 11.825, lng: 42.590 },
+  DK: { lat: 56.264, lng: 9.502 },     DM: { lat: 15.415, lng: -61.371 },
+  DO: { lat: 18.736, lng: -70.163 },   DZ: { lat: 28.034, lng: 1.660 },
+  EC: { lat: -1.831, lng: -78.183 },   EE: { lat: 58.595, lng: 25.014 },
+  EG: { lat: 26.821, lng: 30.803 },    EH: { lat: 24.216, lng: -12.886 },
+  ER: { lat: 15.179, lng: 39.782 },    ES: { lat: 40.464, lng: -3.749 },
+  ET: { lat: 9.145, lng: 40.490 },     FI: { lat: 61.924, lng: 25.748 },
+  FJ: { lat: -17.713, lng: 178.065 },  FK: { lat: -51.796, lng: -59.524 },
+  FM: { lat: 7.426, lng: 150.551 },    FO: { lat: 61.893, lng: -6.911 },
+  FR: { lat: 46.228, lng: 2.214 },     GA: { lat: -0.804, lng: 11.609 },
+  GB: { lat: 55.378, lng: -3.436 },    GD: { lat: 12.117, lng: -61.679 },
+  GE: { lat: 42.315, lng: 43.357 },    GF: { lat: 3.934, lng: -53.126 },
+  GG: { lat: 49.466, lng: -2.585 },    GH: { lat: 7.946, lng: -1.024 },
+  GI: { lat: 36.138, lng: -5.345 },    GL: { lat: 71.707, lng: -42.604 },
+  GM: { lat: 13.444, lng: -15.310 },   GN: { lat: 9.945, lng: -9.697 },
+  GP: { lat: 16.265, lng: -61.551 },   GQ: { lat: 1.651, lng: 10.268 },
+  GR: { lat: 39.074, lng: 21.824 },    GS: { lat: -54.430, lng: -36.588 },
+  GT: { lat: 15.783, lng: -90.231 },   GU: { lat: 13.444, lng: 144.794 },
+  GW: { lat: 11.804, lng: -15.180 },   GY: { lat: 4.861, lng: -58.930 },
+  HK: { lat: 22.320, lng: 114.170 },   HM: { lat: -53.081, lng: 73.504 },
+  HN: { lat: 15.200, lng: -86.242 },   HR: { lat: 45.100, lng: 15.200 },
+  HT: { lat: 18.971, lng: -72.285 },   HU: { lat: 47.162, lng: 19.503 },
+  ID: { lat: -0.789, lng: 113.921 },   IE: { lat: 53.413, lng: -8.244 },
+  IL: { lat: 31.046, lng: 34.852 },    IM: { lat: 54.237, lng: -4.548 },
+  IN: { lat: 20.594, lng: 78.963 },    IO: { lat: -6.343, lng: 71.877 },
+  IQ: { lat: 33.223, lng: 43.679 },    IR: { lat: 32.428, lng: 53.688 },
+  IS: { lat: 64.963, lng: -19.021 },   IT: { lat: 41.872, lng: 12.567 },
+  JE: { lat: 49.214, lng: -2.131 },    JM: { lat: 18.109, lng: -77.298 },
+  JO: { lat: 30.585, lng: 36.238 },    JP: { lat: 36.205, lng: 138.253 },
+  KE: { lat: -0.024, lng: 37.906 },    KG: { lat: 41.204, lng: 74.766 },
+  KH: { lat: 12.566, lng: 104.991 },   KI: { lat: -3.370, lng: -168.734 },
+  KM: { lat: -11.875, lng: 43.872 },   KN: { lat: 17.358, lng: -62.783 },
+  KP: { lat: 40.340, lng: 127.510 },   KR: { lat: 35.908, lng: 127.767 },
+  KW: { lat: 29.312, lng: 47.481 },    KY: { lat: 19.314, lng: -81.255 },
+  KZ: { lat: 48.020, lng: 66.924 },    LA: { lat: 19.856, lng: 102.495 },
+  LB: { lat: 33.855, lng: 35.862 },    LC: { lat: 13.909, lng: -60.979 },
+  LI: { lat: 47.166, lng: 9.555 },     LK: { lat: 7.873, lng: 80.772 },
+  LR: { lat: 6.428, lng: -9.429 },     LS: { lat: -29.610, lng: 28.234 },
+  LT: { lat: 55.169, lng: 23.881 },    LU: { lat: 49.815, lng: 6.130 },
+  LV: { lat: 56.880, lng: 24.603 },    LY: { lat: 26.335, lng: 17.228 },
+  MA: { lat: 31.792, lng: -7.093 },    MC: { lat: 43.738, lng: 7.424 },
+  MD: { lat: 47.411, lng: 28.370 },    ME: { lat: 42.708, lng: 19.374 },
+  MF: { lat: 18.083, lng: -63.052 },   MG: { lat: -18.767, lng: 46.869 },
+  MH: { lat: 7.131, lng: 171.184 },    MK: { lat: 41.608, lng: 21.745 },
+  ML: { lat: 17.571, lng: -3.996 },    MM: { lat: 21.914, lng: 95.956 },
+  MN: { lat: 46.862, lng: 103.847 },   MO: { lat: 22.199, lng: 113.544 },
+  MP: { lat: 17.331, lng: 145.385 },   MQ: { lat: 14.642, lng: -61.024 },
+  MR: { lat: 21.008, lng: -10.941 },   MS: { lat: 16.742, lng: -62.187 },
+  MT: { lat: 35.938, lng: 14.375 },    MU: { lat: -20.348, lng: 57.552 },
+  MV: { lat: 3.203, lng: 73.221 },     MW: { lat: -13.254, lng: 34.302 },
+  MX: { lat: 23.635, lng: -102.553 },  MY: { lat: 4.210, lng: 101.976 },
+  MZ: { lat: -18.665, lng: 35.530 },   NA: { lat: -22.958, lng: 18.490 },
+  NC: { lat: -20.905, lng: 165.618 },  NE: { lat: 17.608, lng: 8.082 },
+  NF: { lat: -29.041, lng: 167.955 },  NG: { lat: 9.082, lng: 8.675 },
+  NI: { lat: 12.865, lng: -85.207 },   NL: { lat: 52.133, lng: 5.291 },
+  NO: { lat: 60.472, lng: 8.469 },     NP: { lat: 28.395, lng: 84.124 },
+  NR: { lat: -0.523, lng: 166.932 },   NU: { lat: -19.054, lng: -169.867 },
+  NZ: { lat: -40.900, lng: 174.886 },  OM: { lat: 21.513, lng: 55.923 },
+  PA: { lat: 8.538, lng: -80.782 },    PE: { lat: -9.190, lng: -75.015 },
+  PF: { lat: -17.680, lng: -149.407 }, PG: { lat: -6.315, lng: 143.956 },
+  PH: { lat: 12.880, lng: 121.774 },   PK: { lat: 30.375, lng: 69.345 },
+  PL: { lat: 51.919, lng: 19.145 },    PM: { lat: 46.941, lng: -56.271 },
+  PN: { lat: -24.704, lng: -127.439 }, PR: { lat: 18.221, lng: -66.591 },
+  PS: { lat: 31.952, lng: 35.233 },    PT: { lat: 39.400, lng: -8.224 },
+  PW: { lat: 7.515, lng: 134.583 },    PY: { lat: -23.443, lng: -58.444 },
+  QA: { lat: 25.355, lng: 51.184 },    RE: { lat: -21.116, lng: 55.536 },
+  RO: { lat: 45.943, lng: 24.967 },    RS: { lat: 44.017, lng: 21.006 },
+  RU: { lat: 61.524, lng: 105.319 },   RW: { lat: -1.940, lng: 29.874 },
+  SA: { lat: 23.886, lng: 45.079 },    SB: { lat: -9.646, lng: 160.156 },
+  SC: { lat: -4.680, lng: 55.492 },    SD: { lat: 12.863, lng: 30.218 },
+  SE: { lat: 60.128, lng: 18.644 },    SG: { lat: 1.352, lng: 103.820 },
+  SH: { lat: -24.144, lng: -10.030 },  SI: { lat: 46.151, lng: 14.995 },
+  SJ: { lat: 77.554, lng: 23.670 },    SK: { lat: 48.669, lng: 19.699 },
+  SL: { lat: 8.461, lng: -11.780 },    SM: { lat: 43.942, lng: 12.458 },
+  SN: { lat: 14.497, lng: -14.452 },   SO: { lat: 5.152, lng: 46.200 },
+  SR: { lat: 3.920, lng: -56.028 },    SS: { lat: 6.877, lng: 31.307 },
+  ST: { lat: 0.187, lng: 6.613 },      SV: { lat: 13.794, lng: -88.897 },
+  SX: { lat: 18.043, lng: -63.055 },   SY: { lat: 34.802, lng: 38.997 },
+  SZ: { lat: -26.523, lng: 31.466 },   TC: { lat: 21.694, lng: -71.798 },
+  TD: { lat: 15.454, lng: 18.732 },    TF: { lat: -49.280, lng: 69.349 },
+  TG: { lat: 8.620, lng: 0.825 },      TH: { lat: 15.870, lng: 100.993 },
+  TJ: { lat: 38.861, lng: 71.276 },    TK: { lat: -9.200, lng: -171.848 },
+  TL: { lat: -8.874, lng: 125.728 },   TM: { lat: 38.970, lng: 59.556 },
+  TN: { lat: 33.887, lng: 9.537 },     TO: { lat: -21.179, lng: -175.198 },
+  TR: { lat: 38.964, lng: 35.243 },    TT: { lat: 10.692, lng: -61.223 },
+  TV: { lat: -7.110, lng: 177.649 },   TW: { lat: 23.698, lng: 120.961 },
+  TZ: { lat: -6.369, lng: 34.889 },    UA: { lat: 48.379, lng: 31.166 },
+  UG: { lat: 1.374, lng: 32.290 },     UM: { lat: 19.282, lng: 166.647 },
+  US: { lat: 37.090, lng: -95.713 },   UY: { lat: -32.523, lng: -55.766 },
+  UZ: { lat: 41.377, lng: 64.585 },    VA: { lat: 41.902, lng: 12.453 },
+  VC: { lat: 12.984, lng: -61.287 },   VE: { lat: 6.424, lng: -66.590 },
+  VG: { lat: 18.420, lng: -64.640 },   VI: { lat: 18.336, lng: -64.896 },
+  VN: { lat: 14.058, lng: 108.277 },   VU: { lat: -15.377, lng: 166.959 },
+  WF: { lat: -13.769, lng: -177.156 }, WS: { lat: -13.759, lng: -172.105 },
+  YE: { lat: 15.553, lng: 48.516 },    YT: { lat: -12.827, lng: 45.166 },
+  ZA: { lat: -30.560, lng: 22.938 },   ZM: { lat: -13.134, lng: 27.849 },
+  ZW: { lat: -19.015, lng: 29.155 },   XK: { lat: 42.603, lng: 20.903 },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // HEBREW LOCATION → ENGLISH DISPLAY NAME
 // Maps the exact Hebrew strings stored in location_mkmbv7be to a clean English label.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -470,15 +606,20 @@ const _countryLower = Object.fromEntries(
  * Resolves lat/lng for an incident.
  *
  * Priority:
- *   1. location_mkmbv7be  →  COORDINATE_MAP  (city-level precision)
- *   2. location_mkmbv7be  →  COUNTRY_MAP     (in case it holds a country name)
- *   3. country_mkmb91h3   →  COUNTRY_MAP     (country centroid fallback)
- *   4. country_mkmb91h3   →  COORDINATE_MAP  (last resort)
- *   5. null               →  incident excluded from the globe
+ *   1. location_mkmbv7be  →  COORDINATE_MAP    (city-level precision)
+ *   2. location_mkmbv7be  →  COUNTRY_MAP       (in case it holds a country name)
+ *   3. country_mkmb91h3   →  COUNTRY_MAP       (country centroid fallback)
+ *   4. country_mkmb91h3   →  COORDINATE_MAP    (last resort by name)
+ *   5. countryCode        →  COUNTRY_CODE_MAP  (ISO-2 catch-all — any country)
+ *   6. null               →  incident excluded from the globe
+ *
+ * Step 5 means a country we've never handled before still lands on the globe at
+ * its centroid, with no need to add it to the maps above.
  */
 export function getCoordinates(
   location: string | null | undefined,
   country: string | null | undefined,
+  countryCode?: string | null | undefined,
 ): Coords | null {
   if (location) {
     const key = location.trim().toLowerCase();
@@ -492,8 +633,13 @@ export function getCoordinates(
     if (_coordLower[key])   return _coordLower[key];
   }
 
-  if (location || country) {
-    console.warn('[Globe] no coords for:', { location, country });
+  if (countryCode) {
+    const code = countryCode.trim().toUpperCase();
+    if (COUNTRY_CODE_MAP[code]) return COUNTRY_CODE_MAP[code];
+  }
+
+  if (location || country || countryCode) {
+    console.warn('[Globe] no coords for:', { location, country, countryCode });
   }
   return null;
 }

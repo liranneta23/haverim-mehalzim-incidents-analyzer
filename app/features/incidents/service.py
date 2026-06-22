@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 from app.config import BOARD_ID, MONDAY_URL, MONDAY_HEADERS
 
@@ -27,6 +28,7 @@ _QUERY = """
         column_values (ids: [%s]) {
           id
           text
+          value
         }
       }
     }
@@ -58,6 +60,14 @@ def fetch_monday_data():
             row = {'name': item['name'], 'id': item['id']}
             for cv in item['column_values']:
                 row[cv['id']] = cv['text']
+                # Monday's Country column carries a language-independent ISO-2 code
+                # in its `value` JSON. Surface it so the map can resolve any country
+                # (incl. ones never seen before) without a hand-maintained name list.
+                if cv['id'] == 'country_mkmb91h3' and cv.get('value'):
+                    try:
+                        row['country_code'] = (json.loads(cv['value']) or {}).get('countryCode')
+                    except (ValueError, TypeError):
+                        pass
 
             location = row.get('location_mkmbv7be', '').strip()
             country  = row.get('country_mkmb91h3',  '').strip()
