@@ -1160,12 +1160,12 @@ export default function DashboardPage() {
                 <div className="mission-hero-content">
                   <div className="mission-eyebrow">Haverim Mehalzim · Israelis Helping Israelis</div>
                   <h1 className="mission-headline">
-                    When Israelis are in distress,<br />we answer the call — worldwide.
+                    When Israelis and Jews are at risk abroad<br />we answer the call - 24/7.
                   </h1>
                   <p className="mission-body">
-                    When an Israeli calls for help, a real person answers — no bots, no automated
-                    menus. Our team responds 24/7 to medical emergencies, rescue operations, and
-                    mental health crises wherever Israelis travel or live, at no cost to those we help.
+                    A real person answers. Our volunteer-driven network helps people and families
+                    through rescue, medical, mental health, evacuation, and antisemitic emergencies -
+                    worldwide, at no cost.
                   </p>
                   <div className="mission-stats-row">
                     <div className="mission-stat-item">
@@ -1200,19 +1200,25 @@ export default function DashboardPage() {
                     <span><span className="mission-stat-secondary-value"><CountUp to={data.summary.countries_operated} delay={700} duration={1200} /></span> Countries Active</span>
                   </div>
                   <div className="mission-actions">
-                    {/* EMERGENCY — most prominent action on the page */}
-                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-sos">
-                      🆘 Help Me
-                    </a>
-                    {/* COMMUNITY — volunteering is the primary community ask */}
-                    <a href={VOLUNTEER_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-volunteer">
-                      Volunteer
-                    </a>
-                    {/* MONEY — donating reads as the fallback to volunteering */}
-                    <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="mission-btn-donate-fallback">
-                      Can’t volunteer? Donate
-                    </a>
-                    <Link to="/map" className="mission-btn-secondary">View Live Operations →</Link>
+                    {/* Tier 1 — the two primary "do something" actions, visually balanced */}
+                    <div className="mission-actions-primary">
+                      {/* EMERGENCY — most prominent action on the page */}
+                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-sos">
+                        🆘 Help Me
+                      </a>
+                      {/* COMMUNITY — volunteering is the primary community ask */}
+                      <a href={VOLUNTEER_URL} target="_blank" rel="noopener noreferrer" className="mission-btn-volunteer">
+                        Volunteer
+                      </a>
+                    </div>
+                    {/* Tier 2 — quieter supporting links */}
+                    <div className="mission-actions-secondary">
+                      {/* MONEY — donating reads as the fallback to volunteering */}
+                      <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }} className="mission-link-quiet">
+                        Can’t volunteer? Donate
+                      </a>
+                      <Link to="/map" className="mission-link-quiet">View Live Operations →</Link>
+                    </div>
                   </div>
                 </div>
                 <HeroGlobe />

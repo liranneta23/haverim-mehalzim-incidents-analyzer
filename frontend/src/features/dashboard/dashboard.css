@@ -433,9 +433,43 @@ header {
 
 .mission-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+/* Tier 1 — primary actions, equal height so they share one baseline */
+.mission-actions-primary {
+  display: flex;
+  align-items: stretch;
   gap: 12px;
   flex-wrap: wrap;
+}
+/* Tier 2 — quiet supporting links */
+.mission-actions-secondary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.mission-link-quiet {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-accent);
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.mission-link-quiet:hover {
+  background: var(--accent-teal-dim);
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
 }
 .mission-btn-primary {
   font-family: var(--font-mono);
@@ -471,21 +505,6 @@ header {
   opacity: 0.9;
   box-shadow: 0 0 32px rgba(0,230,160,0.5);
 }
-.mission-btn-secondary {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent-teal);
-  background: var(--accent-teal-dim);
-  border: 1px solid var(--border-accent);
-  padding: 10px 22px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-.mission-btn-secondary:hover { background: rgba(0,230,160,0.18); }
-
 
 /* ─── HERO GLOBE VISUAL ─── */
 .hero-visual-wrap {
@@ -1712,15 +1731,18 @@ header {
 
 /* EMERGENCY — the loudest action on the page */
 .mission-btn-sos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fff;
   background: var(--accent-red);
   border: 1px solid var(--accent-red);
-  padding: 15px 36px;
+  padding: 14px 32px;
   border-radius: 8px;
   text-decoration: none;
   box-shadow: 0 0 24px rgba(255,77,106,0.45);
@@ -1738,36 +1760,24 @@ header {
 
 /* COMMUNITY — volunteering is the primary community ask */
 .mission-btn-volunteer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--bg-void);
   background: var(--accent-teal);
   border: 1px solid var(--accent-teal);
-  padding: 12px 28px;
-  border-radius: 6px;
+  padding: 14px 32px;
+  border-radius: 8px;
   text-decoration: none;
-  transition: opacity 0.2s;
+  box-shadow: 0 0 20px rgba(0,230,160,0.25);
+  transition: opacity 0.2s, box-shadow 0.2s;
 }
-.mission-btn-volunteer:hover { opacity: 0.85; }
-
-/* MONEY — donating reads as the quieter fallback */
-.mission-btn-donate-fallback {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid var(--border-mid);
-  padding: 12px 24px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: border-color 0.2s, color 0.2s;
-}
-.mission-btn-donate-fallback:hover { border-color: var(--border-accent); color: var(--accent-teal); }
+.mission-btn-volunteer:hover { opacity: 0.9; box-shadow: 0 0 30px rgba(0,230,160,0.4); }
 
 /* ─── NEWSLETTER SIGN-UP ─── */
 .newsletter-section {
