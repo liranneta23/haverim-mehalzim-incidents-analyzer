@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, redirect, send_from_directory
 from flask_cors import CORS
 
 _DIST = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
@@ -17,6 +17,15 @@ def create_app():
     # API routes
     from app.features.incidents.routes import incidents_bp
     app.register_blueprint(incidents_bp)
+
+    # Tranzila POSTs the payment result back to the redirect URLs. The SPA
+    # fallback below only serves GET, so a POST would 405. Bounce it to GET
+    # (303) so React renders the thanks/failed page cleanly and a refresh
+    # doesn't re-submit.
+    @app.route('/donate/thanks', methods=['POST'])
+    @app.route('/donate/failed', methods=['POST'])
+    def donate_result_post():
+        return redirect(request.path, code=303)
 
     # Serve React build for every non-API route
     @app.route('/', defaults={'path': ''})
