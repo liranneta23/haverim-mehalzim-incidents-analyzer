@@ -9,6 +9,14 @@ const RED   = '#ff4040';
 const MONO  = "'JetBrains Mono', monospace";
 const READ_MS = 2000; // ms to hold card after typing before advancing
 
+// Incident-specific donations route through Tranzila (one-time); passing the
+// incident's Monday id links the payment to that case. The generic footer link
+// (no incident) intentionally stays on the general JGive flow.
+const incidentCtx = (i: GlobeIncident) => ({
+  incidentId:   i.id,
+  incidentName: `${i.label} · ${i.locationName}`,
+});
+
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 
 function useTypewriter(text: string, speed = 18, forceComplete = false): { displayed: string; done: boolean } {
@@ -171,7 +179,7 @@ function IncomingCard({
 
       {/* CTA row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: isReading ? 14 : 0 }}>
-        <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
+        <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(incidentCtx(incident)); }}
           style={{
             fontFamily: MONO, fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700,
             color: '#0B0E11', background: TEAL,
@@ -235,7 +243,7 @@ function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: num
             {expanded ? '▲ close' : '▼ read'}
           </span>
         ) : (
-          <a href={DONATE_URL} onClick={e => { e.preventDefault(); e.stopPropagation(); openDonate(); }}
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); e.stopPropagation(); openDonate(incidentCtx(incident)); }}
             style={{
               fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700,
               color: `${GOLD}55`, border: `1px solid ${GOLD}1a`, background: `${GOLD}06`,
@@ -268,7 +276,7 @@ function QueueRow({ incident, seq, isDone }: { incident: GlobeIncident; seq: num
           <p style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.85, color: 'rgba(100,135,160,0.85)', margin: '0 0 16px' }}>
             {story}
           </p>
-          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(); }}
+          <a href={DONATE_URL} onClick={e => { e.preventDefault(); openDonate(incidentCtx(incident)); }}
             style={{
               fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700,
               color: `${GOLD}88`, border: `1px solid ${GOLD}22`, background: `${GOLD}08`,

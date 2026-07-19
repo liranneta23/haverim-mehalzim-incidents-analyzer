@@ -11,6 +11,13 @@ from app.features.incidents.feedback_service import (
     delete_item as delete_feedback_item,
 )
 from app.features.incidents.newsletter_service import post_subscriber_to_monday
+from app.features.incidents.payment_service import (
+    build_payment_url,
+    parse_notify,
+    new_order_id,
+    is_configured as payment_configured,
+)
+from app.features.incidents.donation_service import record_confirmed_payment
 from app.features.incidents.analysis import (
     count_incidents_per_type,
     get_incidents_current_year,
@@ -369,6 +376,93 @@ def get_leaderboard():
     except Exception as ex:
         print(f'[leaderboard] error: {ex}')
         return jsonify({'success': False, 'message': str(ex)}), 500
+
+
+# ── Donations (Tranzila) ────────────────────────────────────────────────────
+_donate_rate: dict = defaultdict(lambda: {'count': 0, 'window_start': 0.0})
+_DONATE_RATE_MAX    = 15
+_DONATE_RATE_WINDOW = 60
+
+
+@incidents_bp.route('/api/donate/start', methods=['POST'])
+def donate_start():
+    """
+    Begin a one-time donation. Validates the request, then returns the Tranzila
+    hosted-page URL the browser should redirect to. No charge happens here — the
+    money is confirmed later at /api/tranzilla/notify.
+    """
+    from flask import request
+
+    ip  = request.remote_addr or 'unknown'
+    now = _time.time()
+    bucket = _donate_rate[ip]
+    if now - bucket['window_start'] > _DONATE_RATE_WINDOW:
+        bucket['count'] = 0
+        bucket['window_start'] = now
+    bucket['count'] += 1
+    if bucket['count'] > _DONATE_RATE_MAX:
+        return jsonify({'success': False, 'message': 'Too many requests'}), 429
+
+    if not payment_configured():
+        return jsonify({'success': False, 'message': 'Payments are not configured'}), 503
+
+    body = request.get_json(silent=True) or {}
+
+    try:
+        amount = round(float(body.get('amount', 0)), 2)
+    except (ValueError, TypeError):
+        amount = 0
+    if amount < 1 or amount > 500000:
+        return jsonify({'success': False, 'message': 'Invalid amount'}), 400
+
+    incident_id = str(body.get('incident_id', '')).strip()[:40]
+    if incident_id and not incident_id.isdigit():
+        return jsonify({'success': False, 'message': 'Invalid incident'}), 400
+
+    order = {
+        'order_id':      new_order_id(),
+        'amount':        amount,
+        'incident_id':   incident_id,
+        'package_id':    str(body.get('package_id', '')).strip()[:60],
+        'package_label': str(body.get('package_label', '')).strip()[:120],
+        'donor_name':    str(body.get('donor_name', '')).strip()[:120],
+        'donor_email':   str(body.get('donor_email', '')).strip()[:200],
+        'donor_phone':   str(body.get('donor_phone', '')).strip()[:40],
+    }
+
+    url = build_payment_url(order)
+    if not url:
+        return jsonify({'success': False, 'message': 'Could not start payment'}), 500
+
+    return jsonify({'success': True, 'payment_url': url, 'order_id': order['order_id']}), 200
+
+
+@incidents_bp.route('/api/tranzilla/notify', methods=['GET', 'POST'])
+def tranzilla_notify():
+    """
+    Server-to-server callback from Tranzila — the SOURCE OF TRUTH for a payment.
+    Only here do we record the donation to Monday. Always returns 200 so Tranzila
+    does not retry indefinitely on our internal errors.
+    """
+    from flask import request
+
+    values = request.form.to_dict() if request.form else {}
+    if not values:
+        values = request.args.to_dict()
+
+    payment = parse_notify(values)
+    if payment is None:
+        # Not approved or failed verification — acknowledge without recording.
+        return jsonify({'success': False}), 200
+
+    try:
+        item_id = record_confirmed_payment(payment, datetime.now().isoformat())
+        if not item_id:
+            print(f'[notify] failed to record order {payment.get("order_id")}')
+    except Exception as ex:
+        print(f'[notify] error recording order {payment.get("order_id")}: {ex}')
+
+    return jsonify({'success': True}), 200
 
 
 @incidents_bp.route('/api/health')

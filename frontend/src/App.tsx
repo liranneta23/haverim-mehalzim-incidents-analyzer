@@ -7,6 +7,7 @@ import FundOurTeamPage from './features/fund/FundOurTeamPage';
 import CaseTrackerPage from './features/tracker/CaseTrackerPage';
 import AdminFeedbackPage from './features/admin/AdminFeedbackPage';
 import DonorImpactPage from './features/donor/DonorImpactPage';
+import DonateResultPage from './features/donate/DonateResultPage';
 // import LeaderboardPage from './features/leaderboard/LeaderboardPage';
 
 function ScrollToTop() {
@@ -27,6 +28,8 @@ export default function App() {
         <Route path="/track/:caseId"   element={<CaseTrackerPage />} />
         <Route path="/admin/feedback"  element={<AdminFeedbackPage />} />
         <Route path="/my-impact/:token" element={<DonorImpactPage />} />
+        <Route path="/donate/thanks"    element={<DonateResultPage variant="thanks" />} />
+        <Route path="/donate/failed"    element={<DonateResultPage variant="failed" />} />
         {/* <Route path="/leaderboard"      element={<LeaderboardPage />} /> */}
       </Routes>
     </BrowserRouter>

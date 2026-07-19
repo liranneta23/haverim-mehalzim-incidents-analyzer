@@ -296,10 +296,16 @@ function IncidentDetail({
       {/* Response impact info */}
       <ResponseImpactInfo accent={accentColor} isResolved={isResolved} />
 
-      {/* CTA */}
+      {/* CTA — incident-specific donation routes through Tranzila (one-time) */}
       <a
         href={DONATE_URL}
-        onClick={e => { e.preventDefault(); openDonate(); }}
+        onClick={e => {
+          e.preventDefault();
+          openDonate({
+            incidentId:   incident.id,
+            incidentName: `${incident.label} · ${incident.locationName}`,
+          });
+        }}
         className="flex items-center justify-center gap-2 w-full text-sm tracking-[0.18em] uppercase font-bold px-4 py-3 rounded transition-opacity hover:opacity-90 mb-3"
         style={isResolved
           ? { background: GOLD, color: '#0B0E11' }
