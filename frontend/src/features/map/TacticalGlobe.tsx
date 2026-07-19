@@ -296,15 +296,19 @@ function IncidentDetail({
       {/* Response impact info */}
       <ResponseImpactInfo accent={accentColor} isResolved={isResolved} />
 
-      {/* CTA — incident-specific donation routes through Tranzila (one-time) */}
+      {/* CTA — live incidents route through Tranzila (one-time, incident-specific).
+          Resolved/past incidents aren't live, so they fall back to the general
+          JGive donation flow rather than an incident-specific Tranzila payment. */}
       <a
         href={DONATE_URL}
         onClick={e => {
           e.preventDefault();
-          openDonate({
-            incidentId:   incident.id,
-            incidentName: `${incident.label} · ${incident.locationName}`,
-          });
+          openDonate(isResolved
+            ? undefined
+            : {
+                incidentId:   incident.id,
+                incidentName: `${incident.label} · ${incident.locationName}`,
+              });
         }}
         className="flex items-center justify-center gap-2 w-full text-sm tracking-[0.18em] uppercase font-bold px-4 py-3 rounded transition-opacity hover:opacity-90 mb-3"
         style={isResolved
