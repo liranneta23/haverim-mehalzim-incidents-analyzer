@@ -33,6 +33,7 @@ from app.config import (
     TRANZILLA_TERMINAL,
     TRANZILLA_CURRENCY,
     TRANZILLA_NOTIFY_SECRET,
+    TRANZILLA_HOST,
     PUBLIC_BASE_URL,
 )
 
@@ -68,7 +69,7 @@ def build_payment_url(order: dict) -> str | None:
         print("[payment_service] TRANZILLA_TERMINAL or PUBLIC_BASE_URL not set")
         return None
 
-    base = f"https://direct.tranzila.com/{TRANZILLA_TERMINAL}/iframenew.php"
+    base = f"https://{TRANZILLA_HOST}/{TRANZILLA_TERMINAL}/iframenew.php"
 
     pdesc = "תרומה - חברים מחלצים"
     if order.get("package_label"):

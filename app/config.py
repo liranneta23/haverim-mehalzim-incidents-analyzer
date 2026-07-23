@@ -27,6 +27,9 @@ TRANZILLA_API_PUBLIC_KEY    = os.getenv("TRANZILLA_API_PUBLIC_KEY")
 TRANZILLA_API_PRIVATE_KEY   = os.getenv("TRANZILLA_API_PRIVATE_KEY")
 # 1 = ILS (shekel), 2 = USD. Israeli terminals default to shekel.
 TRANZILLA_CURRENCY          = os.getenv("TRANZILLA_CURRENCY", "1")
+# Hosted-page host. "directng.tranzila.com" is Tranzila's current standard
+# (the older "direct.tranzila.com" is deprecated). Override via env if needed.
+TRANZILLA_HOST              = os.getenv("TRANZILLA_HOST", "directng.tranzila.com")
 # Optional shared secret configured in the Tranzila terminal's "notify" settings.
 # When set, incoming server notifications are rejected unless they carry it.
 TRANZILLA_NOTIFY_SECRET     = os.getenv("TRANZILLA_NOTIFY_SECRET")
