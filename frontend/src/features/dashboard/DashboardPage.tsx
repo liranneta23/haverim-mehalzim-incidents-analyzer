@@ -1160,7 +1160,7 @@ export default function DashboardPage() {
                 <div className="mission-hero-content">
                   <div className="mission-eyebrow">Haverim Mehalzim · Israelis Helping Israelis</div>
                   <h1 className="mission-headline">
-                    When Israelis and Jewish People are at risk abroad<br />we answer the call - 24/7.
+                    When Israelis and Jewish People are at risk abroad we answer the call - 24/7.
                   </h1>
                   <p className="mission-body">
                     A real person answers. Our volunteer-driven network helps people and families

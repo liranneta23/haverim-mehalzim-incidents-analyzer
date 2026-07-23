@@ -37,12 +37,17 @@ from app.config import (
 )
 
 # ── Donations board columns ──────────────────────────────────────────────────
+# Defaults are baked in (not just left to env) because production runs on Render,
+# which does NOT read the local .env — only vars set in its dashboard. Baking the
+# known ids here means the columns fill in without depending on Render env vars.
 _AMOUNT_COL   = os.getenv("DONATION_AMOUNT_COL",   "numbers")
 _DATE_COL     = os.getenv("DONATION_DATE_COL",     "date4")
 _DONOR_COL    = os.getenv("DONATION_DONOR_COL",    "board_relation_mksevkdt")
+# Incident is linked via a board-relation column → the main incidents board
+# (item_ids = the incident's Monday item id).
 _INCIDENT_COL = os.getenv("DONATION_INCIDENT_COL", "board_relation_mm5ck4nc")
 _INCIDENT_TYPE = os.getenv("DONATION_INCIDENT_COL_TYPE", "board_relation")
-_ORDER_COL    = os.getenv("DONATION_ORDER_COL",    "")
+_ORDER_COL    = os.getenv("DONATION_ORDER_COL",    "text_mm5crtkb")
 _STATUS_COL   = os.getenv("DONATION_STATUS_COL",   "")
 _PAID_LABEL   = os.getenv("DONATION_PAID_LABEL",   "שולם")
 
@@ -50,6 +55,9 @@ _PAID_LABEL   = os.getenv("DONATION_PAID_LABEL",   "שולם")
 _DONOR_EMAIL_COL  = os.getenv("DONOR_EMAIL_COL",  "email_mm5cnfxk")
 _DONOR_TOKEN_COL  = os.getenv("DONOR_TOKEN_COL",  "text_mm37g124")
 _DONOR_AMOUNT_COL = os.getenv("DONOR_AMOUNT_COL", "numeric_mm37pefa")
+# Connect-boards column on the Donors board that links a donor to their donation
+# items on the Donations board. Each new donation is appended here.
+_DONOR_DONATIONS_COL = os.getenv("DONOR_DONATIONS_COL", "connect_boards3")
 
 
 def _escape(s: str) -> str:
@@ -176,6 +184,54 @@ def _bump_donor_amount(item_id: str, new_total: float) -> None:
     """)
 
 
+def _existing_linked_ids(donor_id: str) -> list[int]:
+    """Read the donation ids already linked on the donor's references column."""
+    data = _post(f"""
+      {{
+        items(ids: [{donor_id}]) {{
+          column_values(ids: ["{_DONOR_DONATIONS_COL}"]) {{ id value }}
+        }}
+      }}
+    """)
+    try:
+        raw = data["data"]["items"][0]["column_values"][0]["value"] if data else None
+    except (KeyError, IndexError, TypeError):
+        raw = None
+    if not raw:
+        return []
+    try:
+        linked = (_json.loads(raw) or {}).get("linkedPulseIds", [])
+        return [int(x["linkedPulseId"]) for x in linked if x.get("linkedPulseId")]
+    except (ValueError, TypeError, KeyError):
+        return []
+
+
+def link_donation_to_donor(donor_id: str, donation_id: str) -> None:
+    """
+    Append this donation to the donor's connect-boards references column, keeping
+    any donations already linked (a plain write would replace them).
+    """
+    if not (_DONOR_DONATIONS_COL and donor_id and donation_id):
+        return
+
+    ids = _existing_linked_ids(donor_id)
+    if int(donation_id) in ids:
+        return  # idempotent — already linked
+    ids.append(int(donation_id))
+
+    values = _escape(_json.dumps({_DONOR_DONATIONS_COL: {"item_ids": ids}}))
+    _post(f"""
+      mutation {{
+        change_multiple_column_values(
+          board_id: {DONORS_BOARD_ID},
+          item_id: {donor_id},
+          column_values: "{values}"
+        ) {{ id }}
+      }}
+    """)
+    print(f"[donation_service] linked donation {donation_id} to donor {donor_id}")
+
+
 # ── Donation row ─────────────────────────────────────────────────────────────
 
 def _column_value(col_type: str, raw: str):
@@ -246,11 +302,17 @@ def record_donation(payment: dict, date_iso: str, donor_item_id: str | None) -> 
 
 
 def record_confirmed_payment(payment: dict, date_iso: str) -> str | None:
-    """High-level entry point: link/create donor, then write the donation row."""
+    """
+    High-level entry point: link/create donor, write the donation row, then
+    add that donation to the donor's references-to-donations column.
+    """
     donor_id = find_or_create_donor(
         payment.get("donor_name", ""),
         payment.get("donor_email", ""),
         payment.get("donor_phone", ""),
         payment["amount"],
     )
-    return record_donation(payment, date_iso, donor_id)
+    donation_id = record_donation(payment, date_iso, donor_id)
+    if donor_id and donation_id:
+        link_donation_to_donor(donor_id, donation_id)
+    return donation_id

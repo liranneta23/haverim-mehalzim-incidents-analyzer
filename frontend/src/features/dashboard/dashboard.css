@@ -355,6 +355,7 @@ header {
   letter-spacing: -1px;
   color: var(--text-primary);
   margin-bottom: 18px;
+  text-wrap: balance;
 }
 .mission-body {
   font-size: 15px;
