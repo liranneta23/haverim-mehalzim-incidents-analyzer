@@ -16,8 +16,11 @@ from app.features.incidents.payment_service import (
     parse_notify,
     new_order_id,
     is_configured as payment_configured,
+    currency_code,
+    SUPPORTED_CURRENCIES,
 )
 from app.features.incidents.donation_service import record_confirmed_payment
+from app.features.incidents import email_service
 from app.features.incidents.analysis import (
     count_incidents_per_type,
     get_incidents_current_year,
@@ -384,6 +387,23 @@ _DONATE_RATE_MAX    = 15
 _DONATE_RATE_WINDOW = 60
 
 
+@incidents_bp.route('/api/payment-config')
+def payment_config():
+    """
+    Public config the donate UI needs: the currencies a donor may choose and the
+    USD→ILS rate. Serving the rate from here (not hardcoding it in the bundle)
+    keeps the price the donor sees and the backend's threshold check on one rate.
+    """
+    from app.features.incidents.constants import USD_TO_ILS
+    resp = jsonify({
+        'success': True,
+        'currencies': SUPPORTED_CURRENCIES,
+        'usd_to_ils': USD_TO_ILS,
+    })
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp, 200
+
+
 @incidents_bp.route('/api/donate/start', methods=['POST'])
 def donate_start():
     """
@@ -419,9 +439,14 @@ def donate_start():
     if incident_id and not incident_id.isdigit():
         return jsonify({'success': False, 'message': 'Invalid incident'}), 400
 
+    currency_name = str(body.get('currency', 'USD')).strip().upper()
+    if currency_name not in SUPPORTED_CURRENCIES:
+        return jsonify({'success': False, 'message': 'Unsupported currency'}), 400
+
     order = {
         'order_id':      new_order_id(),
         'amount':        amount,
+        'currency':      currency_code(currency_name),   # Tranzila numeric code
         'incident_id':   incident_id,
         'package_id':    str(body.get('package_id', '')).strip()[:60],
         'package_label': str(body.get('package_label', '')).strip()[:120],
@@ -456,9 +481,29 @@ def tranzilla_notify():
         return jsonify({'success': False}), 200
 
     try:
-        item_id = record_confirmed_payment(payment, datetime.now().isoformat())
-        if not item_id:
-            print(f'[notify] failed to record order {payment.get("order_id")}')
+        result = record_confirmed_payment(payment, datetime.now().isoformat())
+
+        if result.get('duplicate'):
+            # A prior (retried) notify already recorded this order and emailed the
+            # donor — don't record or email again.
+            print(f'[notify] duplicate order {payment.get("order_id")} — skipping email')
+        else:
+            if not result.get('donation_id'):
+                print(f'[notify] failed to record order {payment.get("order_id")}')
+
+            # Best-effort donor thank-you email — never let a mail failure affect
+            # the 200 we owe Tranzila, nor the fact that the money was recorded.
+            try:
+                email_service.send_donation_thankyou(
+                    donor_name=payment.get('donor_name', ''),
+                    donor_email=payment.get('donor_email', ''),
+                    amount=payment.get('amount', 0),
+                    currency=payment.get('currency', ''),
+                    token=result.get('token'),
+                    incident_id=payment.get('incident_id', ''),
+                )
+            except Exception as mail_ex:
+                print(f'[notify] thank-you email error for order {payment.get("order_id")}: {mail_ex}')
     except Exception as ex:
         print(f'[notify] error recording order {payment.get("order_id")}: {ex}')
 

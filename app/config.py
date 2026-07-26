@@ -25,8 +25,12 @@ TRANZILLA_TERMINAL_PASSWORD = os.getenv("TRANZILLA_TERMINAL_PASSWORD")
 TRANZILLA_API_USERNAME      = os.getenv("TRANZILLA_API_USERNAME")
 TRANZILLA_API_PUBLIC_KEY    = os.getenv("TRANZILLA_API_PUBLIC_KEY")
 TRANZILLA_API_PRIVATE_KEY   = os.getenv("TRANZILLA_API_PRIVATE_KEY")
-# 1 = ILS (shekel), 2 = USD. Israeli terminals default to shekel.
+# 1 = ILS (shekel), 2 = USD. Donors now choose their currency per donation; this
+# is only the fallback when none is supplied.
 TRANZILLA_CURRENCY          = os.getenv("TRANZILLA_CURRENCY", "1")
+# NOTE: the USD→ILS rate and the impact-link threshold are hardcoded business
+# constants in app/features/incidents/constants.py (USD_TO_ILS, IMPACT_LINK_MIN_USD),
+# deliberately NOT env-driven so a bad/missing env var can't break a donation.
 # Hosted-page host. "directng.tranzila.com" is Tranzila's current standard
 # (the older "direct.tranzila.com" is deprecated). Override via env if needed.
 TRANZILLA_HOST              = os.getenv("TRANZILLA_HOST", "directng.tranzila.com")
@@ -37,3 +41,14 @@ TRANZILLA_NOTIFY_SECRET     = os.getenv("TRANZILLA_NOTIFY_SECRET")
 # Absolute base URL of THIS app, e.g. https://your-app.onrender.com — Tranzila
 # needs fully-qualified success / fail / notify URLs to redirect and call back.
 PUBLIC_BASE_URL = (os.getenv("PUBLIC_BASE_URL") or "").rstrip("/")
+
+# ── Brevo transactional email ────────────────────────────────────────────────
+# Used to send the donor thank-you email after a confirmed donation. Only the
+# API key is a secret (set it in .env locally and in the Render dashboard). The
+# sender identity is baked in as a default so Render needs just BREVO_API_KEY —
+# the from-address must be a verified sender / authenticated domain in Brevo.
+BREVO_API_KEY        = os.getenv("BREVO_API_KEY")
+EMAIL_SENDER_NAME    = os.getenv("EMAIL_SENDER_NAME",    "Haverim Mehalzim")
+EMAIL_SENDER_ADDRESS = os.getenv("EMAIL_SENDER_ADDRESS", "info@haverimmehalzim.org")
+# Where donor replies land. Defaults to the sender address.
+EMAIL_REPLY_TO       = os.getenv("EMAIL_REPLY_TO", "") or EMAIL_SENDER_ADDRESS

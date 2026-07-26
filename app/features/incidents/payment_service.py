@@ -36,8 +36,33 @@ from app.config import (
     TRANZILLA_HOST,
     PUBLIC_BASE_URL,
 )
+from app.features.incidents.constants import USD_TO_ILS
 
 _APPROVED = "000"
+
+# Donor-selectable currencies → Tranzila numeric currency code. USD=2, ILS=1.
+CURRENCY_CODES = {"USD": "2", "ILS": "1"}
+SUPPORTED_CURRENCIES = list(CURRENCY_CODES.keys())
+
+
+def currency_code(name: str) -> str:
+    """Map a currency name ('USD'/'ILS') to its Tranzila code; fall back to config."""
+    return CURRENCY_CODES.get((name or "").strip().upper(), TRANZILLA_CURRENCY)
+
+
+def to_usd(amount, code: str) -> float:
+    """
+    Convert a charged amount in Tranzila-code `code` to USD using the fixed rate.
+    Used to value a gift against the USD-denominated impact-link threshold.
+    """
+    try:
+        amount = float(amount)
+    except (ValueError, TypeError):
+        return 0.0
+    if str(code) == CURRENCY_CODES["ILS"]:
+        return amount / USD_TO_ILS if USD_TO_ILS else amount
+    # USD (or unknown) — treat as already USD.
+    return amount
 
 # Our custom param names (echoed back by Tranzila). Prefixed to avoid colliding
 # with any reserved Tranzila field.
@@ -62,8 +87,8 @@ def build_payment_url(order: dict) -> str | None:
     Build the Tranzila hosted-page URL for one donation.
 
     `order` keys:
-      order_id, amount, incident_id, package_id, package_label,
-      donor_name, donor_email, donor_phone
+      order_id, amount, currency (Tranzila code), incident_id, package_id,
+      package_label, donor_name, donor_email, donor_phone
     """
     if not is_configured():
         print("[payment_service] TRANZILLA_TERMINAL or PUBLIC_BASE_URL not set")
@@ -77,7 +102,7 @@ def build_payment_url(order: dict) -> str | None:
 
     params = {
         "sum":                 f"{float(order['amount']):.2f}",
-        "currency":            TRANZILLA_CURRENCY,
+        "currency":            order.get("currency") or TRANZILLA_CURRENCY,
         "cred_type":           "1",
         "pdesc":               pdesc,
         "contact":             order.get("donor_name", ""),

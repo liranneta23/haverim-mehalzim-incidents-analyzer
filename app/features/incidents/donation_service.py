@@ -35,6 +35,8 @@ from app.config import (
     MONDAY_URL, MONDAY_HEADERS,
     DONATIONS_BOARD_ID, DONORS_BOARD_ID,
 )
+from app.features.incidents.constants import IMPACT_LINK_MIN_USD
+from app.features.incidents.payment_service import to_usd
 
 # ── Donations board columns ──────────────────────────────────────────────────
 # Defaults are baked in (not just left to env) because production runs on Render,
@@ -88,26 +90,44 @@ def _parse_amount(raw: str) -> float:
 
 # ── Donor find-or-create ─────────────────────────────────────────────────────
 
-def find_or_create_donor(name: str, email: str, phone: str, amount: float) -> str | None:
+def find_or_create_donor(name: str, email: str, phone: str, amount: float,
+                         amount_usd: float | None = None) -> tuple[str | None, str | None]:
     """
-    Return the Monday item id of the donor, creating the row if this email is new.
-    On an existing donor, bumps their cumulative amount so my-impact stays correct.
-    Returns None if the Donors board is not configured (donation is still recorded,
-    just without a donor link).
+    Return (donor_item_id, token) for the donor, creating the row if this email
+    is new. On an existing donor, bumps their cumulative amount so my-impact
+    stays correct.
+
+    The personal impact token is a TOP-TIER PERK: it is only generated for a gift
+    worth IMPACT_LINK_MIN_USD or more. Donors may pay in any currency, so the
+    caller passes `amount_usd` (the gift converted to USD) for the threshold test;
+    when omitted it defaults to `amount` (assumes already USD). A donor who never
+    crosses the bar has no token, so no /my-impact link appears in their email. A
+    donor who already earned a token keeps it and still gets the link on smaller
+    follow-up gifts.
+
+    Returns (None, None) if the Donors board is not configured (the donation is
+    still recorded, just without a donor link).
     """
     if not DONORS_BOARD_ID:
-        return None
+        return None, None
 
-    existing_id, existing_amount = _lookup_donor(email, name)
+    # The Donors board cumulative is kept in USD so my-impact / leaderboard are
+    # single-currency regardless of what the donor paid in. Normalise here.
+    usd = amount if amount_usd is None else amount_usd
+    qualifies = round(usd) >= IMPACT_LINK_MIN_USD
+
+    existing_id, existing_amount, existing_token = _lookup_donor(email, name)
     if existing_id:
-        _bump_donor_amount(existing_id, existing_amount + amount)
-        return existing_id
+        _bump_donor_amount(existing_id, existing_amount + usd)
+        # Keep an existing token; only mint one now if this gift qualifies.
+        token = existing_token or (_ensure_donor_token(existing_id) if qualifies else None)
+        return existing_id, token
 
-    return _create_donor(name, email, amount)
+    return _create_donor(name, email, usd, qualifies)
 
 
-def _lookup_donor(email: str, name: str) -> tuple[str | None, float]:
-    ids = [c for c in [_DONOR_EMAIL_COL, _DONOR_AMOUNT_COL] if c]
+def _lookup_donor(email: str, name: str) -> tuple[str | None, float, str | None]:
+    ids = [c for c in [_DONOR_EMAIL_COL, _DONOR_AMOUNT_COL, _DONOR_TOKEN_COL] if c]
     ids_gql = ", ".join(f'"{c}"' for c in ids) if ids else '""'
 
     data = _post(f"""
@@ -124,7 +144,7 @@ def _lookup_donor(email: str, name: str) -> tuple[str | None, float]:
       }}
     """)
     if not data:
-        return None, 0.0
+        return None, 0.0, None
 
     items = data["data"]["boards"][0]["items_page"]["items"]
     email_norm = (email or "").strip().lower()
@@ -133,23 +153,44 @@ def _lookup_donor(email: str, name: str) -> tuple[str | None, float]:
     for item in items:
         cols = {cv["id"]: cv["text"] for cv in item["column_values"]}
         row_amount = _parse_amount(cols.get(_DONOR_AMOUNT_COL) or "")
+        row_token  = (cols.get(_DONOR_TOKEN_COL) or "").strip() or None
         # Prefer matching on email; fall back to exact name when no email column.
         if _DONOR_EMAIL_COL and email_norm:
             if (cols.get(_DONOR_EMAIL_COL) or "").strip().lower() == email_norm:
-                return item["id"], row_amount
+                return item["id"], row_amount, row_token
         elif name_norm and (item["name"] or "").strip().lower() == name_norm:
-            return item["id"], row_amount
+            return item["id"], row_amount, row_token
 
-    return None, 0.0
+    return None, 0.0, None
 
 
-def _create_donor(name: str, email: str, amount: float) -> str | None:
-    values: dict = {_DONOR_AMOUNT_COL: str(amount)}
+def _ensure_donor_token(item_id: str) -> str | None:
+    """Write a fresh permanent token onto a donor row that is missing one."""
+    if not _DONOR_TOKEN_COL:
+        return None
+    token = secrets.token_hex(16)
+    values = _escape(_json.dumps({_DONOR_TOKEN_COL: token}))
+    data = _post(f"""
+      mutation {{
+        change_multiple_column_values(
+          board_id: {DONORS_BOARD_ID},
+          item_id: {item_id},
+          column_values: "{values}"
+        ) {{ id }}
+      }}
+    """)
+    return token if data else None
+
+
+def _create_donor(name: str, email: str, usd_amount: float, qualifies: bool) -> tuple[str | None, str | None]:
+    # Impact token only for qualifying (top-tier) gifts — see find_or_create_donor.
+    token = secrets.token_hex(16) if (_DONOR_TOKEN_COL and qualifies) else None
+    values: dict = {_DONOR_AMOUNT_COL: f"{usd_amount:.2f}"}  # stored in USD
     if _DONOR_EMAIL_COL and email:
         # Monday email columns expect a structured {"email","text"} value.
         values[_DONOR_EMAIL_COL] = {"email": email, "text": email}
-    if _DONOR_TOKEN_COL:
-        values[_DONOR_TOKEN_COL] = secrets.token_hex(16)  # permanent my-impact link
+    if token:
+        values[_DONOR_TOKEN_COL] = token
 
     col_values = _escape(_json.dumps(values))
     item_name = _escape(name or email or "תורם/ת")
@@ -165,14 +206,14 @@ def _create_donor(name: str, email: str, amount: float) -> str | None:
       }}
     """)
     if not data:
-        return None
-    return data["data"]["create_item"]["id"]
+        return None, None
+    return data["data"]["create_item"]["id"], token
 
 
 def _bump_donor_amount(item_id: str, new_total: float) -> None:
     if not _DONOR_AMOUNT_COL:
         return
-    values = _escape(_json.dumps({_DONOR_AMOUNT_COL: str(new_total)}))
+    values = _escape(_json.dumps({_DONOR_AMOUNT_COL: f"{new_total:.2f}"}))  # USD, 2dp
     _post(f"""
       mutation {{
         change_multiple_column_values(
@@ -301,18 +342,83 @@ def record_donation(payment: dict, date_iso: str, donor_item_id: str | None) -> 
     return item_id
 
 
-def record_confirmed_payment(payment: dict, date_iso: str) -> str | None:
+def _find_donation_id_by_order(order_id: str) -> str | None:
+    """
+    Return the id of an already-recorded donation for this order, or None.
+
+    Dedup key is the order id we stored on `_ORDER_COL` (format
+    "<order_id> · conf … · tx …"). Tranzila may fire the notify callback more
+    than once for the same charge; without this, each retry would create a
+    duplicate donation row and resend the thank-you email. Stateless by design:
+    the source of truth is Monday, not a local store. Requires `_ORDER_COL`;
+    if it is not configured we cannot dedup and return None (no dedup).
+
+    Note: this is a read-before-write check, not a lock — two truly simultaneous
+    callbacks could still both pass. In practice Tranzila retries are spaced out,
+    so this removes the duplicates seen in real usage.
+    """
+    if not (DONATIONS_BOARD_ID and _ORDER_COL and order_id):
+        return None
+
+    # Newest-first so recent orders (the ones being retried) stay within limit.
+    data = _post(f"""
+      {{
+        boards(ids: [{DONATIONS_BOARD_ID}]) {{
+          items_page(
+            limit: 500,
+            query_params: {{ order_by: [{{ column_id: "__creation_log__", direction: desc }}] }}
+          ) {{
+            items {{
+              id
+              column_values(ids: ["{_ORDER_COL}"]) {{ id text }}
+            }}
+          }}
+        }}
+      }}
+    """)
+    if not data:
+        return None
+    try:
+        items = data["data"]["boards"][0]["items_page"]["items"]
+    except (KeyError, IndexError, TypeError):
+        return None
+
+    for item in items:
+        for cv in item["column_values"]:
+            text = (cv.get("text") or "").strip()
+            if text and text.split(" · ", 1)[0].strip() == order_id:
+                return item["id"]
+    return None
+
+
+def record_confirmed_payment(payment: dict, date_iso: str) -> dict:
     """
     High-level entry point: link/create donor, write the donation row, then
     add that donation to the donor's references-to-donations column.
+
+    Returns a dict {donor_id, donation_id, token, duplicate} so the caller can
+    send the thank-you email (which needs the donor's permanent my-impact token).
+    `duplicate` is True when this order was already recorded by an earlier notify
+    — the caller should then skip the email. Any id/token may be None if the
+    corresponding write/lookup did not happen.
     """
-    donor_id = find_or_create_donor(
+    # Idempotency: if a prior (possibly retried) notify already recorded this
+    # order, do nothing — no new row, no second email.
+    order_id = payment.get("order_id", "")
+    existing_id = _find_donation_id_by_order(order_id)
+    if existing_id:
+        print(f"[donation_service] duplicate notify for order {order_id} — "
+              f"donation {existing_id} already recorded, skipping")
+        return {"donor_id": None, "donation_id": existing_id, "token": None, "duplicate": True}
+
+    donor_id, token = find_or_create_donor(
         payment.get("donor_name", ""),
         payment.get("donor_email", ""),
         payment.get("donor_phone", ""),
         payment["amount"],
+        amount_usd=to_usd(payment["amount"], payment.get("currency", "")),
     )
     donation_id = record_donation(payment, date_iso, donor_id)
     if donor_id and donation_id:
         link_donation_to_donor(donor_id, donation_id)
-    return donation_id
+    return {"donor_id": donor_id, "donation_id": donation_id, "token": token, "duplicate": False}

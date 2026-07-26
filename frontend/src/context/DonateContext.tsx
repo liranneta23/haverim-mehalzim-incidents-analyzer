@@ -22,6 +22,11 @@ export const DONATE_PACKAGES: DonatePackage[] = [
   { id: 'scoop_run',   label: 'Scoop & Run',            amount: 14000 },
 ];
 
+// Donor-selectable currencies. Package amounts above are USD; ILS is derived
+// with the backend's rate (fetched at runtime), falling back to this constant.
+export type Currency = 'USD' | 'ILS';
+const USD_TO_ILS_FALLBACK = 3.7;
+
 export interface DonateContext {
   incidentId?: string;
   incidentName?: string;
@@ -92,6 +97,9 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
     ? { id: ctx.packageId || 'custom', label: ctx.packageLabel || 'Custom', amount: ctx.amount }
     : DONATE_PACKAGES[0];
 
+  // Preset package amounts are defined in USD; the donor may pay in USD or ILS.
+  const [currency,  setCurrency]  = useState<Currency>('USD');
+  const [rate,      setRate]      = useState<number>(USD_TO_ILS_FALLBACK);
   const [packageId, setPackageId] = useState(preset.id);
   const [amount,    setAmount]    = useState<string>(String(preset.amount));
   const [name,      setName]      = useState('');
@@ -107,7 +115,29 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
   }, [onClose]);
 
-  const pickPackage = (p: DonatePackage) => { setPackageId(p.id); setAmount(String(p.amount)); };
+  // One shared USD→ILS rate from the backend, so the price shown here and the
+  // 14K-USD impact-link threshold checked on the server never diverge.
+  useEffect(() => {
+    fetch('/api/payment-config')
+      .then(r => r.json())
+      .then(j => { if (j?.success && j.usd_to_ils > 0) setRate(j.usd_to_ils); })
+      .catch(() => {});
+  }, []);
+
+  const symbol   = currency === 'USD' ? '$' : '₪';
+  // A USD package amount shown in the selected currency.
+  const display  = (usd: number) => (currency === 'USD' ? usd : Math.round(usd * rate));
+
+  const pickPackage = (p: DonatePackage) => { setPackageId(p.id); setAmount(String(display(p.amount))); };
+
+  const changeCurrency = (next: Currency) => {
+    if (next === currency) return;
+    const cur = Number(amount);
+    if (Number.isFinite(cur) && cur > 0) {
+      setAmount(String(next === 'ILS' ? Math.round(cur * rate) : Math.round(cur / rate)));
+    }
+    setCurrency(next);
+  };
 
   const submit = async () => {
     setError('');
@@ -117,7 +147,7 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) { setError('Please enter a valid email.'); return; }
 
     const chosen = DONATE_PACKAGES.find(p => p.id === packageId);
-    const isPreset = chosen && Number(amount) === chosen.amount;
+    const isPreset = chosen && Number(amount) === display(chosen.amount);
 
     setBusy(true);
     try {
@@ -126,6 +156,7 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amt,
+          currency,
           incident_id:   ctx.incidentId || '',
           package_id:    isPreset ? chosen!.id : 'custom',
           package_label: isPreset ? chosen!.label : 'Custom amount',
@@ -161,22 +192,37 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
         )}
 
         <div style={S.body}>
-          <div style={S.fieldLabel}>Choose an amount (USD)</div>
+          <div style={S.currencyRow}>
+            <span style={S.fieldLabel}>Currency</span>
+            <div style={S.currencyToggle}>
+              {(['USD', 'ILS'] as Currency[]).map(c => (
+                <button
+                  key={c}
+                  onClick={() => changeCurrency(c)}
+                  style={{ ...S.curBtn, ...(currency === c ? S.curBtnActive : {}) }}
+                >
+                  {c === 'USD' ? '$ USD' : '₪ ILS'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={S.fieldLabel}>Choose an amount ({currency})</div>
           <div style={S.tiers}>
             {DONATE_PACKAGES.map(p => (
               <button
                 key={p.id}
                 onClick={() => pickPackage(p)}
-                style={{ ...S.tier, ...(packageId === p.id && Number(amount) === p.amount ? S.tierActive : {}) }}
+                style={{ ...S.tier, ...(packageId === p.id && Number(amount) === display(p.amount) ? S.tierActive : {}) }}
               >
-                <span style={S.tierAmt}>${p.amount.toLocaleString()}</span>
+                <span style={S.tierAmt}>{symbol}{display(p.amount).toLocaleString()}</span>
                 <span style={S.tierLbl}>{p.label}</span>
               </button>
             ))}
           </div>
 
           <div style={S.customRow}>
-            <span style={S.customPrefix}>$</span>
+            <span style={S.customPrefix}>{symbol}</span>
             <input
               style={S.customInput}
               type="number" min={1} inputMode="decimal"
@@ -237,6 +283,12 @@ const STYLES: Record<string, React.CSSProperties> = {
                 borderBottom: '1px solid rgba(45,212,191,.15)', color: TEAL },
   body:    { padding: 20, display: 'flex', flexDirection: 'column', gap: 12 },
   fieldLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, opacity: .7 },
+  currencyRow:    { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  currencyToggle: { display: 'flex', gap: 6, background: 'rgba(255,255,255,.04)',
+                    border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: 3 },
+  curBtn:         { padding: '7px 14px', border: 'none', borderRadius: 8, cursor: 'pointer',
+                    background: 'transparent', color: 'inherit', fontSize: 13, fontWeight: 700, opacity: .7 },
+  curBtnActive:   { background: TEAL, color: '#04121a', opacity: 1 },
   tiers:   { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
   tier:    { display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 12px', cursor: 'pointer',
              background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.12)',
