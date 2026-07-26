@@ -25,7 +25,10 @@ from datetime import datetime
 
 from app.config import MONDAY_URL, MONDAY_HEADERS, DONORS_BOARD_ID
 from app.features.incidents.service import fetch_monday_data
-from app.features.incidents.constants import SIGNIFICANT_INCIDENT, GROUP_OPENED, INCIDENT_HANDLED_BY_RON
+from app.features.incidents.constants import (
+    SIGNIFICANT_INCIDENT, GROUP_OPENED, INCIDENT_HANDLED_BY_RON,
+    AVG_MISSION_COST, COST_PER_LIFE,
+)
 
 # Column IDs — override via env if the board structure changes
 _TOKEN_COL      = os.getenv('DONOR_TOKEN_COL',      'text_mm37g124')
@@ -34,8 +37,7 @@ _FIRST_DATE_COL = os.getenv('DONOR_FIRST_DATE_COL', '')
 _LAST_DATE_COL  = os.getenv('DONOR_LAST_DATE_COL',  '')
 _NOTE_COL       = os.getenv('DONOR_NOTE_COL',       '')
 
-AVG_MISSION_COST = 350  # USD — matches the constant used in the frontend
-COST_PER_LIFE    = 5000  # NIS per life saved — used for leaderboard ranking
+# AVG_MISSION_COST and COST_PER_LIFE now live in constants.py (both USD).
 
 _HANDLED = {GROUP_OPENED, INCIDENT_HANDLED_BY_RON, SIGNIFICANT_INCIDENT}
 

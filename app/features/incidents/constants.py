@@ -36,3 +36,12 @@ USD_TO_ILS = 3.7
 # top package. Donors may pay in any supported currency; the gift is converted to
 # USD (via USD_TO_ILS) before it is compared against this bar.
 IMPACT_LINK_MIN_USD = 14000
+
+# Average cost in USD to fund one rescue mission. Translates a donor's cumulative
+# USD giving into "missions funded" on the my-impact page.
+AVG_MISSION_COST = 350
+
+# Cost in USD attributed to saving one life. Used to rank donors on the
+# leaderboard (lives saved = cumulative USD // this). Donor amounts are stored in
+# USD, so this is USD-denominated too.
+COST_PER_LIFE = 5000
