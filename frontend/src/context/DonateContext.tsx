@@ -11,6 +11,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 const EMBED_SRC    = 'https://www.jgive.com/new/en/ils/embeds/9810c15b-6b6f-4255-9e48-df2aaa659f38';
 const EMBED_SCRIPT = 'https://www.jgive.com/embed/embedding-utm.js';
 
+// TEMPORARY (added 2026-08-03): Tranzila is still in testing mode, so route
+// incident-specific donations to the general JGive form too, instead of the
+// Tranzila hosted page. Flip back to `false` after ~1 month (early Sept 2026)
+// to restore the incident-specific Tranzila flow. When false, openDonate({incidentId})
+// resumes opening TranzilaModal.
+const FORCE_JGIVE_FOR_INCIDENTS = true;
+
 // Donation packages (USD) for the incident-specific Tranzila flow. Keep ids
 // stable — they are stored on the Monday donation row via the package column.
 export interface DonatePackage { id: string; label: string; amount: number; }
@@ -250,7 +257,7 @@ function TranzilaModal({ ctx, onClose }: { ctx: DonateContext; onClose: () => vo
 
 export function DonateProvider({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<DonateContext | null>(null);
-  const isIncident = !!ctx?.incidentId;
+  const isIncident = !!ctx?.incidentId && !FORCE_JGIVE_FOR_INCIDENTS;
   return (
     <DonateCtx.Provider value={{ openDonate: (c) => setCtx(c || {}) }}>
       {children}
